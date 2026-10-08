@@ -188,13 +188,21 @@ def fetch_season(year: int, out: Path, cache_dir: Path) -> tuple[pd.DataFrame, l
     meetings = pd.DataFrame(api.get("meetings", year=year))
     if meetings.empty:
         raise SystemExit("OpenF1 returned no meetings. Check access to api.openf1.org.")
-    meetings = meetings[~meetings["meeting_name"].str.contains("Testing", case=False)]
-    meetings = meetings.sort_values("date_start").reset_index(drop=True)
-    meetings["round"] = meetings.index + 1
-
     sessions = pd.DataFrame(api.get("sessions", year=year, session_name="Qualifying"))
     sessions["date_end"] = to_dt(sessions["date_end"])
     now = pd.Timestamp.now(tz="UTC")
+
+    # Official round numbers: drop testing and cancelled meetings
+    # (cancelled = already in the past but never had a qualifying session).
+    meetings["date_start"] = to_dt(meetings["date_start"])
+    meetings = meetings[~meetings["meeting_name"].str.contains("Testing", case=False)]
+    held = meetings["meeting_key"].isin(sessions["meeting_key"])
+    upcoming = meetings["date_start"] > now - pd.Timedelta(days=4)
+    for name in meetings.loc[~held & ~upcoming, "meeting_name"]:
+        print(f"  cancelled: {name}")
+    meetings = meetings[held | upcoming].sort_values("date_start").reset_index(drop=True)
+    meetings["round"] = meetings.index + 1
+
     sessions = sessions[sessions["date_end"] < now]
     sessions = sessions.merge(meetings[["meeting_key", "meeting_name", "round"]], on="meeting_key")
     sessions = sessions.sort_values("round")
