@@ -8,6 +8,7 @@
   and in GitHub Actions. No API key needed.
 
 Usage:  python src/purple_sectors/fetch.py --year 2026 [--strict]
+
 """
 import argparse
 import json
