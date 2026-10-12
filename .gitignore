@@ -4,3 +4,10 @@ outputs/
 __pycache__/
 .DS_Store
 .ipynb_checkpoints/
+*.hpp
+stan/quali
+stan/quali_share
+*.npz
+posteriors_*.zip
+stan/quali_v11
+stan/quali_v12
