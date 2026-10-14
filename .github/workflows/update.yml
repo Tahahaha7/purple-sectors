@@ -1,0 +1,97 @@
+name: Update model
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"   # Sunday 06:00 UTC: the morning after qualifying
+    - cron: "0 6 * * 1"   # Monday 06:00 UTC: retry in case timing data was late
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Refit even if there is no new data"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-model
+  cancel-in-progress: false
+
+env:
+  YEAR: "2026"
+  CMDSTAN_VERSION: "2.36.0"
+  PYTHONPATH: src
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore OpenF1 cache
+        uses: actions/cache@v4
+        with:
+          path: data/raw/openf1_cache
+          key: openf1-${{ env.YEAR }}-${{ github.run_id }}
+          restore-keys: openf1-${{ env.YEAR }}-
+
+      - name: Fetch qualifying sessions
+        run: python -m purple_sectors.fetch --year "$YEAR" --strict
+
+      - name: Check for new data
+        id: changes
+        run: |
+          if git diff --quiet -- "data/raw/quali_laps_${YEAR}.csv" && [ "${{ inputs.force }}" != "true" ]; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "No new sessions: skipping the fit." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore CmdStan
+        if: steps.changes.outputs.new == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
+
+      - name: Install CmdStan
+        if: steps.changes.outputs.new == 'true'
+        run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
+
+      - name: Fit production model (v1.2)
+        if: steps.changes.outputs.new == 'true'
+        run: python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v12.stan --out posterior_v12.npz
+
+      - name: Upload posterior
+        if: always() && steps.changes.outputs.new == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: posterior-v12-run-${{ github.run_number }}
+          path: posterior_v12.npz
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Export website data
+        if: steps.changes.outputs.new == 'true'
+        run: python -m purple_sectors.export --posterior posterior_v12.npz --laps "data/raw/quali_laps_${YEAR}.csv" --out site/data
+
+      - name: Commit and push
+        if: steps.changes.outputs.new == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "data/raw/quali_laps_${YEAR}.csv" site/data
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "Update model: $(date -u +%Y-%m-%d)"
+          git push
