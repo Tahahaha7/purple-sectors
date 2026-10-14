@@ -25,12 +25,12 @@ env:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -39,7 +39,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Restore OpenF1 cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: data/raw/openf1_cache
           key: openf1-${{ env.YEAR }}-${{ github.run_id }}
@@ -60,7 +60,7 @@ jobs:
 
       - name: Restore CmdStan
         if: steps.changes.outputs.new == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cmdstan
           key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload posterior
         if: always() && steps.changes.outputs.new == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: posterior-v12-run-${{ github.run_number }}
           path: posterior_v12.npz
