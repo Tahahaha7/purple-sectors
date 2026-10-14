@@ -24,6 +24,7 @@ BASE = "https://api.openf1.org/v1"
 MIN_INTERVAL = 60 / 27            # seconds between calls: stays under 30/min
 MAX_RETRIES = 8
 FRESH_HOURS = 6                   # don't cache sessions that ended this recently
+STALE_DAYS = 7                    # a session still without laps after this long was cancelled
 SESSION_ENDPOINTS = ["laps", "race_control", "drivers", "stints", "weather"]
 
 
@@ -68,13 +69,15 @@ class OpenF1:
             return r.json()
         raise RuntimeError(f"gave up on /{endpoint} after {MAX_RETRIES} attempts")
 
-    def session(self, sk: int, fresh: bool) -> dict:
+    def session(self, sk: int, fresh: bool, stale: bool) -> dict:
         """Raw responses for one session, from cache when available."""
         folder = self.cache / str(sk)
         if (folder / "_complete").exists():
             return {ep: json.loads((folder / f"{ep}.json").read_text()) for ep in SESSION_ENDPOINTS}
         raw = {ep: self.get(ep, session_key=sk) for ep in SESSION_ENDPOINTS}
-        if raw["laps"] and not fresh:                     # never freeze a still-filling feed
+        # cache finished sessions, and sessions that are confirmed empty (cancelled);
+        # never freeze a feed that may still be filling
+        if (raw["laps"] and not fresh) or (not raw["laps"] and stale):
             folder.mkdir(parents=True, exist_ok=True)
             for ep, data in raw.items():
                 (folder / f"{ep}.json").write_text(json.dumps(data))
@@ -191,30 +194,45 @@ def fetch_season(year: int, out: Path, cache_dir: Path) -> tuple[pd.DataFrame, l
     sessions = pd.DataFrame(api.get("sessions", year=year, session_name="Qualifying"))
     sessions["date_end"] = to_dt(sessions["date_end"])
     now = pd.Timestamp.now(tz="UTC")
+    past = sessions[sessions["date_end"] < now].copy()
+    todo = sum(not (Path(cache_dir) / str(k) / "_complete").exists() for k in past["session_key"])
+    print(f"{len(past)} past qualifying sessions · {todo} to download "
+          f"(~{todo * len(SESSION_ENDPOINTS) * MIN_INTERVAL / 60:.0f} min)")
 
-    # Official round numbers: drop testing and cancelled meetings
-    # (cancelled = already in the past but never had a qualifying session).
+    # 1. download every past session (cached ones are free)
+    raw, errors = {}, {}
+    for _, s in past.iterrows():
+        sk, age = int(s["session_key"]), now - s["date_end"]
+        try:
+            raw[sk] = api.session(sk, fresh=age < pd.Timedelta(hours=FRESH_HOURS),
+                                  stale=age > pd.Timedelta(days=STALE_DAYS))
+        except Exception as e:
+            errors[sk] = f"{type(e).__name__}: {e}"
+
+    # 2. official round numbers: drop testing and cancelled meetings. Cancelled = in the past
+    #    with no qualifying session at all, or whose session still has no laps after STALE_DAYS.
+    empty = {int(s["meeting_key"]) for _, s in past.iterrows()
+             if int(s["session_key"]) in raw and not raw[int(s["session_key"])]["laps"]
+             and now - s["date_end"] > pd.Timedelta(days=STALE_DAYS)}
     meetings["date_start"] = to_dt(meetings["date_start"])
     meetings = meetings[~meetings["meeting_name"].str.contains("Testing", case=False)]
-    held = meetings["meeting_key"].isin(sessions["meeting_key"])
+    held = meetings["meeting_key"].isin(sessions["meeting_key"]) & ~meetings["meeting_key"].isin(empty)
     upcoming = meetings["date_start"] > now - pd.Timedelta(days=4)
     for name in meetings.loc[~held & ~upcoming, "meeting_name"]:
         print(f"  cancelled: {name}")
     meetings = meetings[held | upcoming].sort_values("date_start").reset_index(drop=True)
     meetings["round"] = meetings.index + 1
+    past = past.merge(meetings[["meeting_key", "meeting_name", "round"]], on="meeting_key")
 
-    sessions = sessions[sessions["date_end"] < now]
-    sessions = sessions.merge(meetings[["meeting_key", "meeting_name", "round"]], on="meeting_key")
-    sessions = sessions.sort_values("round")
-    todo = sum(not (Path(cache_dir) / str(k) / "_complete").exists() for k in sessions["session_key"])
-    print(f"{len(sessions)} qualifying sessions · {todo} to download (~{todo * 5 * MIN_INTERVAL / 60:.0f} min)")
-
+    # 3. build the lap table
     frames, skipped = [], []
-    for _, s in sessions.iterrows():
+    for _, s in past.sort_values("round").iterrows():
         tag = f"R{s['round']:<2} {s['meeting_name']}"
         try:
-            fresh = now - s["date_end"] < pd.Timedelta(hours=FRESH_HOURS)
-            df = build_session(api.session(int(s["session_key"]), fresh))
+            sk = int(s["session_key"])
+            if sk in errors:
+                raise RuntimeError(errors[sk])
+            df = build_session(raw[sk])
             for col, val in [("round", s["round"]), ("event", s["meeting_name"]),
                              ("location", s.get("location")), ("country", s.get("country_name")),
                              ("circuit", s.get("circuit_short_name"))]:
