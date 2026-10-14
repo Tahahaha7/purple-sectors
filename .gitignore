@@ -11,3 +11,4 @@ stan/quali_share
 posteriors_*.zip
 stan/quali_v11
 stan/quali_v12
+data/raw/openf1_cache/
