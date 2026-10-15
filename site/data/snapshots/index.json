@@ -7,7 +7,8 @@
    "location": "Melbourne",
    "date": "2026.03.07",
    "file": "r01.json",
-   "passed": false
+   "passed": false,
+   "status": "warn"
   },
   {
    "round": 2,
@@ -15,7 +16,8 @@
    "location": "Shanghai",
    "date": "2026.03.14",
    "file": "r02.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 3,
@@ -23,7 +25,8 @@
    "location": "Suzuka",
    "date": "2026.03.28",
    "file": "r03.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 4,
@@ -31,7 +34,8 @@
    "location": "Miami Gardens",
    "date": "2026.05.02",
    "file": "r04.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 5,
@@ -39,7 +43,8 @@
    "location": "Montr\u00e9al",
    "date": "2026.05.23",
    "file": "r05.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 6,
@@ -47,7 +52,8 @@
    "location": "Monte Carlo",
    "date": "2026.06.06",
    "file": "r06.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 7,
@@ -55,7 +61,8 @@
    "location": "Barcelona",
    "date": "2026.06.13",
    "file": "r07.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 8,
@@ -63,7 +70,8 @@
    "location": "Spielberg",
    "date": "2026.06.27",
    "file": "r08.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 9,
@@ -71,7 +79,8 @@
    "location": "Silverstone",
    "date": "2026.07.04",
    "file": "r09.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 10,
@@ -79,7 +88,8 @@
    "location": "Spa-Francorchamps",
    "date": "2026.07.18",
    "file": "r10.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 11,
@@ -87,7 +97,8 @@
    "location": "Budapest",
    "date": "2026.07.25",
    "file": "r11.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 12,
@@ -95,7 +106,8 @@
    "location": "Zandvoort",
    "date": "2026.08.22",
    "file": "r12.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 13,
@@ -103,7 +115,8 @@
    "location": "Monza",
    "date": "2026.09.05",
    "file": "r13.json",
-   "passed": false
+   "passed": false,
+   "status": "warn"
   },
   {
    "round": 14,
@@ -111,7 +124,8 @@
    "location": "Madrid",
    "date": "2026.09.12",
    "file": "r14.json",
-   "passed": false
+   "passed": false,
+   "status": "warn"
   },
   {
    "round": 15,
@@ -119,7 +133,8 @@
    "location": "Baku",
    "date": "2026.09.25",
    "file": "r15.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 16,
@@ -127,7 +142,8 @@
    "location": "Kuala Lumpur",
    "date": "2026.10.03",
    "file": "r16.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 17,
@@ -135,7 +151,8 @@
    "location": "Marina Bay",
    "date": "2026.10.10",
    "file": "r17.json",
-   "passed": true
+   "passed": true,
+   "status": "pass"
   }
  ]
 }
