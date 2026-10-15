@@ -142,7 +142,8 @@ def snapshot(post, laps_csv: Path) -> dict:
     }
     if "divergences" in post.files:
         snap["diagnostics"] = {"divergences": int(post["divergences"]), "draws": int(post["draws_total"]),
-                               "max_rhat": round(float(post["max_rhat"]), 4), "passed": bool(post["passed"])}
+                               "max_rhat": round(float(post["max_rhat"]), 4), "passed": bool(post["passed"]),
+                               "worst": str(post["worst"]) if "worst" in post.files else None}
     return snap
 
 

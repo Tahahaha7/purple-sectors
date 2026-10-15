@@ -22,8 +22,8 @@ LATENT = ["gamma", "delta", "theta", "nu", "tau", "alpha"]
 DERIVED = ["car_share", "loss_bad"]
 
 
-def max_rhat(fit, variables) -> float:
-    """Split R-hat (Gelman et al.), maximum over all scalar components."""
+def max_rhat(fit, variables) -> tuple[float, str]:
+    """Split R-hat (Gelman et al.): the maximum over all scalar components, and which one it is."""
     df = fit.draws_pd(vars=variables)
     cols = [c for c in df.columns if not c.endswith("__")]
     n = fit.num_draws_sampling
@@ -33,7 +33,9 @@ def max_rhat(fit, variables) -> float:
     w = x.var(axis=0, ddof=1).mean(axis=0)
     b = h * x.mean(axis=0).var(axis=0, ddof=1)
     with np.errstate(invalid="ignore", divide="ignore"):
-        return float(np.nanmax(np.sqrt(((h - 1) / h * w + b / h) / w)))
+        r = np.sqrt(((h - 1) / h * w + b / h) / w)
+    k = int(np.nanargmax(r))
+    return float(r[k]), cols[k]
 
 
 def summary_line(fit, name) -> str:
@@ -53,9 +55,9 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
     mv = fit.method_variables()
     div = int(mv["divergent__"].sum())
     total = int(mv["divergent__"].size)
-    rhat = max_rhat(fit, HYPER + LATENT)
+    rhat, worst = max_rhat(fit, HYPER + LATENT)
     ok = div <= max_div_frac * total and rhat <= max_r
-    print(f"divergences {div}/{total} · max R-hat {rhat:.3f} · {'OK' if ok else 'FAILED'}")
+    print(f"divergences {div}/{total} · max R-hat {rhat:.3f} ({worst}) · {'OK' if ok else 'FAILED'}")
 
     out_vars = {v: fit.stan_variable(v).astype("float32") for v in HYPER + LATENT + DERIVED}
     out_vars["p_bad_mean"] = fit.stan_variable("p_bad").mean(axis=0).astype("float32")
@@ -63,13 +65,13 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
                         drivers=np.array(des.drivers), cars=np.array(des.cars),
                         events=np.array(des.events), y=des.laps["y"].to_numpy(),
                         driver=des.driver, car=des.car, event=des.event, seg=des.seg,
-                        divergences=div, draws_total=total, max_rhat=rhat, passed=ok)
+                        divergences=div, draws_total=total, max_rhat=rhat, worst=worst, passed=ok)
     print(f"saved {out}")
 
     if summary := os.environ.get("GITHUB_STEP_SUMMARY"):     # shows on the Actions run page
         cs = np.percentile(fit.stan_variable("car_share").mean(axis=1), [5, 50, 95])
         lines = [f"## Model fit: {'✅ passed' if ok else '❌ failed'}",
-                 f"{des.N} push laps · {des.E} events · divergences {div}/{total} · max R-hat {rhat:.3f}",
+                 f"{des.N} push laps · {des.E} events · divergences {div}/{total} · max R-hat {rhat:.3f} (`{worst}`)",
                  f"\n**Car share:** {cs[1]:.3f} [{cs[0]:.3f}, {cs[2]:.3f}]\n",
                  "| parameter | median | 90% |", "|---|---|---|"]
         lines += [summary_line(fit, v) for v in ["sigma_driver", "pi_bad", "loss_clean", "mu_gamma"]]
@@ -83,7 +85,7 @@ if __name__ == "__main__":
     ap.add_argument("--stan", type=Path, default=Path("stan/quali_v12.stan"))
     ap.add_argument("--out", type=Path, default=Path("posterior_v12.npz"))
     ap.add_argument("--warmup", type=int, default=1000)
-    ap.add_argument("--samples", type=int, default=1000)
+    ap.add_argument("--samples", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--max-div-frac", type=float, default=0.002, help="max share of divergent draws")
     ap.add_argument("--max-rhat", type=float, default=1.01)
