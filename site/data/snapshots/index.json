@@ -1,0 +1,141 @@
+{
+ "latest": 17,
+ "rounds": [
+  {
+   "round": 1,
+   "name": "Australian Grand Prix",
+   "location": "Melbourne",
+   "date": "2026.03.07",
+   "file": "r01.json",
+   "passed": false
+  },
+  {
+   "round": 2,
+   "name": "Chinese Grand Prix",
+   "location": "Shanghai",
+   "date": "2026.03.14",
+   "file": "r02.json",
+   "passed": true
+  },
+  {
+   "round": 3,
+   "name": "Japanese Grand Prix",
+   "location": "Suzuka",
+   "date": "2026.03.28",
+   "file": "r03.json",
+   "passed": true
+  },
+  {
+   "round": 4,
+   "name": "Miami Grand Prix",
+   "location": "Miami Gardens",
+   "date": "2026.05.02",
+   "file": "r04.json",
+   "passed": false
+  },
+  {
+   "round": 5,
+   "name": "Canadian Grand Prix",
+   "location": "Montr\u00e9al",
+   "date": "2026.05.23",
+   "file": "r05.json",
+   "passed": false
+  },
+  {
+   "round": 6,
+   "name": "Monaco Grand Prix",
+   "location": "Monte Carlo",
+   "date": "2026.06.06",
+   "file": "r06.json",
+   "passed": true
+  },
+  {
+   "round": 7,
+   "name": "Barcelona Grand Prix",
+   "location": "Barcelona",
+   "date": "2026.06.13",
+   "file": "r07.json",
+   "passed": true
+  },
+  {
+   "round": 8,
+   "name": "Austrian Grand Prix",
+   "location": "Spielberg",
+   "date": "2026.06.27",
+   "file": "r08.json",
+   "passed": true
+  },
+  {
+   "round": 9,
+   "name": "British Grand Prix",
+   "location": "Silverstone",
+   "date": "2026.07.04",
+   "file": "r09.json",
+   "passed": false
+  },
+  {
+   "round": 10,
+   "name": "Belgian Grand Prix",
+   "location": "Spa-Francorchamps",
+   "date": "2026.07.18",
+   "file": "r10.json",
+   "passed": true
+  },
+  {
+   "round": 11,
+   "name": "Hungarian Grand Prix",
+   "location": "Budapest",
+   "date": "2026.07.25",
+   "file": "r11.json",
+   "passed": true
+  },
+  {
+   "round": 12,
+   "name": "Dutch Grand Prix",
+   "location": "Zandvoort",
+   "date": "2026.08.22",
+   "file": "r12.json",
+   "passed": false
+  },
+  {
+   "round": 13,
+   "name": "Italian Grand Prix",
+   "location": "Monza",
+   "date": "2026.09.05",
+   "file": "r13.json",
+   "passed": false
+  },
+  {
+   "round": 14,
+   "name": "Spanish Grand Prix",
+   "location": "Madrid",
+   "date": "2026.09.12",
+   "file": "r14.json",
+   "passed": false
+  },
+  {
+   "round": 15,
+   "name": "Azerbaijan Grand Prix",
+   "location": "Baku",
+   "date": "2026.09.25",
+   "file": "r15.json",
+   "passed": false
+  },
+  {
+   "round": 16,
+   "name": "Bahrain Grand Prix",
+   "location": "Kuala Lumpur",
+   "date": "2026.10.03",
+   "file": "r16.json",
+   "passed": true
+  },
+  {
+   "round": 17,
+   "name": "Singapore Grand Prix",
+   "location": "Marina Bay",
+   "date": "2026.10.10",
+   "file": "r17.json",
+   "passed": true
+  }
+ ]
+}
