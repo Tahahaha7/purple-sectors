@@ -73,6 +73,23 @@ def _iv(x) -> list:
     return [round(float(v), 3) for v in np.percentile(x, Q)]
 
 
+GRID = (-0.8, 0.8, 81)            # teammate-gap density grid, seconds on a 90 s lap
+
+
+def density(draws: np.ndarray, grid=GRID) -> list:
+    """Smoothed posterior density on a fixed grid (fine histogram + Gaussian kernel, no SciPy needed)."""
+    lo, hi, n = grid
+    x = np.linspace(lo, hi, n)
+    fine = np.linspace(lo, hi, 8 * (n - 1) + 1)
+    h, _ = np.histogram(draws, bins=np.r_[fine - (fine[1] - fine[0]) / 2, fine[-1] + (fine[1] - fine[0]) / 2])
+    iqr = np.subtract(*np.percentile(draws, [75, 25]))
+    bw = 0.9 * min(draws.std(), iqr / 1.34 if iqr > 0 else draws.std()) * len(draws) ** -0.2
+    k = np.arange(-int(4 * bw / (fine[1] - fine[0])) - 1, int(4 * bw / (fine[1] - fine[0])) + 2) * (fine[1] - fine[0])
+    smooth = np.convolve(h, np.exp(-0.5 * (k / bw) ** 2), mode="same")
+    dens = smooth / (smooth.sum() * (fine[1] - fine[0])) * (np.isfinite(draws).mean())
+    return np.round(np.interp(x, fine, dens), 2).tolist()
+
+
 def teammate_pairs(post, info: pd.DataFrame) -> list:
     """For each car, the pair of drivers who shared it most, with the posterior gap (seconds)."""
     drivers, cars = [str(d) for d in post["drivers"]], [str(c) for c in post["cars"]]
@@ -100,7 +117,8 @@ def teammate_pairs(post, info: pd.DataFrame) -> list:
                       "p": round(float((gap < 0).mean()), 3), "shared": len(evs[a] & evs[b]),
                       "also": [{"code": drivers[i], "name": str(info.loc[drivers[i], "name"])}
                                for i in ds if i not in (a, b)],
-                      "dots": np.round(np.quantile(gap, (np.arange(20) + 0.5) / 20), 3).tolist()})
+                      "dots": np.round(np.quantile(gap, (np.arange(20) + 0.5) / 20), 3).tolist(),
+                      "density": density(gap)})
     pairs.sort(key=lambda p: -p["p"])
     return pairs
 
@@ -133,6 +151,7 @@ def snapshot(post, laps_csv: Path) -> dict:
                      "team": _short(team_of[d]), "skill": _q(post["delta"][:, i] * SEC)}
                     for i, d in enumerate(drivers)],
         "teammates": [{k: v for k, v in p.items() if k != "dots"} for p in teammate_pairs(post, info)],
+        "grid": list(GRID),
         "events": [{"round": r, "name": str(meta.loc[r, "name"]), "laps": int(laps_per[k]),
                     "q1_q2": _iv(tau[:, k, 1] * SEC), "q2_q3": _iv((tau[:, k, 2] - tau[:, k, 1]) * SEC),
                     "gamma": _iv(post["gamma"][:, k] * SEC) if "gamma" in post.files else None}
@@ -191,7 +210,7 @@ def soft(post, laps_csv: Path) -> dict:
                          "p_imp": round(float((change[:, c] < 0).mean()), 3)})
     car_rows.sort(key=lambda r: r["med"])
 
-    pairs = teammate_pairs(post, info)
+    pairs = [{k: v for k, v in p.items() if k != "density"} for p in teammate_pairs(post, info)]
 
     rng = np.random.default_rng(7)
     pick = rng.choice(now.shape[0], min(96, now.shape[0]), replace=False)
