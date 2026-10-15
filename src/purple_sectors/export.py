@@ -5,6 +5,7 @@ Usage:  python src/purple_sectors/export.py --posterior posterior_v12.npz \
 """
 import argparse
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -66,11 +67,11 @@ QS = [0.025] + [round(x, 2) for x in np.arange(0.05, 0.951, 0.05)] + [0.975]   #
 
 
 def _q(x) -> list:
-    return np.round(np.quantile(x, QS), 3).tolist()
+    return np.round(np.quantile(np.asarray(x, dtype=float), QS), 3).tolist()
 
 
 def _iv(x) -> list:
-    return [round(float(v), 3) for v in np.percentile(x, Q)]
+    return [round(float(v), 3) for v in np.percentile(np.asarray(x, dtype=float), Q)]
 
 
 GRID = (-0.8, 0.8, 81)            # teammate-gap density grid, seconds on a 90 s lap
@@ -79,6 +80,7 @@ GRID = (-0.8, 0.8, 81)            # teammate-gap density grid, seconds on a 90 s
 def density(draws: np.ndarray, grid=GRID) -> list:
     """Smoothed posterior density on a fixed grid (fine histogram + Gaussian kernel, no SciPy needed)."""
     lo, hi, n = grid
+    draws = np.asarray(draws, dtype=float)
     x = np.linspace(lo, hi, n)
     fine = np.linspace(lo, hi, 8 * (n - 1) + 1)
     h, _ = np.histogram(draws, bins=np.r_[fine - (fine[1] - fine[0]) / 2, fine[-1] + (fine[1] - fine[0]) / 2])
@@ -173,9 +175,26 @@ def _status(post) -> str:
     return "pass" if "passed" not in post.files or bool(post["passed"]) else "fail"
 
 
+DRAW_PARAMS = {"sigma_dev": SEC, "sigma_nu": SEC, "pi_bad": 1.0, "loss_clean": SEC, "sigma_driver": SEC, "sigma": SEC}
+
+
+def draws_snapshot(post, n: int = 150) -> dict:
+    """Joint posterior draws (same draw index across every quantity) for the Inter page's clouds."""
+    S = post["theta"].shape[0]
+    pick = np.linspace(0, S - 1, n).round().astype(int)
+    now = post["theta"][pick, -1, :] * SEC
+    rnd = lambda a: np.round(np.asarray(a, dtype=float), 3).tolist()
+    return {
+        "round": int(post["events"][-1]), "n": n,
+        "cars": {_short(t): rnd(now[:, c]) for c, t in enumerate(post["cars"])},
+        "drivers": {str(d): rnd(post["delta"][pick, i] * SEC) for i, d in enumerate(post["drivers"])},
+        "params": {k: rnd(post[k][pick] * f) for k, f in DRAW_PARAMS.items() if k in post.files},
+    }
+
+
 def write_index(snap_dir: Path) -> Path:
     rows = []
-    for f in sorted(snap_dir.glob("r*.json")):
+    for f in sorted(p for p in snap_dir.glob("r*.json") if re.fullmatch(r"r\d+\.json", p.name)):
         s = json.loads(f.read_text())
         rows.append({"round": s["round"], "name": s["name"], "location": s["location"], "date": s["date"],
                      "file": f.name, "passed": s.get("diagnostics", {}).get("passed", True),
@@ -240,6 +259,9 @@ def main(posterior: Path, laps: Path, out: Path, model: str = "v1.2",
         sp = snapshot_dir / f"r{snap['round']:02d}.json"
         sp.write_text(json.dumps(snap, separators=(",", ":"), ensure_ascii=False))
         print(f"wrote {sp} ({sp.stat().st_size / 1024:.0f} KB)")
+        dp = snapshot_dir / f"r{snap['round']:02d}_draws.json"
+        dp.write_text(json.dumps(draws_snapshot(post), separators=(",", ":")))
+        print(f"wrote {dp} ({dp.stat().st_size / 1024:.0f} KB)")
         write_index(snapshot_dir)
         if only_snapshot:
             return sp

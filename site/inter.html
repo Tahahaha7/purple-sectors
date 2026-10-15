@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>purple-sectors / Inter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#FFFFFF; --ink:#000000; --ink-2:#6B6B6B; --ink-3:#A3A3A3; --rule:#E4E4E4; --fill:#F2F2F2;
+  --accent:#6E2BF2;
+}
+@media (prefers-color-scheme: dark){
+  :root{ color-scheme: dark;
+    --bg:#000000; --ink:#FFFFFF; --ink-2:#9A9A9A; --ink-3:#5C5C5C; --rule:#232323; --fill:#141414;
+    --accent:#A57CFF; }
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.page{max-width:1200px;margin:0 auto;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+.cell{border-bottom:1px solid var(--rule);padding:22px 24px}
+.slash{color:var(--ink-2)}
+.slash::before{content:"/"}
+.count{color:var(--ink-2)}
+
+/* nav */
+nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.home{font-weight:700;margin-right:auto}
+.home::after{content:"/";color:var(--accent)}
+.keys{display:flex;gap:22px;list-style:none;padding:0}
+.keys a{color:var(--ink-2)} .keys a:hover{color:var(--ink)}
+.keys a[aria-current="page"]{color:var(--ink)}
+.keys b{font-weight:500}
+.keys a[aria-current="page"] b{color:var(--accent)}
+.stamp{color:var(--ink-2)}
+
+/* section heads */
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:30px 24px 16px;border-bottom:1px solid var(--rule)}
+.head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.head p{color:var(--ink-2);max-width:60ch;margin-top:6px}
+
+/* router */
+.router{display:grid;grid-template-columns:repeat(3,1fr)}
+.router > a,.router > div{padding:22px 24px;border-right:1px solid var(--rule);display:block}
+.router > :last-child{border-right:0}
+.router a:hover{background:var(--fill)}
+.router .t{font-weight:600;margin:6px 0 4px}
+.router p{color:var(--ink-2)}
+.fine{padding:18px 24px 40px;color:var(--ink-2);font-size:12px;max-width:100ch}
+
+
+/* header + timeline */
+.mhead{display:grid;grid-template-columns:1.1fr 1fr;border-bottom:1px solid var(--rule)}
+.mhead .copy{padding:40px 24px 30px;border-right:1px solid var(--rule)}
+.hello{color:var(--ink-2);margin-bottom:18px}
+h1{font-weight:500;font-size:clamp(28px,3.8vw,46px);line-height:1.08;letter-spacing:-.03em}
+.lede{margin-top:20px;max-width:52ch}
+.controls{padding:28px 24px;display:flex;flex-direction:column;justify-content:flex-end;gap:16px}
+.now{font-size:22px;font-weight:500;letter-spacing:-.02em}
+.now small{display:block;font-size:12px;color:var(--ink-2);font-weight:400;letter-spacing:0}
+.row{display:flex;gap:10px;align-items:center}
+button{font:inherit;color:inherit;background:transparent;border:1px solid var(--rule);padding:6px 12px;cursor:pointer}
+button:hover{background:var(--fill)}
+button b{color:var(--accent);font-weight:500}
+.timeline{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
+.timeline button{overflow:hidden;white-space:nowrap}
+.timeline button{padding:8px 0 6px;border:0;border-top:3px solid var(--rule);font-size:10px;color:var(--ink-3)}
+.timeline button.seen{border-top-color:var(--ink);color:var(--ink-2)}
+.timeline button.cur{border-top-color:var(--accent);color:var(--ink)}
+.timeline button.warn::after{content:"*";color:var(--ink-2)}
+.note{font-size:12px;color:var(--ink-2)}
+
+
+/* flow */
+.legend{display:flex;flex-wrap:wrap;gap:18px;padding:12px 24px;border-bottom:1px solid var(--rule);font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;vertical-align:middle;margin-right:6px}
+.cwrap{overflow-x:auto;border-bottom:1px solid var(--rule)}
+#flow{display:block;width:100%;min-width:980px;aspect-ratio:1160/640}
+/* probability space */
+.panels{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule)}
+.panel{padding:18px 20px 16px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel:last-child{border-right:0}
+.panel h3{font-size:15px;font-weight:600}
+.panel p{color:var(--ink-2);font-size:12px}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
+.pills button{font-size:11px;padding:3px 7px}
+.pills button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);background:var(--fill)}
+select{font:inherit;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--rule);padding:4px 6px;max-width:48%}
+.cloud{width:100%;height:auto;display:block}
+.cloud text{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;fill:var(--ink-2)}
+.cloud .fr{fill:none;stroke:var(--rule)}
+.cloud .dg{stroke:var(--ink-3);stroke-dasharray:3 3}
+.cloud .reg{fill:var(--accent);opacity:.06}
+.cloud .el{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 3}
+.meter{font-size:13px}
+.meter b{font-weight:600}
+.meter .dn{color:var(--accent)}
+.meter .up{color:var(--ink)}
+@media (max-width:980px){.panels{grid-template-columns:1fr}.panel{border-right:0;border-bottom:1px solid var(--rule)}}
+@media (max-width:860px){
+  .mhead{grid-template-columns:1fr}
+  .mhead .copy{border-right:0;border-bottom:1px solid var(--rule)}
+  .timeline button{font-size:8px;letter-spacing:-.04em}
+  .router{grid-template-columns:1fr}
+  .router > a,.router > div{border-right:0;border-bottom:1px solid var(--rule)}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<nav aria-label="Pages">
+  <a class="home" href="index.html">purple-sectors</a>
+  <ul class="keys">
+    <li><a href="index.html"><b>[S]</b> Soft</a></li>
+    <li><a href="medium.html"><b>[M]</b> Medium</a></li>
+    <li><a href="hard.html"><b>[H]</b> Hard</a></li>
+    <li><a href="inter.html" aria-current="page"><b>[I]</b> Inter</a></li>
+  </ul>
+  <span class="stamp" id="stamp"></span>
+</nav>
+
+<header class="mhead">
+  <div class="copy">
+    <p class="hello">Inter: for changing conditions</p>
+    <h1>How evidence moves the model.</h1>
+    <p class="lede">Every belief here is a cloud of 150 possibilities the model still considers plausible. Feed it a qualifying session and watch the laps flow in: some clouds collapse, some barely move, and a few even widen when the new data disagrees with the old.</p>
+  </div>
+  <div class="controls">
+    <div class="now" id="now"></div>
+    <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
+    <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
+    <p class="note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
+  </div>
+</header>
+
+<div class="legend" aria-hidden="true">
+  <span><i style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></i>Evidence: laps from the new round</span>
+  <span><i style="width:30px;height:7px;background:radial-gradient(circle,var(--ink) 1px,transparent 1.5px) 0 0/5px 7px"></i>Belief: each dot is one plausible value</span>
+  <span><b style="color:var(--accent);font-weight:600">&darr;</b> narrower than last round <b style="font-weight:600;margin-left:8px">&uarr;</b> wider</span>
+</div>
+<div class="cwrap"><canvas id="flow" role="img" aria-label="Animated factor graph: particles of evidence flow from each round into the cars, their drivers and the shared parameters; each node is a strip of posterior draws that contracts or widens."></canvas></div>
+
+<section aria-labelledby="h-space">
+  <div class="head"><div><h2 id="h-space">Probability space</h2>
+    <p>Two quantities at once. Each dot is one joint possibility; the shape of the cloud shows what the model knows, and what it can't tell apart.</p></div></div>
+  <div class="panels">
+    <div class="panel" id="p-mates">
+      <h3>Teammates</h3><div class="pills" id="mates-pills"></div>
+      <svg class="cloud" id="c-mates" viewBox="0 0 400 400"></svg>
+      <div class="meter" id="m-mates"></div>
+      <p>The cloud is long along the diagonal and thin across it. The model is sure of the <i>gap</i> between teammates but not of how good the pair is overall. Dots in the shaded half: the first driver is quicker.</p>
+    </div>
+    <div class="panel" id="p-cars">
+      <h3>Car against car</h3><div class="row"><select id="car-a" aria-label="First car"></select><select id="car-b" aria-label="Second car"></select></div>
+      <svg class="cloud" id="c-cars" viewBox="0 0 400 400"></svg>
+      <div class="meter" id="m-cars"></div>
+      <p>Pace against the field average, in seconds per 90-second lap. Dots in the shaded half: the first car is quicker. Watch two cars separate, or stay entangled.</p>
+    </div>
+    <div class="panel" id="p-trade">
+      <h3>The model's trade-offs</h3><div class="pills" id="trade-pills"></div>
+      <svg class="cloud" id="c-trade" viewBox="0 0 400 400"></svg>
+      <div class="meter" id="m-trade"></div>
+      <p id="trade-text"></p>
+    </div>
+  </div>
+</section>
+
+<section class="router" aria-label="More">
+  <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The long run</div><p>What the model believes about every car, driver and circuit.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Race distance</div><p>Every equation, assumption and check behind these numbers.</p></a>
+  <div><span class="slash">Source</span><div class="t">Data</div><p>Lap timing from OpenF1, refit after every qualifying session.</p></div>
+</section>
+<p class="fine">An independent fan project, not associated with Formula 1.</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id), NS = 'http://www.w3.org/2000/svg';
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cap = w => w.charAt(0) + w.slice(1).toLowerCase(), last = n => cap(n.split(' ').slice(-1)[0]);
+const pct = p => p >= 0.995 ? '99%+' : p < 0.005 ? '<1%' : Math.round(p * 100) + '%';
+const CODE = {"Melbourne":"MEL","Shanghai":"SHA","Suzuka":"SUZ","Miami Gardens":"MIA","Montréal":"MTL","Monte Carlo":"MON","Barcelona":"BAR",
+  "Spielberg":"AUT","Silverstone":"SIL","Spa-Francorchamps":"SPA","Budapest":"BUD","Zandvoort":"ZAN","Monza":"MZA","Madrid":"MAD",
+  "Baku":"BAK","Kuala Lumpur":"KUL","Marina Bay":"SIN","Singapore":"SIN","Austin":"COT","Mexico City":"MEX","São Paulo":"SAO",
+  "Las Vegas":"LVS","Lusail":"LUS","Yas Island":"ABU","Yas Marina":"ABU"};
+const code = loc => CODE[loc] || String(loc).slice(0, 3).toUpperCase();
+const PARAM_LABEL = { sigma_dev: 'Development rate (s/√week)', sigma_nu: 'Track suitability (s)', pi_bad: 'Compromised laps (share)',
+  loss_clean: 'Clean-lap margin (s)', sigma_driver: 'Driver spread (s)', sigma: 'Lap noise (s)' };
+const TRADES = [
+  ['sigma_dev', 'sigma_nu', 'Development vs track fit', 'A car can look different at a new circuit because it developed, or because the track suits it. The data struggle to tell those apart, so the cloud stretches into a ridge. That ridge is why a few rounds carry a warning.'],
+  ['pi_bad', 'loss_clean', 'Bad laps vs clean margin', 'Is a slowish lap a compromised lap, or just a normal clean lap? The two explanations compete, and the cloud tilts as they trade off.'],
+  ['sigma_driver', 'sigma', 'Driver spread vs lap noise', 'Are teammates genuinely different, or is it lap-to-lap noise? More sessions pull these two apart.'],
+];
+
+let IDX, SNAPS = [], DRAWS = [], K = 0, timer = null;
+fetch('data/snapshots/index.json', { cache: 'no-cache' }).then(r => r.json()).then(idx => {
+  IDX = idx.rounds;
+  return Promise.all(IDX.map(r => Promise.all([
+    fetch('data/snapshots/' + r.file, { cache: 'no-cache' }).then(x => x.json()),
+    fetch('data/snapshots/' + r.file.replace('.json', '_draws.json'), { cache: 'no-cache' }).then(x => x.ok ? x.json() : null),
+  ])));
+}).then(pairs => {
+  pairs.sort((a, b) => a[0].round - b[0].round);
+  const ok = pairs.filter(p => p[1]);
+  if (!ok.length) throw new Error('no draws');
+  SNAPS = ok.map(p => p[0]); DRAWS = ok.map(p => p[1]); init();
+}).catch(() => { $('now').textContent = 'The joint posterior history is refreshing. Check back in a few minutes.'; });
+
+/* ---------------- helpers ---------------- */
+const lerp = (a, b, t) => a + (b - a) * t, ease = t => 1 - Math.pow(1 - t, 3);
+const q = (arr, p) => { const s = [...arr].sort((a, b) => a - b), i = (s.length - 1) * p, lo = Math.floor(i); return lerp(s[lo], s[Math.min(lo + 1, s.length - 1)], i - lo); };
+const width90 = arr => q(arr, 0.95) - q(arr, 0.05);
+const hashJ = i => ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1;       // stable vertical jitter
+function cov2(xs, ys) {
+  const n = xs.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+  let a = 0, b = 0, c = 0; for (let i = 0; i < n; i++) { const dx = xs[i] - mx, dy = ys[i] - my; a += dx * dx; b += dx * dy; c += dy * dy; }
+  return { mx, my, a: a / (n - 1), b: b / (n - 1), c: c / (n - 1) };
+}
+const area = C => Math.sqrt(Math.max(1e-12, C.a * C.c - C.b * C.b));
+function meter(el, now, prev, label) {
+  if (prev == null) { el.innerHTML = `<b>First look</b>: the model has seen one session.`; return; }
+  const r = now / prev - 1, dn = r < 0;
+  el.innerHTML = `${label}: <b class="${dn ? 'dn' : 'up'}">${dn ? '\u2193' : '\u2191'} ${Math.abs(r * 100).toFixed(0)}% ${dn ? 'narrower' : 'wider'}</b> than after the previous round.`;
+}
+
+/* ---------------- the flow (canvas) ---------------- */
+const W = 1160, H = 640, cv = $('flow'), ctx = cv.getContext('2d');
+let LAY, staticLayer, particles = [], strips = new Map(), animUntil = 0;
+function sizeCanvas() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function layout() {
+  const n = SNAPS.length, latest = SNAPS[n - 1], Dl = DRAWS[n - 1];
+  const cars = Object.keys(Dl.cars).sort((a, b) => q(Dl.cars[a], .5) - q(Dl.cars[b], .5));
+  const rounds = SNAPS.map((s, i) => ({ s, x: 70, y: 52 + i * (488 / Math.max(1, n - 1)) }));
+  const carN = cars.map((t, j) => ({ team: t, x: 520, lx: 410, y: 60 + j * (472 / (cars.length - 1)) }));
+  const team = {}; SNAPS.forEach(s => s.drivers.forEach(d => team[d.code] = d.team));
+  const drv = []; carN.forEach(c => {
+    const codes = Object.keys(team).filter(k => team[k] === c.team), step = codes.length > 2 ? 13 : 16;
+    codes.forEach((k, i) => drv.push({ code: k, team: c.team, x: 860, y: c.y + (i - (codes.length - 1) / 2) * step }));
+  });
+  const params = Object.keys(PARAM_LABEL).map((k, i) => ({ k, x: 200 + i * 155, y: 612 }));
+  return { rounds, carN, drv, params };
+}
+function drawStatic() {
+  staticLayer = document.createElement('canvas'); staticLayer.width = cv.width; staticLayer.height = cv.height;
+  const c = staticLayer.getContext('2d'), dpr = cv.width / W; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.strokeStyle = css('--ink-3'); c.globalAlpha = 0.14; c.lineWidth = 1;
+  LAY.rounds.forEach(r => LAY.carN.forEach(k => { c.beginPath(); c.moveTo(r.x + 8, r.y); c.bezierCurveTo(250, r.y, 250, k.y, k.lx - 8, k.y); c.stroke(); }));
+  c.globalAlpha = 0.3;
+  LAY.drv.forEach(d => { const k = LAY.carN.find(k => k.team === d.team); c.beginPath(); c.moveTo(k.x + 250, k.y); c.bezierCurveTo(800, k.y, 800, d.y, d.x - 6, d.y); c.stroke(); });
+  c.beginPath(); c.moveTo(70, 546); c.lineTo(70, 576); c.lineTo(1120, 576); c.stroke();
+  c.globalAlpha = 1; c.fillStyle = css('--ink-2'); c.font = '11px "JetBrains Mono", monospace';
+  [['/Data', 40], ['/Cars', 410], ['/Drivers', 860]].forEach(([t, x]) => c.fillText(t, x, 22));
+  c.fillText('/Shared by every lap', 200, 568);
+}
+const XC = [-1.8, 2.0], XD = [-0.5, 0.5];
+function stripTarget(id) {
+  const D = DRAWS[K];
+  if (id[0] === 'c') return D.cars[id.slice(1)]; if (id[0] === 'd') return D.drivers[id.slice(1)]; return D.params[id.slice(1)];
+}
+function retarget(animate, delay) {
+  const ids = [...LAY.carN.map(c => 'c' + c.team), ...LAY.drv.map(d => 'd' + d.code), ...LAY.params.map(p => 'p' + p.k)];
+  const t0 = performance.now() + (delay || 0), t1 = t0 + (animate ? 700 : 0);
+  ids.forEach(id => {
+    const to = stripTarget(id), cur = strips.get(id);
+    if (!to) { strips.set(id, null); return; }
+    const toS = [...to].sort((a, b) => a - b);
+    const fromS = cur && cur.to ? cur.to : toS;
+    strips.set(id, { from: fromS, to: toS, t0, t1 });
+  });
+  animUntil = Math.max(animUntil, t1 + 50); kick();
+}
+function stripVals(S, now) {
+  if (!S) return null; const t = S.t1 <= S.t0 ? 1 : Math.min(1, Math.max(0, (now - S.t0) / (S.t1 - S.t0))), e = ease(t);
+  return S.to.map((v, i) => lerp(S.from[i], v, e));
+}
+function spawn(roundIdx) {
+  if (REDUCED) return;
+  const r = LAY.rounds[roundIdx], laps = (SNAPS[roundIdx].events.find(e => e.round === SNAPS[roundIdx].round) || { laps: 80 }).laps;
+  const n = Math.round(laps / 3), now = performance.now();
+  for (let i = 0; i < n; i++) {
+    const car = LAY.carN[Math.floor(Math.random() * LAY.carN.length)], kids = LAY.drv.filter(d => d.team === car.team);
+    const toParams = Math.random() < 0.18, kid = kids[Math.floor(Math.random() * kids.length)];
+    particles.push({ r, car, kid, toParams, p: LAY.params[Math.floor(Math.random() * LAY.params.length)], t0: now + Math.random() * 380, dur: 900 + Math.random() * 300 });
+  }
+  animUntil = Math.max(animUntil, now + 1900); kick();
+}
+function bez(p0, p1, p2, p3, t) { const u = 1 - t; return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3; }
+let raf = null; function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+function frame(now) {
+  raf = null; ctx.clearRect(0, 0, W, H); ctx.drawImage(staticLayer, 0, 0, W, H);
+  const ink = css('--ink'), ink2 = css('--ink-2'), ink3 = css('--ink-3'), acc = css('--accent');
+  ctx.font = '11px "JetBrains Mono", monospace';
+  // rounds
+  LAY.rounds.forEach((r, i) => {
+    const side = 9; ctx.fillStyle = i > K ? ink3 : i === K ? acc : ink; ctx.globalAlpha = i > K ? 0.35 : 1;
+    ctx.fillRect(r.x - side / 2, r.y - side / 2, side, side); ctx.fillStyle = i > K ? ink3 : ink2; ctx.fillText(code(r.s.location), r.x - 46, r.y + 4);
+  });
+  ctx.globalAlpha = 1;
+  // strips
+  const D = DRAWS[K], P = DRAWS[K - 1];
+  const strip = (id, x0, x1, lo, hi, y, r, label) => {
+    const v = stripVals(strips.get(id), now); ctx.fillStyle = ink;
+    if (label) { ctx.fillStyle = v ? ink : ink3; ctx.fillText(label[0], label[1], y + 4); }
+    if (!v) { ctx.fillStyle = ink3; ctx.fillText('not in the model yet', x0, y + 4); return; }
+    ctx.fillStyle = ink; ctx.globalAlpha = 0.55;
+    v.forEach((val, i) => { const x = x0 + (Math.max(lo, Math.min(hi, val)) - lo) / (hi - lo) * (x1 - x0); ctx.beginPath(); ctx.arc(x, y + (hashJ(i) - 0.5) * 12, r, 0, 6.283); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    const now90 = width90(stripTarget(id) || []), prevArr = P && (id[0] === 'c' ? P.cars[id.slice(1)] : id[0] === 'd' ? P.drivers[id.slice(1)] : P.params[id.slice(1)]);
+    if (prevArr) { const ch = now90 / width90(prevArr) - 1; ctx.fillStyle = ch < 0 ? acc : ink2; ctx.fillText((ch < 0 ? '\u2193' : '\u2191') + Math.abs(ch * 100).toFixed(0) + '%', x1 + 8, y + 4); }
+  };
+  LAY.carN.forEach(c => { ctx.fillStyle = ink; ctx.fillText(c.team, c.lx, c.y + 4); strip('c' + c.team, c.x, c.x + 200, XC[0], XC[1], c.y, 1.3); });
+  LAY.drv.forEach(d => strip('d' + d.code, d.x + 36, d.x + 220, XD[0], XD[1], d.y, 1.0, [d.code, d.x]));
+  LAY.params.forEach(p => {
+    const v = (DRAWS[DRAWS.length - 1].params[p.k] || []), lo = Math.min(...DRAWS.flatMap(d => d.params[p.k] || [])), hi = Math.max(...DRAWS.flatMap(d => d.params[p.k] || []));
+    ctx.fillStyle = ink2; ctx.fillText(PARAM_LABEL[p.k].split(' (')[0], p.x, p.y - 12);
+    if (v.length) strip('p' + p.k, p.x, p.x + 105, lo, hi * 1.02, p.y + 6, 1.0);
+  });
+  // particles
+  particles = particles.filter(pt => {
+    const t = (now - pt.t0) / pt.dur; if (t < 0) return true; if (t > 1.45) return false;
+    let x, y;
+    if (pt.toParams) { const u = Math.min(1, t); if (u < 0.4) { x = 70; y = lerp(pt.r.y, 576, u / 0.4); } else { x = lerp(70, pt.p.x + 50, (u - 0.4) / 0.6); y = 576; } }
+    else if (t <= 1) { const e = ease(t); x = bez(pt.r.x + 8, 250, 250, pt.car.lx - 8, e); y = bez(pt.r.y, pt.r.y, pt.car.y, pt.car.y, e); }
+    else { const u = (t - 1) / 0.45; x = bez(pt.car.x + 250, 800, 800, pt.kid.x - 6, u); y = bez(pt.car.y, pt.car.y, pt.kid.y, pt.kid.y, u); }
+    ctx.fillStyle = acc; ctx.globalAlpha = t > 1.2 ? (1.45 - t) / 0.25 : 0.9; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1;
+    return true;
+  });
+  if (now < animUntil || particles.length) kick();
+}
+
+/* ---------------- probability space (SVG clouds) ---------------- */
+const CL = { mates: { sel: null, shown: null }, cars: { sel: null, shown: null }, trade: { sel: 0, shown: null } };
+function angleSort(xs, ys) {
+  const n = xs.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+  return [...Array(n).keys()].sort((i, j) => Math.atan2(ys[i] - my, xs[i] - mx) - Math.atan2(ys[j] - my, xs[j] - mx));
+}
+function seriesFor(kind) {
+  if (kind === 'mates') { const t = CL.mates.sel; return DRAWS.map(D => D.drivers[t.a] && D.drivers[t.b] ? [D.drivers[t.a], D.drivers[t.b]] : null); }
+  if (kind === 'cars') { const [a, b] = CL.cars.sel; return DRAWS.map(D => [D.cars[a], D.cars[b]]); }
+  const [a, b] = TRADES[CL.trade.sel]; return DRAWS.map(D => D.params[a] && D.params[b] ? [D.params[a], D.params[b]] : null);
+}
+function drawCloud(kind, animate) {
+  const svg = $('c-' + kind), S = seriesFor(kind), cur = S[K], prev = K > 0 ? S[K - 1] : null, st = CL[kind];
+  const all = S.filter((p, i) => p && (i > 0 || S.filter(Boolean).length === 1));
+  const qx = all.map(p => [q(p[0], .01), q(p[0], .99)]), qy = all.map(p => [q(p[1], .01), q(p[1], .99)]);
+  let x0 = Math.min(...qx.map(v => v[0])), x1 = Math.max(...qx.map(v => v[1])), y0 = Math.min(...qy.map(v => v[0])), y1 = Math.max(...qy.map(v => v[1]));
+  const diag = kind !== 'trade';
+  if (diag) { const lo = Math.min(x0, y0), hi = Math.max(x1, y1), pad = (hi - lo) * 0.06; x0 = y0 = lo - pad; x1 = y1 = hi + pad; }
+  else { const px = (x1 - x0) * 0.06, py = (y1 - y0) * 0.06; x0 -= px; x1 += px; y0 -= py; y1 += py; }
+  const L = 46, R = 390, T = 12, B = 352, cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  const X = v => L + (cl(v, x0, x1) - x0) / (x1 - x0) * (R - L), Y = v => B - (cl(v, y0, y1) - y0) / (y1 - y0) * (B - T);
+  const labels = kind === 'mates' ? [last(CL.mates.sel.an), last(CL.mates.sel.bn)] : kind === 'cars' ? CL.cars.sel : [PARAM_LABEL[TRADES[CL.trade.sel][0]], PARAM_LABEL[TRADES[CL.trade.sel][1]]];
+  let frame = `<rect class="fr" x="${L}" y="${T}" width="${R - L}" height="${B - T}"/>`;
+  if (diag) frame += `<path class="reg" d="M${X(x0)} ${Y(x0)}L${X(x1)} ${Y(x1)}L${X(x0)} ${Y(y1)}Z"/><line class="dg" x1="${X(x0)}" y1="${Y(x0)}" x2="${X(x1)}" y2="${Y(x1)}"/>`;
+  const ticks = (lo, hi) => [lo + (hi - lo) * 0.15, (lo + hi) / 2, hi - (hi - lo) * 0.15];
+  ticks(x0, x1).forEach(v => frame += `<text x="${X(v)}" y="${B + 14}" text-anchor="middle">${v.toFixed(2)}</text>`);
+  ticks(y0, y1).forEach(v => frame += `<text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${v.toFixed(2)}</text>`);
+  frame += `<text x="${(L + R) / 2}" y="${B + 32}" text-anchor="middle">${labels[0]} \u2192</text><text transform="translate(12 ${(T + B) / 2}) rotate(-90)" text-anchor="middle">${labels[1]} \u2192</text>`;
+  if (!cur) { svg.innerHTML = frame + `<text x="${(L + R) / 2}" y="${(T + B) / 2}" text-anchor="middle">not in the model yet</text>`; st.shown = null; $('m-' + kind).textContent = ''; return; }
+  const ord = angleSort(cur[0], cur[1]), tx = ord.map(i => cur[0][i]), ty = ord.map(i => cur[1][i]);
+  const fx = st.shown ? st.shown[0] : tx, fy = st.shown ? st.shown[1] : ty;
+  const C = cov2(tx, ty), k = 2.146, ev = (() => { const tr = C.a + C.c, det = C.a * C.c - C.b * C.b, s = Math.sqrt(Math.max(0, tr * tr / 4 - det)); return [tr / 2 + s, tr / 2 - s]; })();
+  const ang = 0.5 * Math.atan2(2 * C.b, C.a - C.c);
+  // 90% ellipse in data space, drawn as a polyline through the screen transform
+  const ell = Array.from({ length: 61 }, (_, i) => { const t = i / 60 * 6.283, u = Math.sqrt(ev[0]) * k * Math.cos(t), w = Math.sqrt(Math.max(0, ev[1])) * k * Math.sin(t);
+    return `${X(C.mx + u * Math.cos(ang) - w * Math.sin(ang)).toFixed(1)} ${Y(C.my + u * Math.sin(ang) + w * Math.cos(ang)).toFixed(1)}`; }).join('L');
+  const inA = diag ? tx.filter((v, i) => v < ty[i]).length / tx.length : null;
+  const t0 = performance.now(), ms = animate && !REDUCED ? 800 : 0, delay = animate && !REDUCED ? 650 : 0, acc = 'var(--accent)', gray = 'var(--ink-3)';
+  const step = now => {
+    const t = ms ? Math.min(1, Math.max(0, (now - t0 - delay) / ms)) : 1, e = ease(t);
+    const xs = tx.map((v, i) => lerp(fx[i] ?? v, v, e)), ys = ty.map((v, i) => lerp(fy[i] ?? v, v, e));
+    svg.innerHTML = frame + (t === 1 ? `<path class="el" d="M${ell}Z"/>` : '') + xs.map((v, i) =>
+      `<circle cx="${X(v).toFixed(1)}" cy="${Y(ys[i]).toFixed(1)}" r="2.6" fill="${diag ? (v < ys[i] ? acc : gray) : 'var(--ink)'}" opacity="${diag ? .8 : .55}"/>`).join('')
+      + (diag ? `<text x="${L + 8}" y="${T + 16}" fill="var(--accent)" style="fill:var(--accent);font-weight:600">${labels[0]} quicker: ${pct(inA)} of the cloud</text>` : `<text x="${L + 8}" y="${T + 16}">correlation ${(C.b / Math.sqrt(C.a * C.c)).toFixed(2)}</text>`);
+    if (t < 1) requestAnimationFrame(step); else st.shown = [tx, ty];
+  };
+  requestAnimationFrame(step);
+  const prevArea = prev ? area(cov2(prev[0], prev[1])) : null;
+  meter($('m-' + kind), area(C), prevArea, 'Uncertainty');
+}
+function buildControls() {
+  const latest = SNAPS[SNAPS.length - 1];
+  const mp = $('mates-pills');
+  latest.teammates.forEach((t, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = t.team; b.setAttribute('aria-pressed', i === 0);
+    b.addEventListener('click', () => { CL.mates.sel = { a: t.a.code, b: t.b.code, an: t.a.name, bn: t.b.name }; CL.mates.shown = null;
+      [...mp.children].forEach(x => x.setAttribute('aria-pressed', x === b)); drawCloud('mates', false); });
+    mp.appendChild(b);
+  });
+  const t0 = latest.teammates[0]; CL.mates.sel = { a: t0.a.code, b: t0.b.code, an: t0.a.name, bn: t0.b.name };
+  const D = DRAWS[DRAWS.length - 1], cars = Object.keys(D.cars).sort((a, b) => q(D.cars[a], .5) - q(D.cars[b], .5));
+  ['car-a', 'car-b'].forEach((id, j) => { const s = $(id); s.innerHTML = cars.map(c => `<option>${c}</option>`).join(''); s.value = cars[j];
+    s.addEventListener('change', () => { CL.cars.sel = [$('car-a').value, $('car-b').value]; CL.cars.shown = null; drawCloud('cars', false); }); });
+  CL.cars.sel = [cars[0], cars[1]];
+  const tp = $('trade-pills');
+  TRADES.forEach((t, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t[2]; b.setAttribute('aria-pressed', i === 0);
+    b.addEventListener('click', () => { CL.trade.sel = i; CL.trade.shown = null; [...tp.children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('trade-text').textContent = TRADES[i][3]; drawCloud('trade', false); });
+    tp.appendChild(b); });
+  $('trade-text').textContent = TRADES[0][3];
+}
+
+/* ---------------- rounds ---------------- */
+function setRound(k, animate) {
+  const prev = K; K = k; const s = SNAPS[k], forward = animate && k === prev + 1;
+  $('now').innerHTML = `Round ${s.round} / ${s.name.replace(' Grand Prix', ' GP')}<small>${s.location}, ${s.date}. Model has seen ${s.laps.toLocaleString('en')} flying laps.</small>`;
+  $('status').textContent = s.diagnostics && s.diagnostics.status === 'warn' ? 'Lower confidence this round' : '';
+  [...$('timeline').children].forEach((b, i) => b.className = (i < k ? 'seen' : i === k ? 'cur' : '') + (SNAPS[i].diagnostics?.status === 'warn' ? ' warn' : ''));
+  if (forward) spawn(k);
+  retarget(animate, forward ? 650 : 0);
+  ['mates', 'cars', 'trade'].forEach(kind => drawCloud(kind, forward));
+}
+function init() {
+  sizeCanvas(); LAY = layout(); drawStatic(); buildControls();
+  const tl = $('timeline'); tl.style.setProperty('--n', SNAPS.length);
+  SNAPS.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = code(s.location); b.title = s.name;
+    b.addEventListener('click', () => { stop(); setRound(i, i === K + 1); }); tl.appendChild(b); });
+  $('stamp').textContent = `${SNAPS[SNAPS.length - 1].date} / Round ${SNAPS[SNAPS.length - 1].round}`;
+  $('play').addEventListener('click', () => timer ? stop() : play());
+  setRound(SNAPS.length - 1, false);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { drawStatic(); kick(); });
+}
+function play() {
+  $('play').innerHTML = '<b>[&#10074;&#10074;]</b> Pause';
+  if (K >= SNAPS.length - 1) { strips.clear(); CL.mates.shown = CL.cars.shown = CL.trade.shown = null; setRound(0, false); }
+  timer = setInterval(() => { if (K >= SNAPS.length - 1) return stop(); setRound(K + 1, true); }, 2000);
+}
+function stop() { clearInterval(timer); timer = null; $('play').innerHTML = '<b>[&#9654;]</b> Play the season'; }
+</script>
+</body>
+</html>
