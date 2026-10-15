@@ -143,8 +143,15 @@ def snapshot(post, laps_csv: Path) -> dict:
     if "divergences" in post.files:
         snap["diagnostics"] = {"divergences": int(post["divergences"]), "draws": int(post["draws_total"]),
                                "max_rhat": round(float(post["max_rhat"]), 4), "passed": bool(post["passed"]),
-                               "worst": str(post["worst"]) if "worst" in post.files else None}
+                               "worst": str(post["worst"]) if "worst" in post.files else None,
+                               "status": _status(post)}
     return snap
+
+
+def _status(post) -> str:
+    if "status" in post.files:
+        return str(post["status"])
+    return "pass" if "passed" not in post.files or bool(post["passed"]) else "fail"
 
 
 def write_index(snap_dir: Path) -> Path:
@@ -152,7 +159,9 @@ def write_index(snap_dir: Path) -> Path:
     for f in sorted(snap_dir.glob("r*.json")):
         s = json.loads(f.read_text())
         rows.append({"round": s["round"], "name": s["name"], "location": s["location"], "date": s["date"],
-                     "file": f.name, "passed": s.get("diagnostics", {}).get("passed", True)})
+                     "file": f.name, "passed": s.get("diagnostics", {}).get("passed", True),
+                     "status": s.get("diagnostics", {}).get("status")
+                               or ("pass" if s.get("diagnostics", {}).get("passed", True) else "fail")})
     rows.sort(key=lambda r: r["round"])
     idx = snap_dir / "index.json"
     idx.write_text(json.dumps({"latest": rows[-1]["round"] if rows else None, "rounds": rows}, indent=1))
@@ -197,6 +206,7 @@ def soft(post, laps_csv: Path) -> dict:
         "loss_clean_ms": int(round(float(np.median(post["loss_clean"])) * 900)),
         "car_spread": round(max(meds) - min(meds), 2),
         "mate_gap": round(float(np.median([abs(p["gap"]) for p in pairs])), 2),
+        "status": _status(post),
         "cars": car_rows, "pairs": pairs,
         "draws": {_short(t): np.round(now[pick, c], 3).tolist() for c, t in enumerate(cars)},
     }
