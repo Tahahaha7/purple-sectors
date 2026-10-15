@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>purple-sectors / Hard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#FFFFFF; --ink:#000000; --ink-2:#6B6B6B; --ink-3:#A3A3A3; --rule:#E4E4E4; --fill:#F2F2F2;
+  --accent:#6E2BF2;
+}
+@media (prefers-color-scheme: dark){
+  :root{ color-scheme: dark;
+    --bg:#000000; --ink:#FFFFFF; --ink-2:#9A9A9A; --ink-3:#5C5C5C; --rule:#232323; --fill:#141414;
+    --accent:#A57CFF; }
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.page{max-width:1200px;margin:0 auto;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+.cell{border-bottom:1px solid var(--rule);padding:22px 24px}
+.slash{color:var(--ink-2)}
+.slash::before{content:"/"}
+.count{color:var(--ink-2)}
+
+/* nav */
+nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.home{font-weight:700;margin-right:auto}
+.home::after{content:"/";color:var(--accent)}
+.keys{display:flex;gap:22px;list-style:none;padding:0}
+.keys a{color:var(--ink-2)} .keys a:hover{color:var(--ink)}
+.keys a[aria-current="page"]{color:var(--ink)}
+.keys b{font-weight:500}
+.keys a[aria-current="page"] b{color:var(--accent)}
+.stamp{color:var(--ink-2)}
+
+/* section heads */
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:30px 24px 16px;border-bottom:1px solid var(--rule)}
+.head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.head p{color:var(--ink-2);max-width:60ch;margin-top:6px}
+
+/* router */
+.router{display:grid;grid-template-columns:repeat(3,1fr)}
+.router > a,.router > div{padding:22px 24px;border-right:1px solid var(--rule);display:block}
+.router > :last-child{border-right:0}
+.router a:hover{background:var(--fill)}
+.router .t{font-weight:600;margin:6px 0 4px}
+.router p{color:var(--ink-2)}
+.fine{padding:18px 24px 40px;color:var(--ink-2);font-size:12px;max-width:100ch}
+
+
+
+.title{display:grid;grid-template-columns:1.2fr 1fr;border-bottom:1px solid var(--rule)}
+.title .copy{padding:40px 24px 30px;border-right:1px solid var(--rule)}
+.hello{color:var(--ink-2);margin-bottom:18px}
+h1{font-weight:500;font-size:clamp(28px,3.8vw,46px);line-height:1.08;letter-spacing:-.03em}
+.lede{margin-top:20px;max-width:56ch}
+.toc{padding:28px 24px;list-style:none;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;align-content:end}
+.toc a{color:var(--ink-2)} .toc a:hover{color:var(--ink)}
+.toc b{color:var(--accent);font-weight:500;display:inline-block;width:5.2em;white-space:nowrap}
+article{border-bottom:1px solid var(--rule)}
+article > h2{padding:28px 24px 14px;font-size:20px;font-weight:600;letter-spacing:-.02em;border-bottom:1px solid var(--rule)}
+article > h2 span{color:var(--ink-2);font-weight:400;margin-right:12px}
+.cl{display:grid;grid-template-columns:72px minmax(0,1fr);gap:0 18px;padding:14px 24px;border-bottom:1px solid var(--rule)}
+.cl:last-child{border-bottom:0}
+.cl > .n{color:var(--accent);font-weight:500}
+.cl p{max-width:84ch}
+.cl p + p,.cl p + .eq,.cl .eq + p,.cl p + table,.cl table + p{margin-top:10px}
+.eq{overflow-x:auto;padding:10px 0}
+.eq .katex{font-size:1.08em}
+.tex-fallback{font-size:13px;color:var(--ink-2);white-space:normal;word-break:break-word}
+.tw{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;max-width:980px;font-size:13px}
+th,td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{color:var(--ink-2);font-weight:400}
+td.r,th.r{text-align:right}
+.ok{color:var(--accent)} .muted{color:var(--ink-2)}
+code{font-family:inherit;background:var(--fill);padding:1px 5px}
+pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;max-width:980px}
+.badge{display:inline-block;border:1px solid var(--rule);padding:1px 7px;font-size:12px}
+.badge.pass{border-color:var(--accent);color:var(--accent)}
+@media (max-width:860px){
+  .title{grid-template-columns:1fr}.title .copy{border-right:0;border-bottom:1px solid var(--rule)}
+  .cl{grid-template-columns:minmax(0,1fr)}.cl > .n{margin-bottom:4px}
+  .toc{grid-template-columns:1fr}
+  .cl table{min-width:560px}
+  .router{grid-template-columns:1fr}.router > a,.router > div{border-right:0;border-bottom:1px solid var(--rule)}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<nav aria-label="Pages">
+  <a class="home" href="index.html">purple-sectors</a>
+  <ul class="keys">
+    <li><a href="index.html"><b>[S]</b> Soft</a></li>
+    <li><a href="medium.html"><b>[M]</b> Medium</a></li>
+    <li><a href="hard.html" aria-current="page"><b>[H]</b> Hard</a></li>
+    <li><a href="inter.html"><b>[I]</b> Inter</a></li>
+  </ul>
+  <span class="stamp" id="stamp"></span>
+</nav>
+
+<header class="title">
+  <div class="copy">
+    <p class="hello">Hard: race distance</p>
+    <h1>Technical regulations of the model.</h1>
+    <p class="lede">Everything behind the numbers on this site: the data, the equations, every prior and why, how the model is fitted and checked, and what it cannot tell you. Article 8 is live and updates after every qualifying session.</p>
+  </div>
+  <ol class="toc">
+    <li><a href="#a1"><b>Art. 1</b>Scope</a></li><li><a href="#a2"><b>Art. 2</b>Data</a></li>
+    <li><a href="#a3"><b>Art. 3</b>Model</a></li><li><a href="#a4"><b>Art. 4</b>Priors</a></li>
+    <li><a href="#a5"><b>Art. 5</b>Inference</a></li><li><a href="#a6"><b>Art. 6</b>Validation</a></li>
+    <li><a href="#a7"><b>Art. 7</b>Limitations</a></li><li><a href="#a8"><b>Art. 8</b>Current fit (live)</a></li>
+    <li><a href="#a9"><b>Art. 9</b>Reproducibility</a></li>
+  </ol>
+</header>
+
+<article id="a1"><h2><span>Article 1</span>Scope</h2>
+  <div class="cl"><span class="n">1.1</span><div><p>The model answers one question: in 2026 qualifying, how much of each lap time comes from the car, from the driver, from the track on the day, and from execution, and how certain is each answer.</p></div></div>
+  <div class="cl"><span class="n">1.2</span><div><p>It produces car pace by round, gaps between teammates, track evolution per circuit, the share of compromised laps, and a full posterior for every quantity. The Soft, Medium and Inter pages are views of this one posterior.</p></div></div>
+  <div class="cl"><span class="n">1.3</span><div><p>It does not model race pace, strategy, tyre degradation over a stint, or the order between drivers of different teams (see 7.1).</p></div></div>
+</article>
+
+<article id="a2"><h2><span>Article 2</span>Data</h2>
+  <div class="cl"><span class="n">2.1</span><div><p>Source: the public <a href="https://openf1.org">OpenF1</a> API. Main qualifying sessions only (Q1, Q2, Q3); Sprint Qualifying is excluded. Cancelled meetings are dropped and rounds use the official numbering.</p></div></div>
+  <div class="cl"><span class="n">2.2</span><div><p>The unit of data is a <b>push lap</b>: a timed lap that was not deleted, was not an out-lap, had no rain flag, and was within 7.0% of the fastest lap of its segment. The 7% cut sits in a natural gap between push laps and cool-down laps.</p></div></div>
+  <div class="cl"><span class="n">2.3</span><div><p>Each driver is kept only in their main car. A driver needs at least <span class="tex" data-tex="\min(3,\ \lceil k/3 \rceil)"></span> events after round <span class="tex" data-tex="k"></span>; substitutes below that are excluded.</p></div></div>
+  <div class="cl"><span class="n">2.4</span><div><p>The response is the log lap time, scaled so that every parameter reads as a percentage of lap time:</p>
+    <div class="eq tex" data-tex="y_i = 100 \log t_i"></div>
+    <p>The site converts to seconds on a typical 90-second lap (1% = 0.9 s).</p></div></div>
+</article>
+
+<article id="a3"><h2><span>Article 3</span>Model (v1.2, production)</h2>
+  <div class="cl"><span class="n">3.1</span><div><p><b>Likelihood.</b> Each lap is either clean or compromised (traffic, a mistake, a yellow flag). Both are exponentially modified Gaussians: noise around the lap's potential, plus a loss that can only cost time.</p>
+    <div class="eq tex" data-tex="y_i \sim (1-\pi)\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}}\right) + \pi\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}+\ell_{\text{gap}}}\right)"></div></div></div>
+  <div class="cl"><span class="n">3.2</span><div><p><b>Lap potential.</b> For a lap by driver <span class="tex" data-tex="d"></span> in car <span class="tex" data-tex="c"></span> at event <span class="tex" data-tex="e"></span>, segment <span class="tex" data-tex="s"></span>, starting <span class="tex" data-tex="t_i"></span> (tens of minutes from the segment's mean lap start):</p>
+    <div class="eq tex" data-tex="\mu_i = \alpha_e + \tau_{e,s} + \gamma_e\, t_i + \theta_{c,e} + \nu_{c,e} + \delta_d + \beta_m\,\mathrm{medium}_i + \beta_a\,\mathrm{age}_i"></div></div></div>
+  <div class="cl"><span class="n">3.3</span><div><p><b>Track evolution.</b> A step per segment, plus a slope within each segment (rubbering in, and teams saving their best tyres for the final run):</p>
+    <div class="eq tex" data-tex="\tau_{e,1}=0,\quad \tau_{e,2}=\kappa_{e,2},\quad \tau_{e,3}=\kappa_{e,2}+\kappa_{e,3},\qquad \kappa_{e,s}\sim\mathcal N(m_s,\sigma_\kappa),\qquad \gamma_e\sim\mathcal N(\mu_\gamma,\sigma_\gamma)"></div></div></div>
+  <div class="cl"><span class="n">3.4</span><div><p><b>Car.</b> A development trend that drifts as a random walk, with steps scaled by the weeks between events, plus a fit to each track that does not carry over:</p>
+    <div class="eq tex" data-tex="\theta_{c,1}\sim\mathcal N(0,\sigma_{\text{car}}),\qquad \theta_{c,e}=\theta_{c,e-1}+\sigma_{\text{dev}}\sqrt{\Delta_e}\,z_{c,e},\qquad \nu_{c,e}\sim\mathcal N(0,\sigma_\nu)"></div></div></div>
+  <div class="cl"><span class="n">3.5</span><div><p><b>Driver.</b> One skill per driver, <span class="tex" data-tex="\delta_d\sim\mathcal N(0,\sigma_\delta)"></span>, constant over the season.</p></div></div>
+  <div class="cl"><span class="n">3.6</span><div><p><b>Identification.</b> Sum-to-zero constraints make car pace relative to the field and driver skill relative to the average driver:</p>
+    <div class="eq tex" data-tex="\textstyle\sum_c \theta_{c,e}=0,\qquad \sum_c \nu_{c,e}=0,\qquad \sum_d \delta_d = 0"></div>
+    <p>The event baseline <span class="tex" data-tex="\alpha_e"></span> absorbs everything shared by all cars that day (weather, grip, the circuit itself), so conditions need no explicit model.</p></div></div>
+  <div class="cl"><span class="n">3.7</span><div><p><b>Car share</b>, the headline split:</p>
+    <div class="eq tex" data-tex="\text{car share}_e = \frac{\operatorname{Var}_c(\theta_{c,e}+\nu_{c,e})}{\operatorname{Var}_c(\theta_{c,e}+\nu_{c,e})+\operatorname{Var}_d(\delta_d)}"></div>
+    <p>Because driver skill is identified within teams only (7.1), this is an upper bound on the car's share; the site leads with the directly measured gaps instead.</p></div></div>
+</article>
+
+<article id="a4"><h2><span>Article 4</span>Priors</h2>
+  <div class="cl"><span class="n">4.1</span><div><p>All values in % of lap time. <span class="tex" data-tex="\mathcal N^{+}"></span> is a half-normal. Hierarchical terms are non-centred.</p>
+    <div class="tw"><table><thead><tr><th>Parameter</th><th>Prior</th><th>Why</th></tr></thead><tbody>
+      <tr><td><span class="tex" data-tex="\sigma_{\text{car}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,1.2)"></span></td><td>Field spreads above ~10% are impossible under the 107% rule</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma_{\text{dev}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.25)"></span></td><td>A season can move a car by 1–3%, not 10%</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma_\nu"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.5)"></span></td><td>Track suitability of up to about ±1%</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma_\delta"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>A driver worth more than 1.5% is implausible</td></tr>
+      <tr><td><span class="tex" data-tex="m_2,\ m_3"></span></td><td><span class="tex" data-tex="\mathcal N(-0.5,\,0.3)"></span></td><td>The track gets faster each segment; slower only in rare cases</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma_\kappa"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>Evolution varies by venue</td></tr>
+      <tr><td><span class="tex" data-tex="\mu_\gamma,\ \sigma_\gamma"></span></td><td><span class="tex" data-tex="\mathcal N(-0.3,\,0.3),\ \mathcal N^{+}(0,\,0.2)"></span></td><td>Per 10 minutes within a segment</td></tr>
+      <tr><td><span class="tex" data-tex="\pi"></span></td><td><span class="tex" data-tex="\mathrm{Beta}(2,\,6)"></span></td><td>Roughly a quarter of push laps compromised, loosely</td></tr>
+      <tr><td><span class="tex" data-tex="\ell_{\text{clean}},\ \ell_{\text{gap}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3),\ \mathcal N^{+}(0,\,1.5)"></span></td><td>Ordered by construction, so the two lap types cannot swap</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.5)"></span></td><td>Lap-to-lap noise</td></tr>
+      <tr><td><span class="tex" data-tex="\beta_m,\ \beta_a"></span></td><td><span class="tex" data-tex="\mathcal N(0.7,\,0.5),\ \mathcal N(0.05,\,0.05)"></span></td><td>Medium tyres and older tyres are slower</td></tr>
+      <tr><td><span class="tex" data-tex="\alpha_e"></span></td><td><span class="tex" data-tex="\mathcal N(\tilde y_e,\,5)"></span></td><td>Centred on the event's median lap; effectively free</td></tr>
+    </tbody></table></div></div></div>
+  <div class="cl"><span class="n">4.2</span><div><p><b>Prior predictive check.</b> Before seeing lap times, 3,000 fake seasons were simulated on the real 2026 design and checked against limits set from F1 knowledge. Each implausible outcome now occurs in about 5% of simulated seasons or fewer: median field spread above 10% (5.4%), any event spread above 15% (2.3%), median teammate gap above 1.5% (0.1%), any driver worth more than 1.5% (3.0%), the track getting slower from Q1 to Q2 (5.8%).</p></div></div>
+  <div class="cl"><span class="n">4.3</span><div><p><b>Sensitivity.</b> The informative prior puts the car share near 0.98 before any data. A second version (v1-B) with a neutral <span class="tex" data-tex="\rho\sim\mathrm{Beta}(1,1)"></span> prior on the share (prior median 0.82) gives the same posterior: 0.985 against 0.983. The result comes from the data.</p></div></div>
+</article>
+
+<article id="a5"><h2><span>Article 5</span>Inference</h2>
+  <div class="cl"><span class="n">5.1</span><div><p>Stan (CmdStan 2.36 via CmdStanPy): 4 chains, 1,000 warm-up and 2,000 sampling iterations each, <code>adapt_delta = 0.95</code>.</p></div></div>
+  <div class="cl"><span class="n">5.2</span><div><p><b>Quality gate</b>, applied to every fit before anything is published:</p>
+    <div class="tw"><table><thead><tr><th>Status</th><th>R-hat (worst parameter)</th><th>Divergent draws</th><th>Effect</th></tr></thead><tbody>
+      <tr><td><span class="badge pass">pass</span></td><td>&le; 1.01</td><td>&le; 0.2%</td><td>Published</td></tr>
+      <tr><td><span class="badge">warn</span></td><td>&le; 1.05</td><td>&le; 1%</td><td>Published with a lower-confidence flag</td></tr>
+      <tr><td><span class="badge">fail</span></td><td>&gt; 1.05</td><td>&gt; 1%</td><td>Blocked; the site keeps the previous round</td></tr>
+    </tbody></table></div></div></div>
+  <div class="cl"><span class="n">5.3</span><div><p><b>Pipeline.</b> Every Sunday at 06:00 UTC (retry on Monday), GitHub Actions fetches new sessions, refits, applies the gate, writes the site's data and redeploys. The history behind Medium and Inter is one fit per round using only the data available up to that round.</p></div></div>
+</article>
+
+<article id="a6"><h2><span>Article 6</span>Validation</h2>
+  <div class="cl"><span class="n">6.1</span><div><p><b>Parameter recovery.</b> Seasons simulated from known parameters on the real design were fitted, and the share of true values inside the 90% intervals measured (target about 90%):</p>
+    <div class="tw"><table><thead><tr><th>Version</th><th>Driver</th><th>Car trend</th><th>Car &times; track</th><th>Track evolution</th><th>New terms</th></tr></thead><tbody>
+      <tr><td>v1</td><td>91%</td><td>90%</td><td>82%</td><td>87%</td><td class="muted">n/a</td></tr>
+      <tr><td>v1.1</td><td>91%</td><td>89%</td><td>92%</td><td>94%</td><td>&gamma;: 100% (16 events)</td></tr>
+      <tr><td>v1.2</td><td>91%</td><td>88%</td><td>90%</td><td>94%</td><td>&pi;, &ell; recovered within 90%</td></tr>
+    </tbody></table></div></div></div>
+  <div class="cl"><span class="n">6.2</span><div><p><b>Model comparison</b> (PSIS-LOO, higher is better):</p>
+    <div class="tw"><table><thead><tr><th>Version</th><th>Change</th><th class="r">elpd</th><th class="r">vs previous</th><th class="r">Pareto k &gt; 0.7</th></tr></thead><tbody>
+      <tr><td>v1</td><td>Ex-Gaussian, segment steps</td><td class="r">&minus;1308.8</td><td class="r muted">n/a</td><td class="r">19 laps</td></tr>
+      <tr><td>v1.1</td><td>+ within-segment evolution</td><td class="r">&minus;1079.5</td><td class="r ok">+229 &plusmn; 21</td><td class="r">18 laps</td></tr>
+      <tr><td>v1.2</td><td>+ clean / compromised mixture</td><td class="r">&minus;1037.2</td><td class="r ok">+42 &plusmn; 13</td><td class="r">4 laps</td></tr>
+    </tbody></table></div></div></div>
+  <div class="cl"><span class="n">6.3</span><div><p><b>Posterior predictive checks.</b> v1.2 reproduces the shape of lap times (skewness and kurtosis, which earlier versions failed). Statistics built from each driver's <i>best</i> lap (teammate gap, field spread, Q1&rarr;Q2 step) still fall in the tails; see 7.2.</p></div></div>
+</article>
+
+<article id="a7"><h2><span>Article 7</span>Limitations</h2>
+  <div class="cl"><span class="n">7.1</span><div><p><b>Drivers are compared within teams only.</b> With one car per driver, a pair's shared quality is indistinguishable from car pace. Cross-team driver rankings need drivers who changed teams, which a multi-season version (2023–2026) would add.</p></div></div>
+  <div class="cl"><span class="n">7.2</span><div><p><b>Head-to-head probabilities are conservative.</b> Drivers adapt within a session (abort, go again, stop after a good lap), so a real best lap is tighter than "the best of several independent laps". The model overstates how uncertain best laps are, by about 20%.</p></div></div>
+  <div class="cl"><span class="n">7.3</span><div><p><b>Development and track fit trade off.</b> The data pin down their combined effect better than the split (posterior correlation about &minus;0.5), so <span class="tex" data-tex="\sigma_{\text{dev}}"></span> mixes slowly and a few rounds pass the gate with a warning. A reparameterisation (v1.3) is planned.</p></div></div>
+  <div class="cl"><span class="n">7.4</span><div><p><b>Early rounds are uncertain by design.</b> After one session the model has about 100 laps; its intervals are wide and honest, not wrong.</p></div></div>
+  <div class="cl"><span class="n">7.5</span><div><p><b>Wet sessions</b> and laps flagged for rain are excluded rather than modelled.</p></div></div>
+</article>
+
+<article id="a8"><h2><span>Article 8</span>Current fit (live)</h2>
+  <div class="cl"><span class="n">8.1</span><div><p id="live-sum">Loading the latest fit&hellip;</p></div></div>
+  <div class="cl"><span class="n">8.2</span><div><div class="tw"><table id="live-params"><thead><tr><th>Parameter</th><th class="r">Median</th><th class="r">90% interval</th><th>In plain terms</th></tr></thead><tbody></tbody></table></div></div></div>
+</article>
+
+<article id="a9"><h2><span>Article 9</span>Reproducibility</h2>
+  <div class="cl"><span class="n">9.1</span><div><p>All code, data and model versions are public at <a href="https://github.com/Tahahaha7/purple-sectors">github.com/Tahahaha7/purple-sectors</a>, with the full development record in <code>docs/model_log.md</code>.</p></div></div>
+  <div class="cl"><span class="n">9.2</span><div><pre>pip install -r requirements.txt
+python -m purple_sectors.fetch --year 2026
+python -m purple_sectors.fit --stan stan/quali_v12.stan --out posterior_v12.npz
+python -m purple_sectors.export --posterior posterior_v12.npz --out site/data --snapshot-dir site/data/snapshots</pre>
+    <p>Run with <code>PYTHONPATH=src</code>. The same data and seeds reproduce the published numbers to the third decimal.</p></div></div>
+</article>
+
+<section class="router" aria-label="More">
+  <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The quick lap</div><p>The headline numbers, for every fan.</p></a>
+  <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The long run</div><p>What the model believes about every car, driver and circuit.</p></a>
+  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] Changing conditions</div><p>How each qualifying session moves the model.</p></a>
+</section>
+<p class="fine">An independent fan project, not associated with Formula 1.</p>
+</div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+function typeset() {
+  document.querySelectorAll('.tex').forEach(el => {
+    const tex = el.dataset.tex, display = el.classList.contains('eq');
+    if (window.katex) { try { katex.render(tex, el, { displayMode: display, throwOnError: false }); return; } catch (e) {} }
+    el.innerHTML = `<code class="tex-fallback">${tex.replace(/</g, '&lt;')}</code>`;
+  });
+}
+window.addEventListener('load', typeset);
+const sgn = (v, d = 2) => (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(d);
+const PLAIN = {
+  sigma_driver: ['Driver spread', v => (v * .9).toFixed(2) + ' s', 'typical skill difference between drivers'],
+  pi_bad: ['Compromised laps', v => Math.round(v * 100) + '%', 'share of push laps lost to traffic, mistakes or yellows'],
+  loss_clean: ['Clean-lap margin', v => (v * .9).toFixed(2) + ' s', 'how far a clean lap is from the limit'],
+  loss_bad: ['Compromised-lap loss', v => (v * .9).toFixed(2) + ' s', 'average time lost on a compromised lap'],
+  sigma: ['Lap noise', v => (v * .9).toFixed(2) + ' s', 'random lap-to-lap variation'],
+  sigma_car: ['Car spread at round 1', v => (v * .9).toFixed(2) + ' s', 'how far apart the cars started'],
+  sigma_dev: ['Development rate', v => (v * .9).toFixed(3) + ' s', 'car pace drift per √week'],
+  sigma_nu: ['Track suitability', v => (v * .9).toFixed(2) + ' s', 'how much a car\'s pace swings by circuit'],
+  mu_gamma: ['Track rubbering', v => sgn(v * .9) + ' s', 'change per 10 minutes within a segment (negative = quicker)'],
+  beta_m: ['Medium tyre', v => sgn(v * .9) + ' s', 'cost of qualifying on mediums instead of softs'],
+};
+fetch('data/snapshots/index.json', { cache: 'no-cache' }).then(r => r.json()).then(idx => {
+  const L = idx.rounds[idx.rounds.length - 1];
+  return fetch('data/snapshots/' + L.file, { cache: 'no-cache' }).then(r => r.json());
+}).then(s => {
+  $('stamp').textContent = `${s.date} / Round ${s.round}`;
+  const d = s.diagnostics || {}, st = d.status || 'pass';
+  $('live-sum').innerHTML = `Fitted after <b>round ${s.round}</b>, the ${s.name} (${s.location}, ${s.date}), on <b>${s.laps.toLocaleString('en')}</b> push laps. ` +
+    `Quality gate: <span class="badge ${st === 'pass' ? 'pass' : ''}">${st}</span> with ${d.divergences ?? 0} divergent draws of ${(d.draws ?? 0).toLocaleString('en')}, ` +
+    `worst R-hat ${d.max_rhat ?? '\u2013'}${d.worst ? ` (<code>${d.worst}</code>)` : ''}. Car share: ${s.car_share[1].toFixed(3)} [${s.car_share[0].toFixed(3)}, ${s.car_share[2].toFixed(3)}].`;
+  $('live-params').querySelector('tbody').innerHTML = Object.entries(PLAIN).filter(([k]) => s.params[k]).map(([k, [label, f, plain]]) => {
+    const [lo, m, hi] = s.params[k];
+    return `<tr><td>${label}</td><td class="r">${f(m)}</td><td class="r">${f(lo)} to ${f(hi)}</td><td class="muted">${plain}</td></tr>`;
+  }).join('');
+}).catch(() => { $('live-sum').textContent = 'The latest fit is refreshing. Check back in a few minutes.'; });
+</script>
+</body>
+</html>
