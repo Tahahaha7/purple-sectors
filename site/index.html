@@ -226,6 +226,10 @@ const $ = id => document.getElementById(id);
 
 // nav stamp + hero
 $('stamp').textContent = `${DATA.date} / Round ${DATA.round}`;
+if (DATA.status === 'warn') {
+  $('stamp').textContent += ' / lower confidence';
+  $('stamp').title = 'This round\'s fit passed with a warning: one sampler check was borderline. Numbers are published but less certain.';
+}
 $('h-cars').textContent = `${DATA.car_spread.toFixed(1)} s between cars.`;
 $('h-mates').textContent = `${DATA.mate_gap.toFixed(2)} s between teammates.`;
 $('val-cars').textContent = `${DATA.car_spread.toFixed(2)} s quickest to slowest car`;
