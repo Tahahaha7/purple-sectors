@@ -42,8 +42,8 @@ def summary_line(fit, name) -> str:
 
 
 def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int,
-         max_div_frac: float, max_r: float) -> int:
-    des = build_design(load_push_laps(str(laps)))
+         max_div_frac: float, max_r: float, max_round: int | None = None, allow_fail: bool = False) -> int:
+    des = build_design(load_push_laps(str(laps), max_round=max_round))
     print(f"{des.N} push laps · {des.D} drivers · {des.C} cars · {des.E} events")
     fit = CmdStanModel(stan_file=str(stan)).sample(
         data=des.stan_data(des.laps["y"].to_numpy()), chains=4, parallel_chains=4,
@@ -62,7 +62,8 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
     np.savez_compressed(out, **out_vars, divergent=mv["divergent__"], treedepth=mv["treedepth__"],
                         drivers=np.array(des.drivers), cars=np.array(des.cars),
                         events=np.array(des.events), y=des.laps["y"].to_numpy(),
-                        driver=des.driver, car=des.car, event=des.event, seg=des.seg)
+                        driver=des.driver, car=des.car, event=des.event, seg=des.seg,
+                        divergences=div, draws_total=total, max_rhat=rhat, passed=ok)
     print(f"saved {out}")
 
     if summary := os.environ.get("GITHUB_STEP_SUMMARY"):     # shows on the Actions run page
@@ -73,7 +74,7 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
                  "| parameter | median | 90% |", "|---|---|---|"]
         lines += [summary_line(fit, v) for v in ["sigma_driver", "pi_bad", "loss_clean", "mu_gamma"]]
         Path(summary).open("a").write("\n".join(lines) + "\n")
-    return 0 if ok else 1
+    return 0 if ok or allow_fail else 1
 
 
 if __name__ == "__main__":
@@ -86,5 +87,8 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--max-div-frac", type=float, default=0.002, help="max share of divergent draws")
     ap.add_argument("--max-rhat", type=float, default=1.01)
+    ap.add_argument("--max-round", type=int, default=None, help="fit only rounds 1..N (history snapshots)")
+    ap.add_argument("--allow-fail", action="store_true", help="exit 0 even if diagnostics fail (backfill)")
     a, _ = ap.parse_known_args()
-    sys.exit(main(a.laps, a.stan, a.out, a.warmup, a.samples, a.seed, a.max_div_frac, a.max_rhat))
+    sys.exit(main(a.laps, a.stan, a.out, a.warmup, a.samples, a.seed, a.max_div_frac, a.max_rhat,
+                  a.max_round, a.allow_fail))

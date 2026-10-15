@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths: ["site/**", ".github/workflows/pages.yml"]
   workflow_run:                 # bot commits from the weekly update don't trigger pushes, so listen for it
-    workflows: ["Update model"]
+    workflows: ["Update model", "Backfill history"]
     types: [completed]
   workflow_dispatch:
 
