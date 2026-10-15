@@ -54,6 +54,80 @@ def car_pace(post) -> list:
     return [out[i] for i in order]
 
 
+SEC = 0.9                       # % of lap time -> seconds on a typical 90-second lap
+SHORT = {"Haas F1 Team": "Haas", "Red Bull Racing": "Red Bull"}
+
+
+def _short(team: str) -> str:
+    return SHORT.get(str(team), str(team))
+
+
+def soft(post, laps_csv: Path) -> dict:
+    """Everything the SOFT (fan) page shows, in seconds on a 90-second lap."""
+    raw = pd.read_csv(laps_csv)
+    info = raw.groupby("driver").agg(name=("full_name", "first"), number=("driver_number", "first"))
+    drivers, cars = [str(d) for d in post["drivers"]], [str(c) for c in post["cars"]]
+    rounds = [int(r) for r in post["events"]]
+    last = raw[raw["round"] == rounds[-1]]
+    theta = post["theta"]
+    now = theta[:, -1, :] * SEC                               # car pace at the latest round
+    fastest = now.argmin(axis=1)
+    change = (theta[:, -1, :] - theta[:, 0, :]) * SEC
+
+    car_rows = []
+    for c, team in enumerate(cars):
+        lo, med, hi = np.percentile(now[:, c], Q)
+        clo, cmed, chi = np.percentile(change[:, c], Q)
+        car_rows.append({"team": _short(team), "lo": round(lo, 3), "med": round(med, 3), "hi": round(hi, 3),
+                         "p_fast": round(float((fastest == c).mean()), 3),
+                         "ch": round(cmed, 3), "ch_lo": round(clo, 3), "ch_hi": round(chi, 3),
+                         "p_imp": round(float((change[:, c] < 0).mean()), 3)})
+    car_rows.sort(key=lambda r: r["med"])
+
+    def person(i):
+        code = drivers[i]
+        return {"code": code, "name": str(info.loc[code, "name"]), "number": int(info.loc[code, "number"])}
+
+    delta = post["delta"] * SEC
+    d_idx, c_idx, e_idx = post["driver"], post["car"], post["event"]
+    pairs = []
+    for c, team in enumerate(cars):
+        ds = sorted(set(d_idx[c_idx == c].tolist()))
+        if len(ds) < 2:
+            continue
+        evs = {i: set(e_idx[(d_idx == i) & (c_idx == c)].tolist()) for i in ds}
+        a, b = max(((x, y) for k, x in enumerate(ds) for y in ds[k + 1:]),
+                   key=lambda p: len(evs[p[0]] & evs[p[1]]))
+        gap = delta[:, a] - delta[:, b]
+        if np.median(gap) > 0:
+            a, b, gap = b, a, -gap
+        lo, med, hi = np.percentile(gap, Q)
+        pairs.append({"team": _short(team), "a": person(a), "b": person(b),
+                      "gap": round(med, 3), "lo": round(lo, 3), "hi": round(hi, 3),
+                      "p": round(float((gap < 0).mean()), 3), "shared": len(evs[a] & evs[b]),
+                      "also": [{"code": drivers[i], "name": str(info.loc[drivers[i], "name"])}
+                               for i in ds if i not in (a, b)],
+                      "dots": np.round(np.quantile(gap, (np.arange(20) + 0.5) / 20), 3).tolist()})
+    pairs.sort(key=lambda p: -p["p"])
+
+    rng = np.random.default_rng(7)
+    pick = rng.choice(now.shape[0], min(96, now.shape[0]), replace=False)
+    meds = [r["med"] for r in car_rows]
+    return {
+        "model": "v1.2", "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "round": rounds[-1], "n_rounds": len(rounds), "event": str(last["event"].iloc[0]),
+        "location": str(last["location"].iloc[0]), "date": str(last["date_start"].min())[:10].replace("-", "."),
+        "laps": int(len(post["y"])),
+        "car_share": [round(float(x), 3) for x in np.percentile(post["car_share"].mean(axis=1), Q)],
+        "pi_bad": round(float(np.median(post["pi_bad"])), 3),
+        "loss_clean_ms": int(round(float(np.median(post["loss_clean"])) * 900)),
+        "car_spread": round(max(meds) - min(meds), 2),
+        "mate_gap": round(float(np.median([abs(p["gap"]) for p in pairs])), 2),
+        "cars": car_rows, "pairs": pairs,
+        "draws": {_short(t): np.round(now[pick, c], 3).tolist() for c, t in enumerate(cars)},
+    }
+
+
 def main(posterior: Path, laps: Path, out: Path, model: str = "v1.2") -> Path:
     post = np.load(posterior, allow_pickle=True)
     doc = {
@@ -69,6 +143,10 @@ def main(posterior: Path, laps: Path, out: Path, model: str = "v1.2") -> Path:
     path = out / "car_pace.json"
     path.write_text(json.dumps(doc, indent=1, ensure_ascii=False))
     print(f"wrote {path} ({path.stat().st_size / 1024:.0f} KB)")
+    if "pi_bad" in post.files:                            # SOFT page needs the v1.2 mixture outputs
+        sp = out / "soft.json"
+        sp.write_text(json.dumps(soft(post, laps), separators=(",", ":"), ensure_ascii=False))
+        print(f"wrote {sp} ({sp.stat().st_size / 1024:.0f} KB)")
     return path
 
 
