@@ -8,6 +8,9 @@ on:
       rounds:
         description: "Rounds to fit, e.g. 1-17 or 3,8,12 (default: every round in the data)"
         default: "all"
+      samples:
+        description: "Sampling draws per chain"
+        default: "2000"
 
 permissions:
   contents: write
@@ -84,7 +87,7 @@ jobs:
       - name: Fit rounds 1..${{ matrix.round }}
         run: >
           python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v12.stan
-          --out post.npz --max-round ${{ matrix.round }} --allow-fail
+          --out post.npz --max-round ${{ matrix.round }} --samples ${{ inputs.samples }} --allow-fail
       - name: Export snapshot
         run: >
           python -m purple_sectors.export --posterior post.npz --laps "data/raw/quali_laps_${YEAR}.csv"
@@ -104,7 +107,7 @@ jobs:
       - uses: actions/setup-python@v6
         with: { python-version: "3.12", cache: pip }
       - run: pip install -r requirements.txt
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v7      # overwrites only the rounds refit in this run
         with:
           pattern: snapshot-*
           merge-multiple: true
