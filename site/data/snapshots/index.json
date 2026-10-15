@@ -31,7 +31,7 @@
    "location": "Miami Gardens",
    "date": "2026.05.02",
    "file": "r04.json",
-   "passed": false
+   "passed": true
   },
   {
    "round": 5,
@@ -39,7 +39,7 @@
    "location": "Montr\u00e9al",
    "date": "2026.05.23",
    "file": "r05.json",
-   "passed": false
+   "passed": true
   },
   {
    "round": 6,
@@ -71,7 +71,7 @@
    "location": "Silverstone",
    "date": "2026.07.04",
    "file": "r09.json",
-   "passed": false
+   "passed": true
   },
   {
    "round": 10,
@@ -95,7 +95,7 @@
    "location": "Zandvoort",
    "date": "2026.08.22",
    "file": "r12.json",
-   "passed": false
+   "passed": true
   },
   {
    "round": 13,
@@ -119,7 +119,7 @@
    "location": "Baku",
    "date": "2026.09.25",
    "file": "r15.json",
-   "passed": false
+   "passed": true
   },
   {
    "round": 16,
