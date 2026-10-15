@@ -84,7 +84,9 @@ jobs:
 
       - name: Export website data
         if: steps.changes.outputs.new == 'true'
-        run: python -m purple_sectors.export --posterior posterior_v12.npz --laps "data/raw/quali_laps_${YEAR}.csv" --out site/data
+        run: >
+          python -m purple_sectors.export --posterior posterior_v12.npz --laps "data/raw/quali_laps_${YEAR}.csv"
+          --out site/data --snapshot-dir site/data/snapshots
 
       - name: Commit and push
         if: steps.changes.outputs.new == 'true'
@@ -94,4 +96,5 @@ jobs:
           git add "data/raw/quali_laps_${YEAR}.csv" site/data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "Update model: $(date -u +%Y-%m-%d)"
+          git pull --rebase
           git push

@@ -9,20 +9,23 @@ MIN_EVENTS = 3        # drop part-time / substitute drivers
 SEG_INDEX = {"Q1": 1, "Q2": 2, "Q3": 3}
 
 
-def one_car_per_driver(p: pd.DataFrame) -> pd.DataFrame:
-    """Keep each driver only in their main team, and only if they ran >= MIN_EVENTS events.
+def one_car_per_driver(p: pd.DataFrame, min_events: int = MIN_EVENTS) -> pd.DataFrame:
+    """Keep each driver only in their main team, and only if they ran >= min_events events.
     Every remaining driver then has exactly one car all season."""
     n = p.groupby(["driver", "team"])["round"].nunique().reset_index(name="events")
     main = n.sort_values("events").groupby("driver").tail(1)
-    main = main[main["events"] >= MIN_EVENTS]
+    main = main[main["events"] >= min_events]
     dropped = n.merge(main, how="left", indicator=True).query("_merge == 'left_only'")
     for _, r in dropped.iterrows():
         print(f"  excluded {r.driver} @ {r.team} ({r.events} events)")
     return p.merge(main[["driver", "team"]], on=["driver", "team"])
 
 
-def load_push_laps(path: str, single_car: bool = True) -> pd.DataFrame:
+def load_push_laps(path: str, single_car: bool = True, max_round: int | None = None) -> pd.DataFrame:
+    """Push laps, optionally only up to (and including) max_round, for season-history snapshots."""
     df = pd.read_csv(path)
+    if max_round is not None:
+        df = df[df["round"] <= max_round]
     df["date_start"] = pd.to_datetime(df["date_start"], format="ISO8601", utc=True)
     valid = (df["lap_time"].notna() & ~df["deleted"] & ~df["is_pit_out_lap"]
              & df["segment"].notna() & (df["rainfall"].fillna(0) == 0))
@@ -36,8 +39,8 @@ def load_push_laps(path: str, single_car: bool = True) -> pd.DataFrame:
     # minutes since segment's mean lap start, in units of 10 min (v1.1 track evolution)
     t = (p["date_start"] - p["date_start"].min()).dt.total_seconds() / 60
     p["t_seg"] = (t - t.groupby([p["round"], p["segment"]]).transform("mean")) / 10
-    if single_car:
-        p = one_car_per_driver(p)
+    if single_car:   # early in the season "3 events" is too strict: require ceil(rounds / 3), at most 3
+        p = one_car_per_driver(p, min(MIN_EVENTS, -(-p["round"].nunique() // 3)))
     return p.reset_index(drop=True)
 
 
