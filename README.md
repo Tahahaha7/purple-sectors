@@ -2,6 +2,7 @@
 
 [![Update model](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml)
 [![Deploy site](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml)
+[![CI](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml)
 
 A Bayesian model of Formula 1 qualifying, refit automatically after every session of the 2026 season.
 Every push lap is decomposed into **car**, **driver**, **track evolution** and **execution**, with full uncertainty.
@@ -44,7 +45,8 @@ src/purple_sectors/simulate.py   NumPy mirror of the Stan models (prior checks, 
 stan/                            v1, v1-B (sensitivity), v1.1, v1.2 (production)
 notebooks/                       recovery and model-comparison notebooks (Colab)
 site/                            the static website (GitHub Pages)
-.github/workflows/               update, backfill, pages
+tests/                           pytest suites (fake OpenF1, synthetic posteriors)
+.github/workflows/               update, backfill, pages, ci, stan
 ```
 
 ## Reproduce
@@ -55,6 +57,14 @@ python -m purple_sectors.fetch --year 2026
 python -m purple_sectors.fit --stan stan/quali_v12.stan --out posterior_v12.npz
 python -m purple_sectors.export --posterior posterior_v12.npz --out site/data --snapshot-dir site/data/snapshots
 ```
+
+## Development
+```bash
+pip install -r requirements-dev.txt
+pytest                      # about 5 s, no network or CmdStan needed
+```
+CI runs the tests on every pull request and before every weekly fit; any change to `stan/` also compiles all models.
+At the end of a season, see [`docs/rollover.md`](docs/rollover.md).
 
 ## Data and licence
 Lap timing from [OpenF1](https://openf1.org). Code under the MIT licence.
