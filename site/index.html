@@ -64,6 +64,9 @@ h1 .b:last-child{color:var(--ink-2)}
 .stats > div:last-child{border-right:0}
 .stats .k{color:var(--ink-2);font-size:12px}
 .stats .v{font-size:26px;font-weight:500;letter-spacing:-.02em;margin-top:4px}
+.changes .stats .v{font-size:19px;line-height:1.25}
+.changes .stats .s{color:var(--ink-2);font-size:12px;margin-top:4px}
+.changes .dn{color:var(--accent)}
 
 /* section heads */
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:30px 24px 16px;border-bottom:1px solid var(--rule)}
@@ -96,6 +99,11 @@ h1 .b:last-child{color:var(--ink-2)}
 .helm .base{background:#FAFAF8;-webkit-mask:var(--h-silh) center/contain no-repeat;mask:var(--h-silh) center/contain no-repeat}
 .helm .paint{background:var(--team);-webkit-mask:var(--h-paint) center/contain no-repeat;mask:var(--h-paint) center/contain no-repeat}
 .helm .ink{background:var(--h-line) center/contain no-repeat;mix-blend-mode:multiply}
+.helm{container-type:inline-size}
+.helm .num{position:absolute;left:52%;top:18%;width:32%;height:20%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15cqw;line-height:1;color:#FFFFFF;-webkit-text-stroke:.07em #17181B;paint-order:stroke fill;
+  transform:rotate(-10deg);letter-spacing:-.02em}
+.helm.mirror .num{transform:scaleX(-1) rotate(10deg)}
 .dots{width:100%;height:auto;display:block}
 .nm{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub{color:var(--ink-2);font-size:12px}
@@ -183,6 +191,12 @@ h1 .b:last-child{color:var(--ink-2)}
   <div><div class="k slash">Flying laps</div><div class="v" id="s-laps"></div></div>
   <div><div class="k slash">Laps compromised</div><div class="v" id="s-bad"></div></div>
   <div><div class="k slash">Clean lap vs perfect</div><div class="v" id="s-clean"></div></div>
+</section>
+
+<section class="changes" id="changes" aria-labelledby="h2-changes" hidden>
+  <div class="head"><div><h2 id="h2-changes">What changed this weekend</h2>
+    <p id="changes-sub"></p></div></div>
+  <div class="stats" id="changes-grid"></div>
 </section>
 
 <section class="cars" aria-labelledby="h2-cars">
@@ -299,7 +313,7 @@ const CODE = {"Mercedes":"MER","Red Bull":"RBR","Ferrari":"FER","McLaren":"MCL",
 // helmets: one technical drawing for every driver; the shell is painted in the team colour
 const livery = () => ({});
 const helmet = (d, team, flip) =>
-  `<div class="helm${flip ? '' : ' mirror'}" style="--team:${TEAM[team] || '#888888'}" aria-hidden="true"><i class="base"></i><i class="paint"></i><i class="ink"></i></div>`;
+  `<div class="helm${flip ? '' : ' mirror'}" style="--team:${TEAM[team] || '#888888'}" aria-hidden="true"><i class="base"></i><i class="paint"></i><i class="ink"></i><b class="num">${d.number}</b></div>`;
 
 // teammate gap as a quantile dot plot: 20 dots, each a 5% chance
 const dotplot = (dots, a, b) => {
@@ -345,9 +359,47 @@ $('movers').innerHTML = [...DATA.cars].sort((a, b) => a.ch - b.ch).map(c => {
 }).join('');
 }
 
+// "What changed this weekend": compare the latest round's posterior with the previous one
+function changes() {
+  const $ = id => document.getElementById(id), minus = x => String(x).replace('-', '\u2212');
+  const sec = (v, d = 2) => minus((v > 0 ? '+' : '') + v.toFixed(d)) + ' s';
+  const pct = p => p >= 0.995 ? '99%+' : p < 0.005 ? '<1%' : Math.round(p * 100) + '%';
+  const last = n => { const w = n.split(' ').slice(-1)[0]; return w.charAt(0) + w.slice(1).toLowerCase(); };
+  return fetch('data/snapshots/index.json', { cache: 'no-cache' }).then(r => r.json()).then(idx => {
+    const r = idx.rounds; if (r.length < 2) return;
+    return Promise.all([r[r.length - 2], r[r.length - 1]].map(x => fetch('data/snapshots/' + x.file, { cache: 'no-cache' }).then(y => y.json())));
+  }).then(pair => {
+    if (!pair) return;
+    const [prev, now] = pair, med = c => c.pace[10];
+    const moves = now.cars.map(c => { const p = prev.cars.find(x => x.team === c.team); return p && { team: c.team, d: med(c) - med(p), now: med(c), pf: c.p_fast, ppf: p.p_fast }; }).filter(Boolean);
+    const gain = moves.reduce((a, b) => b.d < a.d ? b : a), drop = moves.reduce((a, b) => b.d > a.d ? b : a);
+    const lead = moves.reduce((a, b) => b.pf > a.pf ? b : a), wasLead = moves.reduce((a, b) => b.ppf > a.ppf ? b : a);
+    const swings = now.teammates.map(t => {
+      const p = prev.teammates.find(x => x.team === t.team); if (!p) return null;
+      const same = p.a.code === t.a.code, pa = same ? p.p : 1 - p.p, ga = same ? p.gap : -p.gap;
+      return { t, before: pa, after: t.p, d: Math.abs(t.p - pa), dg: Math.abs(t.gap - ga), gb: ga };
+    }).filter(Boolean);
+    const byP = swings.reduce((a, b) => b.d > a.d ? b : a), byGap = swings.reduce((a, b) => b.dg > a.dg ? b : a);
+    const swing = byP.d >= 0.01 ? byP : byGap, usesGap = byP.d < 0.01;
+    const w90 = c => c.pace[19] - c.pace[1];
+    const shrink = now.cars.reduce((a, c) => { const p = prev.cars.find(x => x.team === c.team); return p ? a + w90(c) / w90(p) : a; }, 0) / now.cars.length - 1;
+    const pts = (a, b) => { const v = Math.round((a - b) * 100); return (v > 0 ? '+' : v < 0 ? '\u2212' : '\u00b1') + Math.abs(v) + ' pts'; };
+    const cell = (k, v, sub) => `<div><div class="k slash">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+    $('changes-sub').textContent = `What the ${now.name} (round ${now.round}) changed in the model, compared with its beliefs after round ${prev.round}.`;
+    $('changes-grid').innerHTML =
+      cell('Biggest gain', `${gain.team} <span class="dn">${gain.d < 0 ? 'found ' + Math.abs(gain.d).toFixed(2) + ' s' : 'held steady'}</span>`, `now ${sec(gain.now)} against the field`) +
+      cell('Biggest drop', `${drop.team} ${drop.d > 0 ? 'lost ' + drop.d.toFixed(2) + ' s' : 'held steady'}`, `now ${sec(drop.now)} against the field`) +
+      cell('Fastest-car odds', `${lead.team} ${pct(lead.pf)}`, lead.team === wasLead.team ? `${pts(lead.pf, lead.ppf)} on the previous round` : `took over from ${wasLead.team}`) +
+      cell('Battle that swung most', `${last(swing.t.a.name)} vs ${last(swing.t.b.name)}`, (usesGap
+        ? `Gap ${Math.abs(swing.gb).toFixed(2)} \u2192 ${Math.abs(swing.t.gap).toFixed(2)} s`
+        : `${last(swing.t.a.name)} quicker: ${pct(swing.before)} \u2192 ${pct(swing.after)}`) + `. Car uncertainty ${shrink < 0 ? '<span class="dn">' + Math.abs(shrink * 100).toFixed(0) + '% narrower</span>' : Math.abs(shrink * 100).toFixed(0) + '% wider'} overall.`);
+    $('changes').hidden = false;
+  }).catch(() => {});
+}
+
 fetch('data/soft.json', { cache: 'no-cache' })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-  .then(render)
+  .then(d => { render(d); changes(); })
   .catch(() => {
     document.getElementById('h-cars').textContent = 'Data is refreshing.';
     document.getElementById('h-mates').textContent = 'Check back in a few minutes.';
