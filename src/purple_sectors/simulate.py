@@ -13,7 +13,8 @@ PRIORS = dict(  # (mean, sd) for normals; sd only for half-normals
     sigma_driver=0.3, beta_m=(0.7, 0.5), beta_a=(0.05, 0.05), sigma=0.5, loss=0.5,
     sigma_total=1.2,  # Model B only
     mu_gamma=(-0.3, 0.3), sigma_gamma=0.2,  # v1.1+
-    pi_bad=(2, 6), loss_clean=0.3, loss_gap=1.5)  # v1.2
+    pi_bad=(2, 6), loss_clean=0.3, loss_gap=1.5,  # v1.2
+    sigma_car_event=0.6, rho_dev=(2, 4))  # v1.3
 
 
 def _sum_to_zero(rng, scale, size):
@@ -24,7 +25,7 @@ def _sum_to_zero(rng, scale, size):
 
 
 def draw_params(des: Design, rng, share_prior: bool = False, v11: bool = False,
-                v12: bool = False, **fixed) -> dict:
+                v12: bool = False, v13: bool = False, **fixed) -> dict:
     """Draw hyperparameters from the priors (unless fixed), then all latent effects.
     share_prior=True uses Model B: rho ~ Beta(1,1) splits sigma_total into car and driver."""
     hn = lambda s: abs(rng.normal(0, s))
@@ -34,6 +35,12 @@ def draw_params(des: Design, rng, share_prior: bool = False, v11: bool = False,
         sigma_nu=hn(PRIORS["sigma_nu"]), sigma_driver=hn(PRIORS["sigma_driver"]),
         beta_m=rng.normal(*PRIORS["beta_m"]), beta_a=rng.normal(*PRIORS["beta_a"]),
         sigma=hn(PRIORS["sigma"]), loss=max(hn(PRIORS["loss"]), 0.01))
+    if v13:          # development vs track fit as (total, share), like Model B does for car vs driver
+        dt_bar = float(np.mean(des.dt[1:])) if des.E > 1 else 1.0
+        tot = fixed.get("sigma_car_event", hn(PRIORS["sigma_car_event"]))
+        rho = fixed.get("rho_dev", rng.beta(*PRIORS["rho_dev"]))
+        p.update(sigma_dev=np.sqrt(rho / dt_bar) * tot, sigma_nu=np.sqrt(1 - rho) * tot, sigma_car_event=tot, rho_dev=rho)
+        v12 = True
     if share_prior:
         rho, tot = rng.uniform(), hn(PRIORS["sigma_total"])
         p.update(sigma_car=np.sqrt(rho) * tot, sigma_driver=np.sqrt(1 - rho) * tot)
