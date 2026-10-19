@@ -4,7 +4,7 @@ Exits with status 1 if the sampler diagnostics fail, so the scheduled pipeline
 never publishes a bad fit.
 
 Usage:  python -m purple_sectors.fit --laps data/raw/quali_laps_2026.csv \
-            --stan stan/quali_v12.stan --out posterior_v12.npz
+            --stan stan/quali_v13.stan --out posterior_v13.npz
 """
 import argparse
 import os
@@ -123,8 +123,8 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--laps", type=Path, default=Path("data/raw/quali_laps_2026.csv"))
-    ap.add_argument("--stan", type=Path, default=Path("stan/quali_v12.stan"))
-    ap.add_argument("--out", type=Path, default=Path("posterior_v12.npz"))
+    ap.add_argument("--stan", type=Path, default=Path("stan/quali_v13.stan"))
+    ap.add_argument("--out", type=Path, default=Path("posterior_v13.npz"))
     ap.add_argument("--warmup", type=int, default=1000)
     ap.add_argument("--samples", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=2026)

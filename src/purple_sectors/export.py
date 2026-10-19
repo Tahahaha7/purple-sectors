@@ -235,7 +235,7 @@ def soft(post, laps_csv: Path) -> dict:
     pick = rng.choice(now.shape[0], min(96, now.shape[0]), replace=False)
     meds = [r["med"] for r in car_rows]
     return {
-        "model": "v1.2", "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "model": "v1.3", "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "round": rounds[-1], "n_rounds": len(rounds), "event": str(last["event"].iloc[0]),
         "location": str(last["location"].iloc[0]), "date": str(last["date_start"].min())[:10].replace("-", "."),
         "laps": int(len(post["y"])),
@@ -250,7 +250,7 @@ def soft(post, laps_csv: Path) -> dict:
     }
 
 
-def main(posterior: Path, laps: Path, out: Path, model: str = "v1.2",
+def main(posterior: Path, laps: Path, out: Path, model: str = "v1.3",
          snapshot_dir: Path | None = None, only_snapshot: bool = False) -> Path:
     post = np.load(posterior, allow_pickle=True)
     if snapshot_dir is not None:
@@ -263,6 +263,8 @@ def main(posterior: Path, laps: Path, out: Path, model: str = "v1.2",
         dp.write_text(json.dumps(draws_snapshot(post), separators=(",", ":")))
         print(f"wrote {dp} ({dp.stat().st_size / 1024:.0f} KB)")
         write_index(snapshot_dir)
+        from purple_sectors.forecast import write as write_forecast
+        write_forecast(post, laps, snapshot_dir.parent)          # forecasts/r<next>.json + scorecard
         if only_snapshot:
             return sp
     doc = {
@@ -290,12 +292,15 @@ if __name__ == "__main__":
     ap.add_argument("--posterior", type=Path)
     ap.add_argument("--laps", type=Path, default=Path("data/raw/quali_laps_2026.csv"))
     ap.add_argument("--out", type=Path, default=Path("site/data"))
-    ap.add_argument("--model", default="v1.2")
+    ap.add_argument("--model", default="v1.3")
     ap.add_argument("--snapshot-dir", type=Path, default=None, help="also write rXX.json + index.json here")
     ap.add_argument("--only-snapshot", action="store_true", help="skip car_pace.json / soft.json")
     ap.add_argument("--index-only", type=Path, default=None, help="just rebuild index.json in this folder")
     args, _ = ap.parse_known_args()
     if args.index_only:
         write_index(args.index_only)
+        from purple_sectors.forecast import scorecard
+        if (args.index_only.parent / "forecasts").exists():
+            scorecard(args.index_only.parent / "forecasts", pd.read_csv(args.laps))
     else:
         main(args.posterior, args.laps, args.out, args.model, args.snapshot_dir, args.only_snapshot)

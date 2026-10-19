@@ -138,7 +138,7 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
     <p>The site converts to seconds on a typical 90-second lap (1% = 0.9 s).</p></div></div>
 </article>
 
-<article id="a3"><h2><span>Article 3</span>Model (v1.2, production)</h2>
+<article id="a3"><h2><span>Article 3</span>Model (v1.3, production)</h2>
   <div class="cl"><span class="n">3.1</span><div><p><b>Likelihood.</b> Each lap is either clean or compromised (traffic, a mistake, a yellow flag). Both are exponentially modified Gaussians: noise around the lap's potential, plus a loss that can only cost time.</p>
     <div class="eq tex" data-tex="y_i \sim (1-\pi)\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}}\right) + \pi\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}+\ell_{\text{gap}}}\right)"></div></div></div>
   <div class="cl"><span class="n">3.2</span><div><p><b>Lap potential.</b> For a lap by driver <span class="tex" data-tex="d"></span> in car <span class="tex" data-tex="c"></span> at event <span class="tex" data-tex="e"></span>, segment <span class="tex" data-tex="s"></span>, starting <span class="tex" data-tex="t_i"></span> (tens of minutes from the segment's mean lap start):</p>
@@ -146,7 +146,9 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
   <div class="cl"><span class="n">3.3</span><div><p><b>Track evolution.</b> A step per segment, plus a slope within each segment (rubbering in, and teams saving their best tyres for the final run):</p>
     <div class="eq tex" data-tex="\tau_{e,1}=0,\quad \tau_{e,2}=\kappa_{e,2},\quad \tau_{e,3}=\kappa_{e,2}+\kappa_{e,3},\qquad \kappa_{e,s}\sim\mathcal N(m_s,\sigma_\kappa),\qquad \gamma_e\sim\mathcal N(\mu_\gamma,\sigma_\gamma)"></div></div></div>
   <div class="cl"><span class="n">3.4</span><div><p><b>Car.</b> A development trend that drifts as a random walk, with steps scaled by the weeks between events, plus a fit to each track that does not carry over:</p>
-    <div class="eq tex" data-tex="\theta_{c,1}\sim\mathcal N(0,\sigma_{\text{car}}),\qquad \theta_{c,e}=\theta_{c,e-1}+\sigma_{\text{dev}}\sqrt{\Delta_e}\,z_{c,e},\qquad \nu_{c,e}\sim\mathcal N(0,\sigma_\nu)"></div></div></div>
+    <div class="eq tex" data-tex="\theta_{c,1}\sim\mathcal N(0,\sigma_{\text{car}}),\qquad \theta_{c,e}=\theta_{c,e-1}+\sigma_{\text{dev}}\sqrt{\Delta_e}\,z_{c,e},\qquad \nu_{c,e}\sim\mathcal N(0,\sigma_\nu)"></div>
+    <p>The data pin down the combined event-to-event variation of a car much better than how it splits between development and track fit, so v1.3 samples that total and the share due to development, and derives the two scales (<span class="tex" data-tex="\bar\Delta"></span> is the typical number of weeks between events):</p>
+    <div class="eq tex" data-tex="\sigma_{\text{dev}}=\sqrt{\rho_{\text{dev}}/\bar\Delta}\;\sigma_{ce},\qquad \sigma_\nu=\sqrt{1-\rho_{\text{dev}}}\;\sigma_{ce}"></div></div></div>
   <div class="cl"><span class="n">3.5</span><div><p><b>Driver.</b> One skill per driver, <span class="tex" data-tex="\delta_d\sim\mathcal N(0,\sigma_\delta)"></span>, constant over the season.</p></div></div>
   <div class="cl"><span class="n">3.6</span><div><p><b>Identification.</b> Sum-to-zero constraints make car pace relative to the field and driver skill relative to the average driver:</p>
     <div class="eq tex" data-tex="\textstyle\sum_c \theta_{c,e}=0,\qquad \sum_c \nu_{c,e}=0,\qquad \sum_d \delta_d = 0"></div>
@@ -160,8 +162,8 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
   <div class="cl"><span class="n">4.1</span><div><p>All values in % of lap time. <span class="tex" data-tex="\mathcal N^{+}"></span> is a half-normal. Hierarchical terms are non-centred.</p>
     <div class="tw"><table><thead><tr><th>Parameter</th><th>Prior</th><th>Why</th></tr></thead><tbody>
       <tr><td><span class="tex" data-tex="\sigma_{\text{car}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,1.2)"></span></td><td>Field spreads above ~10% are impossible under the 107% rule</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma_{\text{dev}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.25)"></span></td><td>A season can move a car by 1–3%, not 10%</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma_\nu"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.5)"></span></td><td>Track suitability of up to about ±1%</td></tr>
+      <tr><td><span class="tex" data-tex="\sigma_{ce}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.6)"></span></td><td>Combined development and track fit per event; implies the same beliefs about each as v1.2</td></tr>
+      <tr><td><span class="tex" data-tex="\rho_{\text{dev}}"></span></td><td><span class="tex" data-tex="\mathrm{Beta}(2,\,4)"></span></td><td>About a third of it from development, loosely; a season moves a car by 1–3%, track fit by up to ±1%</td></tr>
       <tr><td><span class="tex" data-tex="\sigma_\delta"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>A driver worth more than 1.5% is implausible</td></tr>
       <tr><td><span class="tex" data-tex="m_2,\ m_3"></span></td><td><span class="tex" data-tex="\mathcal N(-0.5,\,0.3)"></span></td><td>The track gets faster each segment; slower only in rare cases</td></tr>
       <tr><td><span class="tex" data-tex="\sigma_\kappa"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>Evolution varies by venue</td></tr>
@@ -193,12 +195,14 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
       <tr><td>v1</td><td>91%</td><td>90%</td><td>82%</td><td>87%</td><td class="muted">n/a</td></tr>
       <tr><td>v1.1</td><td>91%</td><td>89%</td><td>92%</td><td>94%</td><td>&gamma;: 100% (16 events)</td></tr>
       <tr><td>v1.2</td><td>91%</td><td>88%</td><td>90%</td><td>94%</td><td>&pi;, &ell; recovered within 90%</td></tr>
+      <tr><td>v1.3</td><td>83%</td><td>92%</td><td>88%</td><td>91%</td><td>all 6 hyperparameters inside their 90% intervals</td></tr>
     </tbody></table></div></div></div>
   <div class="cl"><span class="n">6.2</span><div><p><b>Model comparison</b> (PSIS-LOO, higher is better):</p>
     <div class="tw"><table><thead><tr><th>Version</th><th>Change</th><th class="r">elpd</th><th class="r">vs previous</th><th class="r">Pareto k &gt; 0.7</th></tr></thead><tbody>
       <tr><td>v1</td><td>Ex-Gaussian, segment steps</td><td class="r">&minus;1308.8</td><td class="r muted">n/a</td><td class="r">19 laps</td></tr>
       <tr><td>v1.1</td><td>+ within-segment evolution</td><td class="r">&minus;1079.5</td><td class="r ok">+229 &plusmn; 21</td><td class="r">18 laps</td></tr>
       <tr><td>v1.2</td><td>+ clean / compromised mixture</td><td class="r">&minus;1037.2</td><td class="r ok">+42 &plusmn; 13</td><td class="r">4 laps</td></tr>
+      <tr><td>v1.3</td><td>development vs track fit as total + share</td><td class="r muted">17 rounds</td><td class="r">&minus;1.3 &plusmn; 1.0 (level)</td><td class="r">7 laps</td></tr>
     </tbody></table></div></div></div>
   <div class="cl"><span class="n">6.3</span><div><p><b>Posterior predictive checks.</b> v1.2 reproduces the shape of lap times (skewness and kurtosis, which earlier versions failed). Statistics built from each driver's <i>best</i> lap (teammate gap, field spread, Q1&rarr;Q2 step) still fall in the tails; see 7.2.</p></div></div>
 </article>
@@ -206,7 +210,7 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
 <article id="a7"><h2><span>Article 7</span>Limitations</h2>
   <div class="cl"><span class="n">7.1</span><div><p><b>Drivers are compared within teams only.</b> With one car per driver, a pair's shared quality is indistinguishable from car pace. Cross-team driver rankings need drivers who changed teams, which a multi-season version (2023–2026) would add.</p></div></div>
   <div class="cl"><span class="n">7.2</span><div><p><b>Head-to-head probabilities are conservative.</b> Drivers adapt within a session (abort, go again, stop after a good lap), so a real best lap is tighter than "the best of several independent laps". The model overstates how uncertain best laps are, by about 20%.</p></div></div>
-  <div class="cl"><span class="n">7.3</span><div><p><b>Development and track fit trade off.</b> The data pin down their combined effect better than the split (posterior correlation about &minus;0.5), so <span class="tex" data-tex="\sigma_{\text{dev}}"></span> mixes slowly and a few rounds pass the gate with a warning. A reparameterisation (v1.3) is planned.</p></div></div>
+  <div class="cl"><span class="n">7.3</span><div><p><b>Development and track fit trade off</b> (resolved in v1.3). The data pin down their combined effect better than the split, so in v1.2 <span class="tex" data-tex="\sigma_{\text{dev}}"></span> mixed slowly and three rounds passed the gate with a warning. v1.3 samples the total and the share instead (3.1–3.4): the effective sample size of <span class="tex" data-tex="\sigma_{\text{dev}}"></span> rose 1.7&ndash;3.3&times; and round 14 went from R-hat 1.016 to 1.001, with identical estimates elsewhere.</p></div></div>
   <div class="cl"><span class="n">7.4</span><div><p><b>Early rounds are uncertain by design.</b> After one session the model has about 100 laps; its intervals are wide and honest, not wrong.</p></div></div>
   <div class="cl"><span class="n">7.5</span><div><p><b>Wet sessions</b> and laps flagged for rain are excluded rather than modelled.</p></div></div>
 </article>
@@ -220,8 +224,8 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
   <div class="cl"><span class="n">9.1</span><div><p>All code, data and model versions are public at <a href="https://github.com/Tahahaha7/purple-sectors">github.com/Tahahaha7/purple-sectors</a>, with the full development record in <code>docs/model_log.md</code>.</p></div></div>
   <div class="cl"><span class="n">9.2</span><div><pre>pip install -r requirements.txt
 python -m purple_sectors.fetch --year 2026
-python -m purple_sectors.fit --stan stan/quali_v12.stan --out posterior_v12.npz
-python -m purple_sectors.export --posterior posterior_v12.npz --out site/data --snapshot-dir site/data/snapshots</pre>
+python -m purple_sectors.fit --stan stan/quali_v13.stan --out posterior_v13.npz
+python -m purple_sectors.export --posterior posterior_v13.npz --out site/data --snapshot-dir site/data/snapshots</pre>
     <p>Run with <code>PYTHONPATH=src</code>. The same data and seeds reproduce the published numbers to the third decimal.</p></div></div>
 </article>
 

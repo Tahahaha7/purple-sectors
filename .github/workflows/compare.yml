@@ -7,10 +7,10 @@ on:
     inputs:
       base:
         description: "Production model"
-        default: "quali_v12"
-      candidate:
-        description: "Candidate model"
         default: "quali_v13"
+      candidate:
+        description: "Candidate model (file name in stan/, without .stan)"
+        required: true
       round:
         description: "Extra round to test (e.g. a round that warned)"
         default: "14"

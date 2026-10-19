@@ -86,7 +86,7 @@ jobs:
         run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
       - name: Fit rounds 1..${{ matrix.round }}
         run: >
-          python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v12.stan
+          python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v13.stan
           --out post.npz --max-round ${{ matrix.round }} --samples ${{ inputs.samples }} --allow-fail
       - name: Export snapshot
         run: >
@@ -95,7 +95,9 @@ jobs:
       - uses: actions/upload-artifact@v6
         with:
           name: snapshot-r${{ matrix.round }}
-          path: out/snapshots/r*.json
+          path: |
+            out/snapshots/r*.json
+            out/forecasts/r*.json
           retention-days: 7
 
   publish:
@@ -111,14 +113,14 @@ jobs:
         with:
           pattern: snapshot-*
           merge-multiple: true
-          path: site/data/snapshots
+          path: site/data
       - name: Rebuild index
         run: python -m purple_sectors.export --index-only site/data/snapshots
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data/snapshots
+          git add site/data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "Backfill posterior history: $(ls site/data/snapshots/r*.json | wc -l | tr -d ' ') rounds"
           git pull --rebase
