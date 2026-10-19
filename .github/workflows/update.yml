@@ -99,5 +99,12 @@ jobs:
           git add "data/raw/quali_laps_${YEAR}.csv" "data/raw/schedule_${YEAR}.json" site/data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "Update model: $(date -u +%Y-%m-%d)"
-          git pull --rebase
-          git push
+          for attempt in 1 2 3; do                           # another job may have committed meanwhile:
+            if git pull --rebase -X theirs origin main \
+               && python -m purple_sectors.export --index-only site/data/snapshots \
+               && git add site/data && git commit --amend --no-edit --allow-empty \
+               && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 10))
+          done
+          exit 1

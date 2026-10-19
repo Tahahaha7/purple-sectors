@@ -77,7 +77,7 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
     print(f"{des.N} push laps · {des.D} drivers · {des.C} cars · {des.E} events")
     fit = CmdStanModel(stan_file=str(stan)).sample(
         data=des.stan_data(des.laps["y"].to_numpy()), chains=4, parallel_chains=4,
-        iter_warmup=warmup, iter_sampling=samples, adapt_delta=0.95, inits=0.5,
+        iter_warmup=warmup, iter_sampling=samples, adapt_delta=0.99 if des.E <= 3 else 0.95, inits=0.5,
         seed=seed, show_progress=False)
 
     names = set(getattr(getattr(fit, "metadata", None), "stan_vars", None) or {})   # what this model actually has
