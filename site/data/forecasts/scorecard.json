@@ -1,4 +1,26 @@
 {
- "rounds": [],
- "latest": "r18.json"
+ "rounds": [
+  {
+   "round": 2,
+   "name": "Chinese Grand Prix",
+   "actual_pole": "ANT",
+   "p_actual_pole": 0.106,
+   "favourite": "RUS",
+   "p_favourite": 0.411,
+   "favourite_right": false,
+   "q3_hits": 7,
+   "brier_q3": 0.1597,
+   "brier_q3_baseline": 0.2521,
+   "log_score_pole": -2.244,
+   "rank_corr": 0.798
+  }
+ ],
+ "latest": "r18.json",
+ "summary": {
+  "forecasts": 1,
+  "favourite_right": 0,
+  "q3_skill": 0.367,
+  "mean_rank_corr": 0.798,
+  "mean_p_actual_pole": 0.106
+ }
 }
