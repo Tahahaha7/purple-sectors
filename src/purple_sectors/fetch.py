@@ -223,6 +223,11 @@ def fetch_season(year: int, out: Path, cache_dir: Path) -> tuple[pd.DataFrame, l
     meetings = meetings[held | upcoming].sort_values("date_start").reset_index(drop=True)
     meetings["round"] = meetings.index + 1
     past = past.merge(meetings[["meeting_key", "meeting_name", "round"]], on="meeting_key")
+    sched = [{"round": int(m["round"]), "name": str(m["meeting_name"]), "location": str(m.get("location", "")),
+              "country": str(m.get("country_name", "")), "date": m["date_start"].isoformat()}
+             for _, m in meetings.iterrows()]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    (out.parent / f"schedule_{year}.json").write_text(json.dumps(sched, indent=1))
 
     # 3. build the lap table
     frames, skipped = [], []
