@@ -1,0 +1,86 @@
+name: Compare models
+
+# Validate a candidate model against the production one before switching:
+# parameter recovery for the candidate, then both fitted side by side on a problem round and the full season.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Production model"
+        default: "quali_v12"
+      candidate:
+        description: "Candidate model"
+        default: "quali_v13"
+      round:
+        description: "Extra round to test (e.g. a round that warned)"
+        default: "14"
+
+permissions:
+  contents: read
+
+env:
+  YEAR: "2026"
+  CMDSTAN_VERSION: "2.36.0"
+  PYTHONPATH: src
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [recovery, base-round, base-all, cand-round, cand-all]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: Restore CmdStan
+        uses: actions/cache@v5
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
+      - name: Install CmdStan if the cache missed
+        run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
+      - name: Run ${{ matrix.job }}
+        env:
+          JOB: ${{ matrix.job }}
+          BASE: ${{ inputs.base }}
+          CAND: ${{ inputs.candidate }}
+          ROUND: ${{ inputs.round }}
+        run: |
+          mkdir -p out
+          LAPS="data/raw/quali_laps_${YEAR}.csv"
+          case "$JOB" in
+            recovery)   python -m purple_sectors.recovery --stan "stan/${CAND}.stan" --laps "$LAPS" --report out/recovery.json ;;
+            base-round) python -m purple_sectors.fit --stan "stan/${BASE}.stan" --laps "$LAPS" --max-round "$ROUND" --allow-fail \
+                          --out "out/post_${BASE}_${ROUND}.npz" --report "out/report_${BASE}_${ROUND}.json" ;;
+            base-all)   python -m purple_sectors.fit --stan "stan/${BASE}.stan" --laps "$LAPS" --allow-fail --save-loglik \
+                          --out "out/post_${BASE}_all.npz" --report "out/report_${BASE}_all.json" ;;
+            cand-round) python -m purple_sectors.fit --stan "stan/${CAND}.stan" --laps "$LAPS" --max-round "$ROUND" --allow-fail \
+                          --out "out/post_${CAND}_${ROUND}.npz" --report "out/report_${CAND}_${ROUND}.json" ;;
+            cand-all)   python -m purple_sectors.fit --stan "stan/${CAND}.stan" --laps "$LAPS" --allow-fail --save-loglik \
+                          --out "out/post_${CAND}_all.npz" --report "out/report_${CAND}_all.json" ;;
+          esac
+      - uses: actions/upload-artifact@v6
+        with:
+          name: compare-${{ matrix.job }}
+          path: |
+            out/*.json
+            out/*_all.npz
+          retention-days: 14
+
+  report:
+    needs: run
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v7
+        with: { pattern: compare-*, path: artifacts }
+      - name: Comparison table
+        run: python -m purple_sectors.compare --dir artifacts --base "${{ inputs.base }}" --candidate "${{ inputs.candidate }}"
