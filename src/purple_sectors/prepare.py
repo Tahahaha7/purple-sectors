@@ -69,13 +69,36 @@ class Design:
     @property
     def E(self): return len(self.events)
 
-    def stan_data(self, y: np.ndarray, prior_only: bool = False) -> dict:
+    def stan_data(self, y: np.ndarray, prior_only: bool = False, priors: dict | None = None) -> dict:
         y_ref = pd.Series(y).groupby(self.event).median().to_numpy()
-        return dict(N=self.N, D=self.D, C=self.C, E=self.E,
+        data = dict(N=self.N, D=self.D, C=self.C, E=self.E,
                     driver=self.driver + 1, car=self.car + 1, event=self.event + 1,
                     seg=self.seg + 1, medium=self.medium, tyre_age=self.tyre_age,
                     dt=self.dt, t_seg=self.t_seg, y_ref=y_ref, y=y,
                     prior_only=int(prior_only))
+        if priors is not None:
+            mean, sd, _ = driver_prior_arrays(self.drivers, priors)
+            data.update(delta_prior_mean=mean, delta_prior_sd=sd)
+        return data
+
+
+def needs_driver_priors(stan_file) -> bool:
+    """v2.0 and later take driver skill priors from the history model."""
+    from pathlib import Path
+    return "delta_prior_mean" in Path(stan_file).read_text()
+
+
+def driver_prior_arrays(drivers: list, priors: dict):
+    """Prior mean and sd for each driver, in the model's order. Drivers without history (rookies)
+    get the population prior: mean 0, sd = the spread of skill plus one season of drift."""
+    rookie_sd = float(np.hypot(priors["sigma_driver"], priors["sigma_drift"]))
+    mean, sd, kind = [], [], []
+    for d in drivers:
+        p = priors["drivers"].get(d)
+        mean.append(p["mean"] if p else 0.0)
+        sd.append(p["sd"] if p else rookie_sd)
+        kind.append("history" if p else "rookie")
+    return np.array(mean), np.array(sd), kind
 
 
 def build_design(p: pd.DataFrame) -> Design:

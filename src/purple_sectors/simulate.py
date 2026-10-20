@@ -25,7 +25,7 @@ def _sum_to_zero(rng, scale, size):
 
 
 def draw_params(des: Design, rng, share_prior: bool = False, v11: bool = False,
-                v12: bool = False, v13: bool = False, **fixed) -> dict:
+                v12: bool = False, v13: bool = False, priors: dict | None = None, **fixed) -> dict:
     """Draw hyperparameters from the priors (unless fixed), then all latent effects.
     share_prior=True uses Model B: rho ~ Beta(1,1) splits sigma_total into car and driver."""
     hn = lambda s: abs(rng.normal(0, s))
@@ -57,7 +57,12 @@ def draw_params(des: Design, rng, share_prior: bool = False, v11: bool = False,
         theta[e] = theta[e - 1] + p["sigma_dev"] * np.sqrt(des.dt[e]) * z[e]
     p["theta"] = theta
     p["nu"] = p["sigma_nu"] * _sum_to_zero(rng, 1.0, (E, C))
-    p["delta"] = p["sigma_driver"] * _sum_to_zero(rng, 1.0, (D,))
+    if priors is not None:          # v2.0: skill comparable across teams, from the history prior
+        from purple_sectors.prepare import driver_prior_arrays
+        mean, sd, _ = driver_prior_arrays(des.drivers, priors)
+        p["delta"] = mean + sd * rng.normal(size=D)
+    else:
+        p["delta"] = p["sigma_driver"] * _sum_to_zero(rng, 1.0, (D,))
     if v12:
         v11 = True
         p.setdefault("pi_bad", rng.beta(*PRIORS["pi_bad"]))

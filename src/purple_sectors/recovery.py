@@ -22,7 +22,7 @@ TRUTH = dict(m=np.array([-0.55, -0.40]), sigma_kappa=0.15, mu_gamma=-0.4, sigma_
 def flags_for(stan: Path) -> dict:
     v = re.search(r"v(\d+)", stan.stem)
     v = int(v.group(1)) if v else 1
-    if v >= 13:
+    if v >= 13:                      # v2.0 = v1.3 + driver priors (handled via needs_driver_priors)
         return {"v13": True}
     return {"v12": True} if v >= 12 else ({"v11": True} if v >= 11 else {})
 
@@ -35,6 +35,8 @@ def cover(draws, true) -> float:
 def main(stan: Path, laps: Path, seed: int, warmup: int, samples: int, report: Path | None) -> dict:
     des = build_design(load_push_laps(str(laps)))
     rng = np.random.default_rng(seed)
+    from purple_sectors.fit import load_priors
+    priors = load_priors(stan, laps, None)
     flags, truth_fixed = flags_for(stan), dict(TRUTH)
     dt_bar = float(np.mean(des.dt[1:]))
     if flags.get("v13"):              # same true development / track fit, expressed the v1.3 way
@@ -42,10 +44,10 @@ def main(stan: Path, laps: Path, seed: int, warmup: int, samples: int, report: P
                            rho_dev=float(0.06 ** 2 * dt_bar / (0.06 ** 2 * dt_bar + 0.30 ** 2)))
     else:
         truth_fixed.update(sigma_dev=0.06, sigma_nu=0.30)
-    truth = draw_params(des, rng, **flags, **truth_fixed)
+    truth = draw_params(des, rng, **flags, priors=priors, **truth_fixed)
     y = simulate_laps(des, truth, rng)
     fit = CmdStanModel(stan_file=str(stan)).sample(
-        data=des.stan_data(y), chains=4, parallel_chains=4, iter_warmup=warmup, iter_sampling=samples,
+        data=des.stan_data(y, priors=priors), chains=4, parallel_chains=4, iter_warmup=warmup, iter_sampling=samples,
         adapt_delta=0.95, inits=0.5, seed=seed, show_progress=False)
     sv = lambda k: fit.stan_variable(k)
     res = {"stan": str(stan),
@@ -54,7 +56,7 @@ def main(stan: Path, laps: Path, seed: int, warmup: int, samples: int, report: P
            "hyper": {}}
     if "gamma" in truth:
         res["coverage"]["gamma"] = cover(sv("gamma"), truth["gamma"])
-    for k in ["sigma_dev", "sigma_nu", "sigma_driver", "pi_bad", "loss_clean", "sigma"]:
+    for k in ["sigma_dev", "sigma_nu"] + ([] if priors else ["sigma_driver"]) + ["pi_bad", "loss_clean", "sigma"]:
         lo, med, hi = np.percentile(sv(k), [5, 50, 95])
         res["hyper"][k] = {"truth": float(truth[k]), "median": float(med), "lo": float(lo), "hi": float(hi),
                            "inside": bool(lo <= truth[k] <= hi)}
