@@ -97,8 +97,8 @@
    "location": "Budapest",
    "date": "2026.07.25",
    "file": "r11.json",
-   "passed": false,
-   "status": "warn"
+   "passed": true,
+   "status": "pass"
   },
   {
    "round": 12,
