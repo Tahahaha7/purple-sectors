@@ -18,6 +18,8 @@ data {
   array[N] int<lower=1, upper=D> driver;
   array[N] int<lower=1, upper=A> base;
   array[D, S] int<lower=0, upper=1> present;   // driver raced in that season
+  array[D, S] int<lower=0, upper=1> young;     // season s is the driver's 2nd or 3rd in F1
+  array[D] int<lower=0, upper=1> young_next;   // the season after the last one is their 2nd or 3rd
   vector[A] y_ref;
   vector[N] y;
 }
@@ -38,6 +40,7 @@ parameters {
   matrix[D, S] z_drv;                           // first season level, then season-to-season drift
   real<lower=0> sigma_driver;
   real<lower=0> sigma_drift;                    // per season
+  real<lower=0> sigma_young;                    // extra change while a driver is still learning
   real<lower=0> sigma;
   real<lower=1, upper=100> nu;                // beyond ~30 it is effectively normal
 }
@@ -58,7 +61,9 @@ transformed parameters {
   {
     matrix[D, S] walk;
     walk[:, 1] = sigma_driver * z_drv[:, 1];
-    for (s in 2:S) walk[:, s] = walk[:, s - 1] + sigma_drift * z_drv[:, s];
+    for (s in 2:S)
+      for (d in 1:D)
+        walk[d, s] = walk[d, s - 1] + sqrt(square(sigma_drift) + young[d, s] * square(sigma_young)) * z_drv[d, s];
     for (s in 1:S) {                             // relative to that season's grid
       real m = 0;
       for (d in 1:D) if (present[d, s]) m += walk[d, s];
@@ -76,6 +81,7 @@ model {
   sigma_nu ~ normal(0, 0.5);
   sigma_driver ~ normal(0, 0.3);
   sigma_drift ~ normal(0, 0.1);
+  sigma_young ~ normal(0, 0.2);
   sigma ~ normal(0, 0.5);
   nu ~ gamma(2, 0.1);
   {
@@ -89,5 +95,6 @@ model {
 generated quantities {
   // skill coming into the next season: last season's level plus one season of drift
   vector[D] skill_next;
-  for (d in 1:D) skill_next[d] = skill[d, S] + sigma_drift * normal_rng(0, 1);
+  for (d in 1:D)
+    skill_next[d] = skill[d, S] + sqrt(square(sigma_drift) + young_next[d] * square(sigma_young)) * normal_rng(0, 1);
 }

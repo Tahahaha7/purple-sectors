@@ -42,3 +42,18 @@ def test_network_links_drivers_through_teammates():
     assert sorted(map(sorted, net["components"])) == [["AAA", "CCC"], ["DDD", "EEE"]]
     edges = {(e["a"], e["b"], e["season"]) for e in net["edges"]}
     assert ("AAA", "BBB", 2024) in edges and ("BBB", "CCC", 2025) in edges and ("AAA", "CCC", 2026) in edges
+
+
+def test_debuts_from_seasons_endpoint():
+    hist = pd.DataFrame([dict(season=2024, driver="AAA", driver_id="aaa"), dict(season=2025, driver="BBB", driver_id="bbb")])
+
+    class S:
+        def get(self, url, params=None, timeout=None):
+            seasons = {"aaa": ["2015", "2016"], "bbb": ["2025"]}[url.split("/drivers/")[1].split("/")[0]]
+            class R:
+                status_code = 200
+                def raise_for_status(self): pass
+                def json(self): return {"MRData": {"SeasonTable": {"Seasons": [{"season": s} for s in seasons]}}}
+            return R()
+    H.MIN_INTERVAL = 0
+    assert H.debuts(hist, S(), grid_2026=["AAA", "BBB", "LIN"]) == {"AAA": 2015, "BBB": 2025, "LIN": 2026}

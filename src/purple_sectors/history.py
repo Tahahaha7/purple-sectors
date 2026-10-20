@@ -64,6 +64,19 @@ def fetch_season(season: int, session=None) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def debuts(hist: pd.DataFrame, session=None, grid_2026: list | None = None) -> dict:
+    """First F1 season of every driver (from Jolpica), so the model knows who is still learning."""
+    session = session or requests.Session()
+    out = {}
+    for code, did in hist.drop_duplicates("driver")[["driver", "driver_id"]].itertuples(index=False):
+        js = _get(session, f"{BASE}/drivers/{did}/seasons.json", {"limit": 100})
+        seasons = [int(s["season"]) for s in js["MRData"]["SeasonTable"]["Seasons"]]
+        out[code] = min(seasons) if seasons else int(hist.loc[hist["driver"] == code, "season"].min())
+    for code in grid_2026 or []:
+        out.setdefault(code, 2026)                 # no earlier season: a 2026 rookie
+    return out
+
+
 def teammate_edges(hist: pd.DataFrame, laps2026: pd.DataFrame | None = None) -> pd.DataFrame:
     """One row per (season, team, driver pair) with the number of rounds they both qualified."""
     frames = [hist[["season", "round", "team", "driver"]]]
@@ -115,13 +128,15 @@ def network(hist: pd.DataFrame, laps2026: pd.DataFrame) -> dict:
             "connected": len(comps) == 1, "components": [sorted(c) for c in comps]}
 
 
-def main(first: int, last: int, laps: Path, out_csv: Path, out_net: Path) -> dict:
+def main(first: int, last: int, laps: Path, out_csv: Path, out_net: Path, out_debuts: Path | None = None) -> dict:
     s = requests.Session()
     hist = pd.concat([fetch_season(y, s) for y in range(first, last + 1)], ignore_index=True)
     out_csv.parent.mkdir(parents=True, exist_ok=True); hist.to_csv(out_csv, index=False)
     l26 = pd.read_csv(laps) if Path(laps).exists() else pd.DataFrame()
     net = network(hist, l26)
     out_net.parent.mkdir(parents=True, exist_ok=True); out_net.write_text(json.dumps(net, indent=1))
+    deb = debuts(hist, s, net["grid_2026"])
+    (out_debuts or out_csv.parent / "driver_debuts.json").write_text(json.dumps(deb, indent=1, sort_keys=True))
     print(f"{len(hist)} results, {hist['driver'].nunique()} drivers, {len(net['edges'])} teammate pairings; "
           f"2026 grid connected: {net['connected']} ({len(net['components'])} component(s))")
     if summary := os.environ.get("GITHUB_STEP_SUMMARY"):

@@ -36,7 +36,14 @@ def load(path: Path, first: int, last: int) -> pd.DataFrame:
     return long.reset_index(drop=True)
 
 
-def design(obs: pd.DataFrame) -> History:
+YOUNG = (1, 2)                  # seasons after the debut with extra change: a driver's 2nd and 3rd seasons
+
+
+def load_debuts(path: Path | None) -> dict:
+    return json.loads(Path(path).read_text()) if path and Path(path).exists() else {}
+
+
+def design(obs: pd.DataFrame, debuts: dict | None = None, next_season: int | None = None) -> History:
     seasons = [int(s) for s in sorted(obs["season"].unique())]
     teams = {s: sorted(obs.loc[obs["season"] == s, "team_id"].unique()) for s in seasons}
     T = max(len(v) for v in teams.values())
@@ -49,13 +56,17 @@ def design(obs: pd.DataFrame) -> History:
     for (d, s) in obs[["driver", "season"]].drop_duplicates().itertuples(index=False):
         present[drivers.index(d), seasons.index(s)] = 1
     y_ref = obs.groupby(["season", "round", "seg"])["y"].median().reindex(pd.MultiIndex.from_frame(bases)).to_numpy()
+    debuts = debuts or {}
+    nxt = next_season or seasons[-1] + 1
+    young = [[int(d in debuts and s - debuts[d] in YOUNG) for s in seasons] for d in drivers]
+    young_next = [int(d in debuts and nxt - debuts[d] in YOUNG) for d in drivers]
     data = dict(N=len(obs), S=len(seasons), T=T, RMAX=max(len(v) for v in rounds.values()),
                 R=[len(rounds[s]) for s in seasons], D=len(drivers), A=len(bases),
                 season=[seasons.index(s) + 1 for s in obs["season"]], rnd=[rnd_idx[(s, r)] for s, r in zip(obs["season"], obs["round"])],
                 team=[teams[s].index(t) + 1 for s, t in zip(obs["season"], obs["team_id"])],
                 driver=[drivers.index(d) + 1 for d in obs["driver"]],
                 base=[base_idx[(s, r, g)] for s, r, g in zip(obs["season"], obs["round"], obs["seg"])],
-                present=present.tolist(), y_ref=y_ref.tolist(), y=obs["y"].tolist())
+                present=present.tolist(), young=young, young_next=young_next, y_ref=y_ref.tolist(), y=obs["y"].tolist())
     return History(obs, seasons, teams, drivers, data)
 
 
@@ -63,17 +74,19 @@ def priors(fit, H: History, next_season: int) -> dict:
     """Each driver's skill entering next_season (mean, sd in % of lap time), from their last season seen."""
     skill = fit.stan_variable("skill")            # draws x D x S
     drift = fit.stan_variable("sigma_drift")
+    yng = fit.stan_variable("sigma_young") if "young_next" in H.data else np.zeros_like(drift)
     pres = np.array(H.data["present"])
     out = {}
     for i, d in enumerate(H.drivers):
         last = int(np.where(pres[i])[0].max())
         gap = (len(H.seasons) - 1 - last) + 1    # seasons from the last one raced to next_season
-        draws = skill[:, i, last] + drift * np.sqrt(gap) * np.random.default_rng(i).normal(size=len(drift))
+        step = np.sqrt(gap * drift ** 2 + H.data["young_next"][i] * yng ** 2)
+        draws = skill[:, i, last] + step * np.random.default_rng(i).normal(size=len(drift))
         out[d] = {"mean": round(float(draws.mean()), 4), "sd": round(float(draws.std()), 4),
-                  "last_season": int(H.seasons[last]), "seasons": int(pres[i].sum())}
+                  "last_season": int(H.seasons[last]), "seasons": int(pres[i].sum()), "young": bool(H.data["young_next"][i])}
     return {"next_season": next_season, "units": "% of lap time vs the average driver; negative = faster",
             "sigma_driver": round(float(np.median(fit.stan_variable("sigma_driver"))), 4),
-            "sigma_drift": round(float(np.median(drift)), 4), "drivers": out}
+            "sigma_drift": round(float(np.median(drift)), 4), "sigma_young": round(float(np.median(yng)), 4), "drivers": out}
 
 
 def season_gaps(obs: pd.DataFrame, season: int) -> pd.DataFrame:
@@ -110,7 +123,7 @@ def holdout(fit, H: History, full_obs: pd.DataFrame, season: int) -> dict:
 
 def simulate(H: History, rng, truth=None) -> tuple[np.ndarray, dict]:
     """Fake best laps on the real history design, from known parameters (recovery check)."""
-    t = dict(sigma_car=0.9, sigma_dev=0.06, sigma_nu=0.3, sigma_driver=0.25, sigma_drift=0.06, sigma=0.25, nu=5.0)
+    t = dict(sigma_car=0.9, sigma_dev=0.06, sigma_nu=0.3, sigma_driver=0.25, sigma_drift=0.06, sigma_young=0.12, sigma=0.25, nu=5.0)
     t.update(truth or {})
     d = H.data; S, T, RMAX, D = d["S"], d["T"], d["RMAX"], d["D"]
     car = np.zeros((S, T, RMAX))
@@ -120,7 +133,8 @@ def simulate(H: History, rng, truth=None) -> tuple[np.ndarray, dict]:
             if r: w = w + t["sigma_dev"] * rng.normal(size=T)
             c = w + t["sigma_nu"] * rng.normal(size=T); car[s, :, r] = c - c.mean()
     pres = np.array(d["present"]); walk = np.zeros((D, S)); walk[:, 0] = t["sigma_driver"] * rng.normal(size=D)
-    for s in range(1, S): walk[:, s] = walk[:, s - 1] + t["sigma_drift"] * rng.normal(size=D)
+    yg = np.array(d["young"]) if "young" in d else np.zeros((D, S))
+    for s in range(1, S): walk[:, s] = walk[:, s - 1] + np.sqrt(t["sigma_drift"] ** 2 + yg[:, s] * t["sigma_young"] ** 2) * rng.normal(size=D)
     skill = walk - np.array([[walk[pres[:, s] == 1, s].mean() for s in range(S)]])
     i = lambda k: np.array(d[k]) - 1
     mu = np.array(d["y_ref"])[i("base")] + car[i("season"), i("team"), i("rnd")] + skill[i("driver"), i("season")]
@@ -131,7 +145,7 @@ def simulate(H: History, rng, truth=None) -> tuple[np.ndarray, dict]:
 def main(a) -> dict:
     from cmdstanpy import CmdStanModel
     obs = load(a.history, a.first, a.last)
-    H = design(obs)
+    H = design(obs, load_debuts(a.debuts), a.holdout or a.last + 1)
     data = dict(H.data); truth = None
     if a.recovery:
         y, truth = simulate(H, np.random.default_rng(a.seed)); data["y"] = y.tolist()
@@ -139,10 +153,10 @@ def main(a) -> dict:
                                                      iter_sampling=a.samples, adapt_delta=0.95, inits=0.5, seed=a.seed, show_progress=False)
     from purple_sectors.fit import max_rhat
     div = int(fit.method_variables()["divergent__"].sum())
-    rhat, worst = max_rhat(fit, ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma", "nu", "skill"])
+    rhat, worst = max_rhat(fit, ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma_young", "sigma", "nu", "skill"])
     rep = {"seasons": H.seasons, "N": int(H.data["N"]), "drivers": len(H.drivers), "divergences": div,
            "max_rhat": round(float(rhat), 4), "worst": worst,
-           "medians": {k: round(float(np.median(fit.stan_variable(k))), 4) for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma", "nu"]}}
+           "medians": {k: round(float(np.median(fit.stan_variable(k))), 4) for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma_young", "sigma", "nu"]}}
     if a.recovery:
         sk = fit.stan_variable("skill"); lo, hi = np.percentile(sk, [5, 95], axis=0); pres = np.array(H.data["present"]) == 1
         rep["recovery"] = {"skill_coverage90": round(float(((truth["skill"] >= lo) & (truth["skill"] <= hi))[pres].mean()), 3),
@@ -175,6 +189,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--history", type=Path, default=Path("data/raw/history_quali_2022_2025.csv"))
     ap.add_argument("--stan", type=Path, default=Path("stan/history.stan"))
+    ap.add_argument("--debuts", type=Path, default=Path("data/raw/driver_debuts.json"))
     ap.add_argument("--first", type=int, default=2022)
     ap.add_argument("--last", type=int, default=2025)
     ap.add_argument("--holdout", type=int, default=None)
