@@ -46,7 +46,8 @@ class _Fit:
     def __init__(self, D, S, n=500):
         rng = np.random.default_rng(2)
         self.v = {"skill": rng.normal(np.linspace(-0.3, 0.3, D)[None, :, None], 0.05, (n, D, S)),
-                  "sigma_drift": np.abs(rng.normal(0.05, 0.01, n)), "sigma_driver": np.abs(rng.normal(0.25, 0.02, n))}
+                  "sigma_drift": np.abs(rng.normal(0.05, 0.01, n)), "sigma_driver": np.abs(rng.normal(0.25, 0.02, n)),
+                  "sigma_young": np.abs(rng.normal(0.15, 0.02, n))}
         self.v["skill_next"] = self.v["skill"][:, :, -1]
 
     def stan_variable(self, k):
@@ -79,7 +80,7 @@ def test_main_writes_json_reports_with_numpy_values(tmp_path):
         def __init__(self, D, S):
             super().__init__(D, S)
             rng = np.random.default_rng(3)
-            for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma", "nu"]:
+            for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma", "nu"]:  # (sigma_young comes from _Fit)
                 self.v[k] = np.abs(rng.normal(1, 0.1, 500))
         def method_variables(self):
             return {"divergent__": np.zeros((125, 4))}
@@ -96,7 +97,7 @@ def test_main_writes_json_reports_with_numpy_values(tmp_path):
         def sample(self, data, **kw): return Fit(data["D"], data["S"])
     cs = sys.modules["cmdstanpy"]; original = cs.CmdStanModel
     cs.CmdStanModel = Model
-    args = types.SimpleNamespace(history=path, stan=None, first=2024, last=2025, holdout=None, recovery=False,
+    args = types.SimpleNamespace(history=path, stan=None, debuts=None, first=2024, last=2025, holdout=None, recovery=False,
                                  priors=tmp_path / "p.json", report=tmp_path / "r.json", warmup=10, samples=10, seed=1)
     try:
         rep = HF.main(args)
@@ -105,3 +106,20 @@ def test_main_writes_json_reports_with_numpy_values(tmp_path):
     assert json.loads((tmp_path / "r.json").read_text())["seasons"] == [2024, 2025]
     assert "AAA" in json.loads((tmp_path / "p.json").read_text())["drivers"]
     assert "max_rhat" in rep
+
+
+def test_young_flags_mark_second_and_third_seasons(tmp_path):
+    obs = HF.load(_history(tmp_path), 2024, 2025)
+    H = HF.design(obs, {"AAA": 2010, "BBB": 2024, "GGG": 2025, "CCC": 2023}, next_season=2026)
+    young = {d: row for d, row in zip(H.drivers, H.data["young"])}
+    nxt = dict(zip(H.drivers, H.data["young_next"]))
+    assert young["BBB"] == [0, 1] and young["CCC"] == [1, 1] and young["AAA"] == [0, 0]   # 2025 is BBB's 2nd, CCC's 3rd
+    assert nxt["GGG"] == 1 and nxt["BBB"] == 1 and nxt["CCC"] == 0 and nxt["AAA"] == 0       # 2026: GGG 2nd, BBB 3rd
+
+
+def test_young_drivers_get_wider_priors(tmp_path):
+    obs = HF.load(_history(tmp_path), 2024, 2025)
+    H = HF.design(obs, {d: 2010 for d in "AAA BBB CCC DDD EEE FFF".split()} | {"GGG": 2025}, next_season=2026)
+    pr = HF.priors(_Fit(H.data["D"], 2), H, 2026)["drivers"]
+    assert pr["GGG"]["young"] and not pr["EEE"]["young"]
+    assert pr["GGG"]["sd"] > pr["EEE"]["sd"] + 0.05                                        # extra room to improve
