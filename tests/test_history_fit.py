@@ -68,3 +68,40 @@ def test_holdout_compares_predicted_and_observed_gaps(tmp_path):
     assert "AAA-CCC" in pairs and "BBB-DDD" in pairs                      # new 2025 pairings, predicted from 2024
     assert "EEE-GGG" not in pairs                                         # GGG has no history: not predictable
     assert out["coverage90"] is not None
+
+
+def test_main_writes_json_reports_with_numpy_values(tmp_path):
+    import json, sys, types
+    path = _history(tmp_path)
+
+    class Fit(_Fit):
+        chains, num_draws_sampling = 4, 125
+        def __init__(self, D, S):
+            super().__init__(D, S)
+            rng = np.random.default_rng(3)
+            for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma", "nu"]:
+                self.v[k] = np.abs(rng.normal(1, 0.1, 500))
+        def method_variables(self):
+            return {"divergent__": np.zeros((125, 4))}
+        def draws_pd(self, vars):
+            cols = {}
+            for k in vars:
+                a = self.v[k].reshape(500, -1)
+                for i in range(a.shape[1]):
+                    cols[f"{k}[{i}]"] = a[:, i]
+            df = pd.DataFrame(cols); df.insert(0, "chain__", np.repeat(np.arange(1, 5), 125)); return df
+
+    class Model:
+        def __init__(self, stan_file): pass
+        def sample(self, data, **kw): return Fit(data["D"], data["S"])
+    cs = sys.modules["cmdstanpy"]; original = cs.CmdStanModel
+    cs.CmdStanModel = Model
+    args = types.SimpleNamespace(history=path, stan=None, first=2024, last=2025, holdout=None, recovery=False,
+                                 priors=tmp_path / "p.json", report=tmp_path / "r.json", warmup=10, samples=10, seed=1)
+    try:
+        rep = HF.main(args)
+    finally:
+        cs.CmdStanModel = original
+    assert json.loads((tmp_path / "r.json").read_text())["seasons"] == [2024, 2025]
+    assert "AAA" in json.loads((tmp_path / "p.json").read_text())["drivers"]
+    assert "max_rhat" in rep

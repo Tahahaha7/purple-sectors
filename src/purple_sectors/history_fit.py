@@ -37,7 +37,7 @@ def load(path: Path, first: int, last: int) -> pd.DataFrame:
 
 
 def design(obs: pd.DataFrame) -> History:
-    seasons = sorted(obs["season"].unique())
+    seasons = [int(s) for s in sorted(obs["season"].unique())]
     teams = {s: sorted(obs.loc[obs["season"] == s, "team_id"].unique()) for s in seasons}
     T = max(len(v) for v in teams.values())
     drivers = sorted(obs["driver"].unique())
@@ -137,8 +137,11 @@ def main(a) -> dict:
         y, truth = simulate(H, np.random.default_rng(a.seed)); data["y"] = y.tolist()
     fit = CmdStanModel(stan_file=str(a.stan)).sample(data=data, chains=4, parallel_chains=4, iter_warmup=a.warmup,
                                                      iter_sampling=a.samples, adapt_delta=0.95, inits=0.5, seed=a.seed, show_progress=False)
+    from purple_sectors.fit import max_rhat
     div = int(fit.method_variables()["divergent__"].sum())
-    rep = {"seasons": H.seasons, "N": H.data["N"], "drivers": len(H.drivers), "divergences": div,
+    rhat, worst = max_rhat(fit, ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma", "nu", "skill"])
+    rep = {"seasons": H.seasons, "N": int(H.data["N"]), "drivers": len(H.drivers), "divergences": div,
+           "max_rhat": round(float(rhat), 4), "worst": worst,
            "medians": {k: round(float(np.median(fit.stan_variable(k))), 4) for k in ["sigma_car", "sigma_dev", "sigma_nu", "sigma_driver", "sigma_drift", "sigma", "nu"]}}
     if a.recovery:
         sk = fit.stan_variable("skill"); lo, hi = np.percentile(sk, [5, 95], axis=0); pres = np.array(H.data["present"]) == 1
@@ -148,13 +151,13 @@ def main(a) -> dict:
         rep["holdout"] = holdout(fit, H, load(a.history, a.first, a.holdout), a.holdout)
     if a.priors:
         Path(a.priors).parent.mkdir(parents=True, exist_ok=True)
-        Path(a.priors).write_text(json.dumps(priors(fit, H, a.last + 1), indent=1))
-    print(json.dumps(rep, indent=1))
+        Path(a.priors).write_text(json.dumps(priors(fit, H, a.last + 1), indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
+    print(json.dumps(rep, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
     if a.report:
-        Path(a.report).write_text(json.dumps(rep, indent=1))
+        Path(a.report).write_text(json.dumps(rep, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
     if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
         L = [f"## History fit {H.seasons[0]}–{H.seasons[-1]}" + (" (recovery)" if a.recovery else ""),
-             f"{H.data['N']} best laps · {len(H.drivers)} drivers · divergences {div}",
+             f"{H.data['N']} best laps · {len(H.drivers)} drivers · divergences {div}/{fit.chains * fit.num_draws_sampling} · max R-hat {rhat:.3f} (`{worst}`)",
              "", "| parameter | median |", "|---|---|"] + [f"| `{k}` | {v} |" for k, v in rep["medians"].items()]
         if "recovery" in rep:
             L += ["", f"**Recovery:** driver-season skill inside 90% interval: {rep['recovery']['skill_coverage90']:.0%}"]
