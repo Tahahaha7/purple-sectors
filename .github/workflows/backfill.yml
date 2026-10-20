@@ -86,7 +86,7 @@ jobs:
         run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
       - name: Fit rounds 1..${{ matrix.round }}
         run: >
-          python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v13.stan
+          python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v20.stan
           --out post.npz --max-round ${{ matrix.round }} --samples ${{ inputs.samples }} --allow-fail
       - name: Export snapshot
         run: >
