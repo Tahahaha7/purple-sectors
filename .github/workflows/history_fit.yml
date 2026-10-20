@@ -1,0 +1,75 @@
+name: History model
+
+# Fit the 2022-2025 history model three ways in parallel:
+#   recovery  - simulated history on the real design: does the model recover known skills?
+#   holdout   - fit 2022-2024 only, predict 2025 teammate gaps before seeing them
+#   full      - fit 2022-2025 and write the 2026 driver priors (committed)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-model
+  cancel-in-progress: false
+
+env:
+  CMDSTAN_VERSION: "2.36.0"
+  PYTHONPATH: src
+
+jobs:
+  fit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [recovery, holdout, full]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: Restore CmdStan
+        uses: actions/cache@v5
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
+      - name: Install CmdStan if the cache missed
+        run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
+      - name: Run ${{ matrix.job }}
+        run: |
+          mkdir -p out
+          case "${{ matrix.job }}" in
+            recovery) python -m purple_sectors.history_fit --recovery --report out/recovery.json ;;
+            holdout)  python -m purple_sectors.history_fit --last 2024 --holdout 2025 --report out/holdout.json ;;
+            full)     python -m purple_sectors.history_fit --last 2025 --priors out/drivers_2026.json --report out/full.json ;;
+          esac
+      - uses: actions/upload-artifact@v6
+        with:
+          name: history-${{ matrix.job }}
+          path: out/
+          retention-days: 30
+
+  commit-priors:
+    needs: fit
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with: { name: history-full, path: out }
+      - name: Commit the 2026 driver priors
+        run: |
+          mkdir -p data/priors && cp out/drivers_2026.json data/priors/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/priors/drivers_2026.json
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "2026 driver priors from the 2022-2025 history model"
+          for attempt in 1 2 3; do
+            if git pull --rebase -X theirs origin main && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true; sleep $((attempt * 10))
+          done
+          exit 1
