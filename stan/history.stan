@@ -39,7 +39,7 @@ parameters {
   real<lower=0> sigma_driver;
   real<lower=0> sigma_drift;                    // per season
   real<lower=0> sigma;
-  real<lower=1> nu;
+  real<lower=1, upper=100> nu;                // beyond ~30 it is effectively normal
 }
 
 transformed parameters {

@@ -59,9 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v7
+        continue-on-error: true                    # the full fit may have failed: nothing to commit then
         with: { name: history-full, path: out }
       - name: Commit the 2026 driver priors
         run: |
+          if [ ! -f out/drivers_2026.json ]; then echo "No priors produced (full fit failed)"; exit 0; fi
           mkdir -p data/priors && cp out/drivers_2026.json data/priors/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
