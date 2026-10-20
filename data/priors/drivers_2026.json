@@ -1,194 +1,226 @@
 {
  "next_season": 2026,
  "units": "% of lap time vs the average driver; negative = faster",
- "sigma_driver": 0.2273,
- "sigma_drift": 0.0362,
+ "sigma_driver": 0.2272,
+ "sigma_drift": 0.0332,
+ "sigma_young": 0.0596,
  "drivers": {
   "ALB": {
-   "mean": -0.0388,
-   "sd": 0.0789,
+   "mean": -0.047,
+   "sd": 0.0777,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "ALO": {
-   "mean": -0.0524,
-   "sd": 0.0871,
+   "mean": -0.0505,
+   "sd": 0.0849,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "ANT": {
-   "mean": 0.0924,
-   "sd": 0.0951,
+   "mean": 0.0911,
+   "sd": 0.1266,
    "last_season": 2025,
-   "seasons": 1
+   "seasons": 1,
+   "young": true
   },
   "BEA": {
-   "mean": 0.0685,
-   "sd": 0.0906,
+   "mean": 0.0523,
+   "sd": 0.1267,
    "last_season": 2025,
-   "seasons": 2
+   "seasons": 2,
+   "young": true
   },
   "BOR": {
-   "mean": 0.0229,
-   "sd": 0.1108,
+   "mean": 0.0248,
+   "sd": 0.1362,
    "last_season": 2025,
-   "seasons": 1
+   "seasons": 1,
+   "young": true
   },
   "BOT": {
-   "mean": 0.0432,
-   "sd": 0.1336,
+   "mean": 0.0539,
+   "sd": 0.1293,
    "last_season": 2024,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "COL": {
-   "mean": 0.2491,
-   "sd": 0.0871,
+   "mean": 0.2732,
+   "sd": 0.1272,
    "last_season": 2025,
-   "seasons": 2
+   "seasons": 2,
+   "young": true
   },
   "DEV": {
-   "mean": 0.3169,
-   "sd": 0.1185,
+   "mean": 0.3257,
+   "sd": 0.1213,
    "last_season": 2023,
-   "seasons": 2
+   "seasons": 2,
+   "young": false
   },
   "DOO": {
-   "mean": 0.316,
-   "sd": 0.1335,
+   "mean": 0.3178,
+   "sd": 0.1593,
    "last_season": 2025,
-   "seasons": 2
+   "seasons": 2,
+   "young": true
   },
   "GAS": {
-   "mean": -0.0108,
-   "sd": 0.0738,
+   "mean": -0.0029,
+   "sd": 0.0749,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "HAD": {
-   "mean": 0.1402,
-   "sd": 0.0908,
+   "mean": 0.1508,
+   "sd": 0.1262,
    "last_season": 2025,
-   "seasons": 1
+   "seasons": 1,
+   "young": true
   },
   "HAM": {
-   "mean": -0.0798,
-   "sd": 0.0788,
+   "mean": -0.0837,
+   "sd": 0.0769,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "HUL": {
-   "mean": 0.0376,
-   "sd": 0.1003,
+   "mean": 0.0394,
+   "sd": 0.098,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "LAT": {
-   "mean": 0.436,
-   "sd": 0.1368,
+   "mean": 0.4291,
+   "sd": 0.1306,
    "last_season": 2022,
-   "seasons": 1
+   "seasons": 1,
+   "young": false
   },
   "LAW": {
-   "mean": 0.2247,
-   "sd": 0.0873,
+   "mean": 0.2412,
+   "sd": 0.0967,
    "last_season": 2025,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "LEC": {
-   "mean": -0.2083,
-   "sd": 0.0764,
+   "mean": -0.2116,
+   "sd": 0.074,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "MAG": {
-   "mean": 0.1653,
-   "sd": 0.1072,
+   "mean": 0.1674,
+   "sd": 0.1053,
    "last_season": 2024,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "MSC": {
-   "mean": 0.3618,
-   "sd": 0.1334,
+   "mean": 0.3685,
+   "sd": 0.1286,
    "last_season": 2022,
-   "seasons": 1
+   "seasons": 1,
+   "young": false
   },
   "NOR": {
-   "mean": -0.193,
-   "sd": 0.0943,
+   "mean": -0.2013,
+   "sd": 0.0935,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "OCO": {
-   "mean": 0.1436,
-   "sd": 0.0818,
+   "mean": 0.137,
+   "sd": 0.0805,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "PER": {
-   "mean": -0.1436,
-   "sd": 0.1008,
+   "mean": -0.1473,
+   "sd": 0.0964,
    "last_season": 2024,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "PIA": {
-   "mean": -0.0917,
-   "sd": 0.095,
+   "mean": -0.1074,
+   "sd": 0.0986,
    "last_season": 2025,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "RIC": {
-   "mean": 0.1192,
-   "sd": 0.0865,
+   "mean": 0.1159,
+   "sd": 0.0851,
    "last_season": 2024,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   },
   "RUS": {
-   "mean": -0.146,
+   "mean": -0.1479,
    "sd": 0.087,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "SAI": {
-   "mean": -0.1319,
-   "sd": 0.0753,
+   "mean": -0.1372,
+   "sd": 0.0747,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "SAR": {
-   "mean": 0.2898,
-   "sd": 0.1007,
+   "mean": 0.2701,
+   "sd": 0.1061,
    "last_season": 2024,
-   "seasons": 2
+   "seasons": 2,
+   "young": false
   },
   "STR": {
-   "mean": 0.1993,
-   "sd": 0.0866,
+   "mean": 0.2019,
+   "sd": 0.085,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "TSU": {
-   "mean": 0.0176,
-   "sd": 0.0736,
+   "mean": 0.017,
+   "sd": 0.0712,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "VER": {
-   "mean": -0.5573,
-   "sd": 0.0833,
+   "mean": -0.5596,
+   "sd": 0.0791,
    "last_season": 2025,
-   "seasons": 4
+   "seasons": 4,
+   "young": false
   },
   "VET": {
-   "mean": 0.0302,
-   "sd": 0.1252,
+   "mean": 0.0362,
+   "sd": 0.1199,
    "last_season": 2022,
-   "seasons": 1
+   "seasons": 1,
+   "young": false
   },
   "ZHO": {
-   "mean": 0.31,
-   "sd": 0.1364,
+   "mean": 0.3478,
+   "sd": 0.1398,
    "last_season": 2024,
-   "seasons": 3
+   "seasons": 3,
+   "young": false
   }
  }
 }
