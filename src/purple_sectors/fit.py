@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from cmdstanpy import CmdStanModel
 
-from purple_sectors.prepare import build_design, load_push_laps
+from purple_sectors.prepare import build_design, driver_prior_arrays, load_push_laps, needs_driver_priors
 
 HYPER = ["m", "sigma_kappa", "mu_gamma", "sigma_gamma", "sigma_car", "sigma_dev", "sigma_nu",
          "sigma_driver", "beta_m", "beta_a", "sigma", "pi_bad", "loss_clean", "loss_gap"]
@@ -54,6 +54,27 @@ def ess(fit, name) -> float:
     return float(m * n / max(1e-9, 2 * s - 1))
 
 
+def load_priors(stan: Path, laps: Path, path: Path | None) -> dict | None:
+    """Driver priors for models that need them (v2.0+): data/priors/drivers_<year>.json by default."""
+    import json
+    if not needs_driver_priors(stan):
+        return None
+    if path is None:
+        year = "".join(ch for ch in Path(laps).stem if ch.isdigit())[-4:]
+        path = Path("data/priors") / f"drivers_{year}.json"
+    if not Path(path).exists():
+        raise SystemExit(f"{stan} needs driver priors, but {path} is missing: run the History model workflow")
+    return json.loads(Path(path).read_text())
+
+
+def prior_conflicts(delta, drivers, prior_mean, prior_sd, z_flag=2.0) -> list:
+    """Drivers whose 2026 posterior has moved far from their history prior (in prior sds)."""
+    z = (delta.mean(axis=0) - prior_mean) / prior_sd
+    rows = [{"driver": d, "z": round(float(zz), 2), "prior": round(float(m) * 0.9, 3), "now": round(float(p) * 0.9, 3)}
+            for d, zz, m, p in zip(drivers, z, prior_mean, delta.mean(axis=0))]
+    return sorted([r for r in rows if abs(r["z"]) >= z_flag], key=lambda r: -abs(r["z"]))
+
+
 def summary_line(fit, name) -> str:
     lo, med, hi = np.percentile(fit.stan_variable(name), [5, 50, 95])
     return f"| `{name}` | {med:.3f} | [{lo:.3f}, {hi:.3f}] |"
@@ -72,11 +93,12 @@ def gate(div: int, total: int, rhat: float, max_div_frac: float = 0.002, max_r: 
 def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int,
          max_div_frac: float, max_r: float, max_round: int | None = None, allow_fail: bool = False,
          warn_div_frac: float = 0.01, warn_r: float = 1.05, save_loglik: bool = False,
-         report: Path | None = None) -> int:
+         report: Path | None = None, driver_priors: Path | None = None) -> int:
     des = build_design(load_push_laps(str(laps), max_round=max_round))
+    priors = load_priors(stan, laps, driver_priors)
     print(f"{des.N} push laps · {des.D} drivers · {des.C} cars · {des.E} events")
     fit = CmdStanModel(stan_file=str(stan)).sample(
-        data=des.stan_data(des.laps["y"].to_numpy()), chains=4, parallel_chains=4,
+        data=des.stan_data(des.laps["y"].to_numpy(), priors=priors), chains=4, parallel_chains=4,
         iter_warmup=warmup, iter_sampling=samples, adapt_delta=0.99 if des.E <= 3 else 0.95, inits=0.5,
         seed=seed, show_progress=False)
 
@@ -91,6 +113,12 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
 
     out_vars = {v: fit.stan_variable(v).astype("float32") for v in hyper + LATENT + DERIVED}
     out_vars["p_bad_mean"] = fit.stan_variable("p_bad").mean(axis=0).astype("float32")
+    conflicts = []
+    if priors is not None:                            # keep the priors with the posterior, for the site
+        pm, ps, kind = driver_prior_arrays(des.drivers, priors)
+        out_vars.update(delta_prior_mean=pm.astype("float32"), delta_prior_sd=ps.astype("float32"),
+                        delta_prior_kind=np.array(kind))
+        conflicts = prior_conflicts(fit.stan_variable("delta"), des.drivers, pm, ps)
     if save_loglik:                                   # for LOO comparison between model versions
         out_vars["log_lik"] = fit.stan_variable("log_lik")[::4].astype("float32")
     np.savez_compressed(out, **out_vars, divergent=mv["divergent__"], treedepth=mv["treedepth__"],
@@ -105,7 +133,8 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
                "divergences": div, "draws": total, "max_rhat": rhat, "worst": worst, "status": status,
                "ess": {v: round(ess(fit, v)) for v in ["sigma_dev", "sigma_nu", "sigma_driver", "pi_bad"] if v in hyper},
                "car_share": float(np.median(fit.stan_variable("car_share").mean(axis=1))),
-               "medians": {v: float(np.median(fit.stan_variable(v))) for v in ["sigma_dev", "sigma_nu", "sigma_driver", "pi_bad", "loss_clean"] if v in hyper}}
+               "medians": {v: float(np.median(fit.stan_variable(v))) for v in ["sigma_dev", "sigma_nu", "sigma_driver", "pi_bad", "loss_clean"] if v in hyper},
+               "prior_conflicts": conflicts}
         Path(report).write_text(json.dumps(rep, indent=1))
 
     if summary := os.environ.get("GITHUB_STEP_SUMMARY"):     # shows on the Actions run page
@@ -116,6 +145,13 @@ def main(laps: Path, stan: Path, out: Path, warmup: int, samples: int, seed: int
                  f"\n**Car share:** {cs[1]:.3f} [{cs[0]:.3f}, {cs[2]:.3f}]\n",
                  "| parameter | median | 90% |", "|---|---|---|"]
         lines += [summary_line(fit, v) for v in ["sigma_driver", "pi_bad", "loss_clean", "mu_gamma"]]
+        if priors is not None:
+            sk = fit.stan_variable("delta"); sk = (sk - sk.mean(axis=1, keepdims=True)) * 0.9
+            order = np.argsort(np.median(sk, axis=0))[:5]
+            lines += ["", "**Fastest drivers, car removed (top 5):** " + ", ".join(
+                f"{des.drivers[i]} {np.median(sk[:, i]):+.2f} s" for i in order)]
+            lines += ["", f"**History vs 2026:** {len(conflicts)} driver(s) moved more than 2 prior sds"]
+            lines += [f"- {c['driver']}: {c['prior']:+.2f} s (2022-25) to {c['now']:+.2f} s (z = {c['z']:+.1f})" for c in conflicts]
         Path(summary).open("a").write("\n".join(lines) + "\n")
     return 0 if status != "fail" or allow_fail else 1
 
@@ -136,6 +172,7 @@ if __name__ == "__main__":
     ap.add_argument("--allow-fail", action="store_true", help="exit 0 even if diagnostics fail (backfill)")
     ap.add_argument("--save-loglik", action="store_true", help="store log_lik draws (model comparison)")
     ap.add_argument("--report", type=Path, default=None, help="write diagnostics as JSON here")
+    ap.add_argument("--driver-priors", type=Path, default=None, help="history priors (v2.0+); default data/priors/drivers_<year>.json")
     a, _ = ap.parse_known_args()
     sys.exit(main(a.laps, a.stan, a.out, a.warmup, a.samples, a.seed, a.max_div_frac, a.max_rhat,
-                  a.max_round, a.allow_fail, a.warn_div_frac, a.warn_rhat, a.save_loglik, a.report))
+                  a.max_round, a.allow_fail, a.warn_div_frac, a.warn_rhat, a.save_loglik, a.report, a.driver_priors))

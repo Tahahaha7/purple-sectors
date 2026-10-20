@@ -150,7 +150,7 @@ def snapshot(post, laps_csv: Path) -> dict:
         "cars": [{"team": _short(t), "pace": _q(now[:, c]), "p_fast": round(float((fastest == c).mean()), 3)}
                  for c, t in enumerate(cars)],
         "drivers": [{"code": d, "name": str(info.loc[d, "name"]), "number": int(info.loc[d, "number"]),
-                     "team": _short(team_of[d]), "skill": _q(post["delta"][:, i] * SEC)}
+                     "team": _short(team_of[d]), "skill": _q(skill_sec(post)[:, i])}
                     for i, d in enumerate(drivers)],
         "teammates": [{k: v for k, v in p.items() if k != "dots"} for p in teammate_pairs(post, info)],
         "grid": list(GRID),
@@ -187,7 +187,8 @@ def draws_snapshot(post, n: int = 150) -> dict:
     return {
         "round": int(post["events"][-1]), "n": n,
         "cars": {_short(t): rnd(now[:, c]) for c, t in enumerate(post["cars"])},
-        "drivers": {str(d): rnd(post["delta"][pick, i] * SEC) for i, d in enumerate(post["drivers"])},
+        "drivers": {str(d): rnd(skill_sec(post)[pick, i]) for i, d in enumerate(post["drivers"])},
+        "cross_team": is_cross_team(post),
         "params": {k: rnd(post[k][pick] * f) for k, f in DRAW_PARAMS.items() if k in post.files},
     }
 
@@ -205,6 +206,42 @@ def write_index(snap_dir: Path) -> Path:
     idx.write_text(json.dumps({"latest": rows[-1]["round"] if rows else None, "rounds": rows}, indent=1))
     print(f"wrote {idx} ({len(rows)} rounds)")
     return idx
+
+
+def model_label(post) -> str:
+    return "v2.0" if is_cross_team(post) else "v1.3"
+
+
+def is_cross_team(post) -> bool:
+    """v2.0+ posteriors: driver skill is comparable across teams (history priors)."""
+    return "delta_prior_mean" in post.files
+
+
+def skill_sec(post) -> np.ndarray:
+    """Driver skill in seconds. Cross-team models: relative to the average driver on the grid (per draw)."""
+    d = np.asarray(post["delta"], dtype=float) * SEC
+    return d - d.mean(axis=1, keepdims=True) if is_cross_team(post) else d
+
+
+def driver_ranking(post, info: pd.DataFrame) -> list:
+    """Every driver ranked by skill with the car removed (v2.0+)."""
+    drivers, cars = [str(d) for d in post["drivers"]], [str(c) for c in post["cars"]]
+    sk = skill_sec(post); D = sk.shape[1]
+    ranks = sk.argsort(axis=1).argsort(axis=1) + 1                       # 1 = fastest, per draw
+    car_of = {i: cars[np.bincount(post["car"][post["driver"] == i]).argmax()] for i in range(D)}
+    pm = np.asarray(post["delta_prior_mean"], dtype=float) * SEC
+    kind = [str(k) for k in post["delta_prior_kind"]] if "delta_prior_kind" in post.files else ["history"] * D
+    raw = np.asarray(post["delta"], dtype=float) * SEC
+    rows = []
+    for i, d in enumerate(drivers):
+        lo, med, hi = np.percentile(sk[:, i], Q)
+        rows.append({"code": d, "name": str(info.loc[d, "name"]), "number": int(info.loc[d, "number"]),
+                     "team": _short(car_of[i]), "skill": [round(lo, 3), round(med, 3), round(hi, 3)],
+                     "p_fastest": round(float((ranks[:, i] == 1).mean()), 3), "p_top3": round(float((ranks[:, i] <= 3).mean()), 3),
+                     "rank": int(np.median(ranks[:, i])), "rank_lo": int(np.percentile(ranks[:, i], 10)), "rank_hi": int(np.percentile(ranks[:, i], 90)),
+                     "history": kind[i] == "history", "vs_history": round(float(np.median(raw[:, i]) - pm[i]), 3)})
+    rows.sort(key=lambda r: r["skill"][1])
+    return rows
 
 
 def soft(post, laps_csv: Path) -> dict:
@@ -235,7 +272,7 @@ def soft(post, laps_csv: Path) -> dict:
     pick = rng.choice(now.shape[0], min(96, now.shape[0]), replace=False)
     meds = [r["med"] for r in car_rows]
     return {
-        "model": "v1.3", "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "model": model_label(post), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "round": rounds[-1], "n_rounds": len(rounds), "event": str(last["event"].iloc[0]),
         "location": str(last["location"].iloc[0]), "date": str(last["date_start"].min())[:10].replace("-", "."),
         "laps": int(len(post["y"])),
@@ -244,7 +281,8 @@ def soft(post, laps_csv: Path) -> dict:
         "loss_clean_ms": int(round(float(np.median(post["loss_clean"])) * 900)),
         "car_spread": round(max(meds) - min(meds), 2),
         "mate_gap": round(float(np.median([abs(p["gap"]) for p in pairs])), 2),
-        "status": _status(post),
+        "status": _status(post), "cross_team": is_cross_team(post),
+        "drivers": driver_ranking(post, info) if is_cross_team(post) else None,
         "cars": car_rows, "pairs": pairs,
         "draws": {_short(t): np.round(now[pick, c], 3).tolist() for c, t in enumerate(cars)},
     }
