@@ -7,7 +7,7 @@ on:
     inputs:
       base:
         description: "Production model"
-        default: "quali_v13"
+        default: "quali_v20"
       candidate:
         description: "Candidate model (file name in stan/, without .stan)"
         required: true

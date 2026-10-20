@@ -72,23 +72,23 @@ jobs:
         if: steps.changes.outputs.new == 'true'
         run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
 
-      - name: Fit production model (v1.3)
+      - name: Fit production model (v2.0)
         if: steps.changes.outputs.new == 'true'
-        run: python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v13.stan --out posterior_v13.npz
+        run: python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v20.stan --out posterior_v20.npz
 
       - name: Upload posterior
         if: always() && steps.changes.outputs.new == 'true'
         uses: actions/upload-artifact@v6
         with:
-          name: posterior-v13-run-${{ github.run_number }}
-          path: posterior_v13.npz
+          name: posterior-v20-run-${{ github.run_number }}
+          path: posterior_v20.npz
           if-no-files-found: ignore
           retention-days: 30
 
       - name: Export website data
         if: steps.changes.outputs.new == 'true'
         run: >
-          python -m purple_sectors.export --posterior posterior_v13.npz --laps "data/raw/quali_laps_${YEAR}.csv"
+          python -m purple_sectors.export --posterior posterior_v20.npz --laps "data/raw/quali_laps_${YEAR}.csv"
           --out site/data --snapshot-dir site/data/snapshots
 
       - name: Commit and push

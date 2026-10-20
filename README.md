@@ -21,7 +21,7 @@ Every push lap is decomposed into **car**, **driver**, **track evolution** and *
 - **About 1 in 10 push laps is compromised** (traffic, mistakes, yellows) and costs about 1.1 s; a clean lap is about 0.25 s off the limit.
 - Drivers are compared **with their teammate only**; cross-team rankings need a multi-season model (planned).
 
-## Model (production: `stan/quali_v13.stan`)
+## Model (production: `stan/quali_v20.stan`)
 `y = 100·log(lap time)`, so every parameter is in % of lap time.
 ```
 y ~ (1 − π)·ExGauss(μ, σ, 1/loss_clean) + π·ExGauss(μ, σ, 1/loss_bad)
@@ -29,10 +29,12 @@ y ~ (1 − π)·ExGauss(μ, σ, 1/loss_clean) + π·ExGauss(μ, σ, 1/loss_bad)
   + car trend (random walk in √weeks) + car × track fit + driver + tyres
 ```
 v1.3 samples car development and track fit as a total plus a share, which fixed slow mixing in v1.2.
+v2.0 starts each driver's skill from a 2022–25 history model (`stan/history.stan`), where drivers moved between teams,
+so drivers are comparable across teams and car pace means the car alone.
 Full details on the [Hard page](https://tahahaha7.github.io/purple-sectors/hard.html); development record in [`docs/model_log.md`](docs/model_log.md).
 
 ## Pipeline
-1. **Every Sunday 06:00 UTC** (retry Monday), `update.yml`: fetch new sessions from [OpenF1](https://openf1.org) → fit v1.3 in Stan → quality gate → export site data and a per-round snapshot → commit → redeploy.
+1. **Every Sunday 06:00 UTC** (retry Monday), `update.yml`: fetch new sessions from [OpenF1](https://openf1.org) → fit v2.0 in Stan → quality gate → export site data and a per-round snapshot → commit → redeploy.
 2. **Quality gate:** pass (R-hat ≤ 1.01, divergences ≤ 0.2%) publishes; warn (≤ 1.05, ≤ 1%) publishes with a flag; fail blocks.
 3. **History:** `backfill.yml` refits rounds 1..k for every k in parallel, so Medium and Inter can replay the season.
 
@@ -43,7 +45,7 @@ src/purple_sectors/prepare.py    push-lap filter, one car per driver, design
 src/purple_sectors/fit.py        CmdStan fit + three-level quality gate
 src/purple_sectors/export.py     posterior → site JSON, per-round snapshots and joint draws
 src/purple_sectors/simulate.py   NumPy mirror of the Stan models (prior checks, recovery)
-stan/                            v1, v1-B (sensitivity), v1.1, v1.2, v1.3 (production)
+stan/                            v1, v1-B, v1.1, v1.2, v1.3, v2.0 (production), history (2022-25)
 notebooks/                       recovery and model-comparison notebooks (Colab)
 site/                            the static website (GitHub Pages)
 tests/                           pytest suites (fake OpenF1, synthetic posteriors)
@@ -55,8 +57,8 @@ tests/                           pytest suites (fake OpenF1, synthetic posterior
 pip install -r requirements.txt
 export PYTHONPATH=src
 python -m purple_sectors.fetch --year 2026
-python -m purple_sectors.fit --stan stan/quali_v13.stan --out posterior_v13.npz
-python -m purple_sectors.export --posterior posterior_v13.npz --out site/data --snapshot-dir site/data/snapshots
+python -m purple_sectors.fit --stan stan/quali_v20.stan --out posterior_v20.npz
+python -m purple_sectors.export --posterior posterior_v20.npz --out site/data --snapshot-dir site/data/snapshots
 ```
 
 ## Development
