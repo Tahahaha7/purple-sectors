@@ -258,7 +258,7 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 
 <section class="router" aria-label="More">
   <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The season</div><p>How the rankings moved round by round, and how the model learned.</p></a>
-  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] Comparisons</div><p>Teammate battles, any driver in any car, and the network that links them all.</p></a>
+  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
   <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, the history behind it, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. Lap timing from OpenF1; 2022&ndash;25 results from Jolpica.</p>
@@ -416,7 +416,7 @@ function nextUp() {
         cell('Pole favourite', `${last(fav.name)} ${pct(fav.p_pole)}`, `then ${fc.drivers.filter(d => d !== fav).sort((a, b) => b.p_pole - a.p_pole).slice(0, 2).map(d => last(d.name) + ' ' + pct(d.p_pole)).join(', ')}`) +
         cell('Forecasts scored', S.forecasts, `favourite took pole ${S.favourite_right} of ${S.forecasts} times`) +
         cell('Q3 calls vs guessing', `${S.q3_skill >= 0 ? '+' : ''}${Math.round(S.q3_skill * 100)}% better`, `Brier skill against picking 10 at random`) +
-        cell('Last scored round', `${lastScored.name.replace(' Grand Prix', ' GP')}`, `${lastScored.actual_pole} took pole; we gave them ${pct(lastScored.p_actual_pole)}`)
+        cell('Last scored round', `${lastScored.name.replace(' Grand Prix', ' GP')}`, `${(fc.drivers.find(d => d.code === lastScored.actual_pole) || { name: lastScored.actual_pole }).name.split(' ').slice(-1)[0].replace(/^(.)(.*)$/, (m, a, b) => a + b.toLowerCase())} took pole, with a ${pct(lastScored.p_actual_pole)} chance in our forecast`)
       ) : cell('Pole favourite', `${last(fav.name)} ${pct(fav.p_pole)}`, 'No forecasts scored yet');
       $('next').hidden = false;
     });
