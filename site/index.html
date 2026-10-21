@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+
 <title>purple-sectors / Soft</title>
 <meta name="description" content="Formula 1 qualifying 2026, decoded: the fastest drivers with the car removed, and the fastest cars with the driver removed.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -14,14 +17,9 @@
 <style>
 
 :root{
-  color-scheme: light;
-  --bg:#FFFFFF; --ink:#000000; --ink-2:#6B6B6B; --ink-3:#A3A3A3; --rule:#E4E4E4; --fill:#F2F2F2;
-  --accent:#6E2BF2;
-}
-@media (prefers-color-scheme: dark){
-  :root{ color-scheme: dark;
-    --bg:#000000; --ink:#FFFFFF; --ink-2:#9A9A9A; --ink-3:#5C5C5C; --rule:#232323; --fill:#141414;
-    --accent:#A57CFF; }
+  color-scheme: dark;                              /* always dark, whatever the computer's setting */
+  --bg:#000000; --ink:#FFFFFF; --ink-2:#9A9A9A; --ink-3:#5C5C5C; --rule:#232323; --fill:#141414;
+  --accent:#A57CFF;
 }
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -113,7 +111,11 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 .heads .s{color:var(--ink-2);font-size:12.5px;margin-top:4px}
 /* driver vs car map */
 .mapwrap{position:relative;border-bottom:1px solid var(--rule)}
-.mapbox{position:relative;width:100%;aspect-ratio:1160/600;min-width:900px}
+.maphead{display:flex;align-items:baseline;gap:8px 28px;flex-wrap:wrap;padding:16px 24px 6px}
+.maphead h2{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0}
+.maphead p{color:var(--ink-2);font-size:12.5px;margin:0;max-width:80ch}
+/* the whole chart fits on one screen: as tall as the window allows, between 440 and 620 px */
+.mapbox{position:relative;width:100%;height:clamp(440px,calc(100vh - 120px),620px);min-width:900px}
 .mapscroll{overflow-x:auto}
 .mapbox svg{position:absolute;inset:0;width:100%;height:100%}
 .mapbox svg text{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;fill:var(--ink-2)}
@@ -216,9 +218,9 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 </header>
 
 <section class="mapwrap" aria-labelledby="h2-map">
-  <div class="head"><div><h2 id="h2-map">Driver vs car</h2>
-    <p>Each column is a car, slowest on the left. Each helmet sits as high as its driver is fast. The stars in slower cars are top left. The thin line through a helmet shows how sure the model is about that driver.</p></div></div>
-  <div class="mapscroll"><div class="mapbox" id="map"><svg id="map-svg" viewBox="0 0 1160 600" preserveAspectRatio="none" aria-hidden="true"></svg><div class="tip" id="tip" role="status"></div></div></div>
+  <div class="maphead"><h2 id="h2-map">Driver vs car</h2>
+    <p>One column per car, slowest on the left; each helmet sits as high as its driver is fast. Stars in slower cars are top left.</p></div>
+<div class="mapscroll"><div class="mapbox" id="map"><svg id="map-svg" viewBox="0 0 1160 600" preserveAspectRatio="none" aria-hidden="true"></svg><div class="tip" id="tip" role="status"></div></div></div>
 </section>
 
 <section class="rk" aria-labelledby="h2-drv">
@@ -278,7 +280,7 @@ function render(D) {
   }
   const carRank = Object.fromEntries(cars.map((c, i) => [c.team, i + 1]));
   const carMed = Object.fromEntries(cars.map(c => [c.team, c]));
-  $('stamp').innerHTML = `${D.date} / Round ${D.round} / ${D.model} <span class="badge ${D.status === 'pass' ? 'pass' : ''}">${D.status || 'pass'}</span>`;
+  $('stamp').textContent = D.date;
   $('hello').textContent = `2026 qualifying, after round ${D.round} (${D.event.replace(' Grand Prix', ' GP')})`;
   const d0 = drivers[0], c0 = cars[0];
   if (d0) {
@@ -287,7 +289,7 @@ function render(D) {
   }
   $('h-car').innerHTML = `<b>${c0.team}</b> ${sec(c0.med)}`;
   $('h-car-s').textContent = `against the average car; ${pct(c0.p_fast)} chance it is the fastest.`;
-  if (drivers.length) drawMap(drivers, cars, carRank);
+  if (drivers.length) { window.__MAP = [drivers, cars, carRank]; drawMap(drivers, cars, carRank); }
   // drivers table
   const dl = Math.min(...drivers.map(d => d.skill[0])) - 0.02, dh = Math.max(...drivers.map(d => d.skill[2])) + 0.02;
   const X = v => ((v - dl) / (dh - dl) * 100).toFixed(2) + '%';
@@ -313,7 +315,9 @@ function render(D) {
 
 function drawMap(drivers, cars, carRank) {
   // across: one column per car, slowest left to fastest right; up: driver skill (faster up)
-  const box = $('map'), svg = $('map-svg'), W = 1160, H = 600, L = 64, R = 1136, T = 36, B = 520;
+  // the drawing scale follows the box's real shape, so text never stretches when the height changes
+  const box = $('map'), svg = $('map-svg'), W = 1160, H = Math.round(W * box.clientHeight / Math.max(1, box.clientWidth)), L = 64, R = 1136, T = 30, B = H - 72;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const order = [...cars].reverse(), C = order.length, col = (R - L) / C;
   const colX = Object.fromEntries(order.map((c, i) => [c.team, L + (i + 0.5) * col]));
   const y0 = Math.max(...drivers.map(d => d.skill[2])) + 0.03, y1 = Math.min(...drivers.map(d => d.skill[0])) - 0.03;
@@ -322,13 +326,15 @@ function drawMap(drivers, cars, carRank) {
   g += `<line class="ax" x1="${L}" y1="${B}" x2="${R}" y2="${B}"/><line class="zero" x1="${L}" y1="${Y(0)}" x2="${R}" y2="${Y(0)}"/>
     <text class="q gem" x="${L + 10}" y="${T + 18}">fast driver, slower car</text><text class="q" x="${R - 10}" y="${T + 18}" text-anchor="end">fast driver, fast car</text>
     <text class="q" x="${L + 10}" y="${B - 12}">slower driver, slower car</text><text class="q" x="${R - 10}" y="${B - 12}" text-anchor="end">car doing the work</text>
-    <text x="${L - 10}" y="${T - 14}" text-anchor="start">\u2191 faster driver</text><text x="${R}" y="${B + 66}" text-anchor="end">faster car \u2192</text>`;
+    <text x="${L - 10}" y="${T - 14}" text-anchor="start">\u2191 faster driver</text><text x="${R}" y="${B + 58}" text-anchor="end">faster car \u2192</text>`;
   order.forEach(c => g += `<text x="${colX[c.team]}" y="${B + 20}" text-anchor="middle" style="fill:var(--ink)">${c.team}</text>
     <text x="${colX[c.team]}" y="${B + 36}" text-anchor="middle">${sec(c.med)}</text>`);
   [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3].forEach(v => { if (v <= y0 && v >= y1) g += `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${v === 0 ? 'avg' : minus((v > 0 ? '+' : '') + v.toFixed(1))}</text>`; });
-  const seen = {};
+  // drivers of the same car share its column, spread evenly (two usually, three when a substitute raced)
+  const per = {}; drivers.forEach(d => (per[d.team] = per[d.team] || []).push(d));
   const pts = drivers.map(d => {
-    const k = seen[d.team] = (seen[d.team] || 0) + 1, dx = (k === 1 ? -1 : 1) * col * 0.22;   // teammates side by side in their car's column
+    const mates = per[d.team], i = mates.indexOf(d), n = mates.length, step = col * (n > 2 ? 0.3 : 0.44);
+    const dx = (i - (n - 1) / 2) * step;
     return { d, x: colX[d.team] + dx, y: Y(d.skill[1]), yl: Y(d.skill[0]), yh: Y(d.skill[2]), left: dx < 0 };
   });
   pts.forEach(p => g += `<line class="wh" x1="${p.x}" x2="${p.x}" y1="${p.yl}" y2="${p.yh}"/>`);
@@ -412,7 +418,7 @@ fetch('data/soft.json', { cache: 'no-cache' })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => { render(d); nextUp(); changes(); })
   .catch(() => { $('h-drv').textContent = 'Data is refreshing.'; $('h-car').textContent = 'Check back in a few minutes.'; });
-window.addEventListener('resize', () => {});
+let rsz; window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (window.__MAP) drawMap(...window.__MAP); }, 150); });
 </script>
 </body>
 </html>
