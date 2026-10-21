@@ -113,123 +113,135 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
 
 <header class="title">
   <div class="copy">
-    <p class="hello">Hard: race distance</p>
+    <p class="hello">Hard: under the hood</p>
     <h1>Technical regulations of the model.</h1>
-    <p class="lede">Everything behind the numbers on this site: the data, the equations, every prior and why, how the model is fitted and checked, and what it cannot tell you. Article 8 is live and updates after every qualifying session.</p>
+    <p class="lede">Everything behind the numbers on this site: the data, the two models and how they connect, every prior and why, how the fits are checked, and what the model cannot tell you. Articles 7 and 9 are live and update after every qualifying session.</p>
   </div>
   <ol class="toc">
     <li><a href="#a1"><b>Art. 1</b>Scope</a></li><li><a href="#a2"><b>Art. 2</b>Data</a></li>
-    <li><a href="#a3"><b>Art. 3</b>Model</a></li><li><a href="#a4"><b>Art. 4</b>Priors</a></li>
-    <li><a href="#a5"><b>Art. 5</b>Inference</a></li><li><a href="#a6"><b>Art. 6</b>Validation</a></li>
-    <li><a href="#a7"><b>Art. 7</b>Limitations</a></li><li><a href="#a8"><b>Art. 8</b>Current fit (live)</a></li>
-    <li><a href="#a9"><b>Art. 9</b>Reproducibility</a></li>
+    <li><a href="#a3"><b>Art. 3</b>The 2026 model</a></li><li><a href="#a4"><b>Art. 4</b>The history model</a></li>
+    <li><a href="#a5"><b>Art. 5</b>Priors</a></li><li><a href="#a6"><b>Art. 6</b>Inference</a></li>
+    <li><a href="#a7"><b>Art. 7</b>Validation</a></li><li><a href="#a8"><b>Art. 8</b>Limitations</a></li>
+    <li><a href="#a9"><b>Art. 9</b>Current fit (live)</a></li><li><a href="#a10"><b>Art. 10</b>Reproducibility</a></li>
   </ol>
 </header>
 
 <article id="a1"><h2><span>Article 1</span>Scope</h2>
   <div class="cl"><span class="n">1.1</span><div><p>The model answers one question: in 2026 qualifying, how much of each lap time comes from the car, from the driver, from the track on the day, and from execution, and how certain is each answer.</p></div></div>
-  <div class="cl"><span class="n">1.2</span><div><p>It produces car pace by round, gaps between teammates, track evolution per circuit, the share of compromised laps, and a full posterior for every quantity. The Soft, Medium and Inter pages are views of this one posterior.</p></div></div>
-  <div class="cl"><span class="n">1.3</span><div><p>It does not model race pace, strategy, tyre degradation over a stint, or the order between drivers of different teams (see 7.1).</p></div></div>
+  <div class="cl"><span class="n">1.2</span><div><p>It ranks drivers <b>with the car removed</b> and cars <b>with the driver removed</b>, estimates where any driver would qualify in any car, compares any two drivers across teams, forecasts the next qualifying session, and gives a full posterior for every quantity. Every page of this site is a view of that one posterior.</p></div></div>
+  <div class="cl"><span class="n">1.3</span><div><p>It does not model race pace, strategy, tyre degradation over a stint, or how long a driver would need to adapt to a different car.</p></div></div>
 </article>
 
 <article id="a2"><h2><span>Article 2</span>Data</h2>
-  <div class="cl"><span class="n">2.1</span><div><p>Source: the public <a href="https://openf1.org">OpenF1</a> API. Main qualifying sessions only (Q1, Q2, Q3); Sprint Qualifying is excluded. Cancelled meetings are dropped and rounds use the official numbering.</p></div></div>
-  <div class="cl"><span class="n">2.2</span><div><p>The unit of data is a <b>push lap</b>: a timed lap that was not deleted, was not an out-lap, had no rain flag, and was within 7.0% of the fastest lap of its segment. The 7% cut sits in a natural gap between push laps and cool-down laps.</p></div></div>
-  <div class="cl"><span class="n">2.3</span><div><p>Each driver is kept only in their main car. A driver needs at least <span class="tex" data-tex="\min(3,\ \lceil k/3 \rceil)"></span> events after round <span class="tex" data-tex="k"></span>; substitutes below that are excluded.</p></div></div>
-  <div class="cl"><span class="n">2.4</span><div><p>The response is the log lap time, scaled so that every parameter reads as a percentage of lap time:</p>
-    <div class="eq tex" data-tex="y_i = 100 \log t_i"></div>
-    <p>The site converts to seconds on a typical 90-second lap (1% = 0.9 s).</p></div></div>
+  <div class="cl"><span class="n">2.1</span><div><p><b>2026 laps.</b> Every lap from main qualifying sessions (Q1, Q2, Q3), from the public <a href="https://openf1.org">OpenF1</a> API. Sprint qualifying is excluded; cancelled meetings are dropped and rounds use the official numbering.</p></div></div>
+  <div class="cl"><span class="n">2.2</span><div><p>The unit of 2026 data is a <b>push lap</b>: a timed lap that was not deleted, was not an out-lap, had no rain flag, and was within 7.0% of the fastest lap of its segment. Each driver is kept in their main car only; a driver needs at least <span class="tex" data-tex="\min(3,\ \lceil k/3 \rceil)"></span> events after round <span class="tex" data-tex="k"></span>.</p></div></div>
+  <div class="cl"><span class="n">2.3</span><div><p><b>2022&ndash;25 results.</b> Each driver's best Q1, Q2 and Q3 lap at every round of 2022&ndash;2025, from the <a href="https://api.jolpi.ca">Jolpica</a> API (the successor of Ergast), plus every driver's debut season. Best laps beyond 107% of the segment's fastest (wet or aborted) are dropped. These seasons are background evidence only: nothing on the site is about them.</p></div></div>
+  <div class="cl"><span class="n">2.4</span><div><p>The response is the log lap time, scaled so that every parameter reads as a percentage of lap time:</p><div class="eq tex" data-tex="y = 100 \log t"></div><p>The site converts to seconds on a typical 90-second lap (1% = 0.9 s).</p></div></div>
 </article>
 
-<article id="a3"><h2><span>Article 3</span>Model (v1.3, production)</h2>
-  <div class="cl"><span class="n">3.1</span><div><p><b>Likelihood.</b> Each lap is either clean or compromised (traffic, a mistake, a yellow flag). Both are exponentially modified Gaussians: noise around the lap's potential, plus a loss that can only cost time.</p>
-    <div class="eq tex" data-tex="y_i \sim (1-\pi)\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}}\right) + \pi\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}+\ell_{\text{gap}}}\right)"></div></div></div>
-  <div class="cl"><span class="n">3.2</span><div><p><b>Lap potential.</b> For a lap by driver <span class="tex" data-tex="d"></span> in car <span class="tex" data-tex="c"></span> at event <span class="tex" data-tex="e"></span>, segment <span class="tex" data-tex="s"></span>, starting <span class="tex" data-tex="t_i"></span> (tens of minutes from the segment's mean lap start):</p>
-    <div class="eq tex" data-tex="\mu_i = \alpha_e + \tau_{e,s} + \gamma_e\, t_i + \theta_{c,e} + \nu_{c,e} + \delta_d + \beta_m\,\mathrm{medium}_i + \beta_a\,\mathrm{age}_i"></div></div></div>
-  <div class="cl"><span class="n">3.3</span><div><p><b>Track evolution.</b> A step per segment, plus a slope within each segment (rubbering in, and teams saving their best tyres for the final run):</p>
-    <div class="eq tex" data-tex="\tau_{e,1}=0,\quad \tau_{e,2}=\kappa_{e,2},\quad \tau_{e,3}=\kappa_{e,2}+\kappa_{e,3},\qquad \kappa_{e,s}\sim\mathcal N(m_s,\sigma_\kappa),\qquad \gamma_e\sim\mathcal N(\mu_\gamma,\sigma_\gamma)"></div></div></div>
-  <div class="cl"><span class="n">3.4</span><div><p><b>Car.</b> A development trend that drifts as a random walk, with steps scaled by the weeks between events, plus a fit to each track that does not carry over:</p>
-    <div class="eq tex" data-tex="\theta_{c,1}\sim\mathcal N(0,\sigma_{\text{car}}),\qquad \theta_{c,e}=\theta_{c,e-1}+\sigma_{\text{dev}}\sqrt{\Delta_e}\,z_{c,e},\qquad \nu_{c,e}\sim\mathcal N(0,\sigma_\nu)"></div>
-    <p>The data pin down the combined event-to-event variation of a car much better than how it splits between development and track fit, so v1.3 samples that total and the share due to development, and derives the two scales (<span class="tex" data-tex="\bar\Delta"></span> is the typical number of weeks between events):</p>
-    <div class="eq tex" data-tex="\sigma_{\text{dev}}=\sqrt{\rho_{\text{dev}}/\bar\Delta}\;\sigma_{ce},\qquad \sigma_\nu=\sqrt{1-\rho_{\text{dev}}}\;\sigma_{ce}"></div></div></div>
-  <div class="cl"><span class="n">3.5</span><div><p><b>Driver.</b> One skill per driver, <span class="tex" data-tex="\delta_d\sim\mathcal N(0,\sigma_\delta)"></span>, constant over the season.</p></div></div>
-  <div class="cl"><span class="n">3.6</span><div><p><b>Identification.</b> Sum-to-zero constraints make car pace relative to the field and driver skill relative to the average driver:</p>
-    <div class="eq tex" data-tex="\textstyle\sum_c \theta_{c,e}=0,\qquad \sum_c \nu_{c,e}=0,\qquad \sum_d \delta_d = 0"></div>
-    <p>The event baseline <span class="tex" data-tex="\alpha_e"></span> absorbs everything shared by all cars that day (weather, grip, the circuit itself), so conditions need no explicit model.</p></div></div>
-  <div class="cl"><span class="n">3.7</span><div><p><b>Car share</b>, the headline split:</p>
-    <div class="eq tex" data-tex="\text{car share}_e = \frac{\operatorname{Var}_c(\theta_{c,e}+\nu_{c,e})}{\operatorname{Var}_c(\theta_{c,e}+\nu_{c,e})+\operatorname{Var}_d(\delta_d)}"></div>
-    <p>Because driver skill is identified within teams only (7.1), this is an upper bound on the car's share; the site leads with the directly measured gaps instead.</p></div></div>
+<article id="a3"><h2><span>Article 3</span>The 2026 model (v2.0, production)</h2>
+  <div class="cl"><span class="n">3.1</span><div><p><b>Likelihood.</b> Each lap is either clean or compromised (traffic, a mistake, a yellow flag). Both are exponentially modified Gaussians: noise around the lap's potential, plus a loss that can only cost time.</p><div class="eq tex" data-tex="y_i \sim (1-\pi)\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}}\right) + \pi\,\mathrm{ExGauss}\!\left(\mu_i,\ \sigma,\ \tfrac{1}{\ell_{\text{clean}}+\ell_{\text{gap}}}\right)"></div></div></div>
+  <div class="cl"><span class="n">3.2</span><div><p><b>Lap potential.</b> For a lap by driver <span class="tex" data-tex="d"></span> in car <span class="tex" data-tex="c"></span> at event <span class="tex" data-tex="e"></span>, segment <span class="tex" data-tex="s"></span>, starting <span class="tex" data-tex="t_i"></span> (tens of minutes from the segment's mean lap start):</p><div class="eq tex" data-tex="\mu_i = \alpha_e + \tau_{e,s} + \gamma_e\, t_i + \theta_{c,e} + \nu_{c,e} + \delta_d + \beta_m\,\mathrm{medium}_i + \beta_a\,\mathrm{age}_i"></div></div></div>
+  <div class="cl"><span class="n">3.3</span><div><p><b>Track evolution.</b> A step per segment, plus a slope within each segment:</p><div class="eq tex" data-tex="\tau_{e,1}=0,\quad \tau_{e,2}=\kappa_{e,2},\quad \tau_{e,3}=\kappa_{e,2}+\kappa_{e,3},\qquad \kappa_{e,s}\sim\mathcal N(m_s,\sigma_\kappa),\qquad \gamma_e\sim\mathcal N(\mu_\gamma,\sigma_\gamma)"></div></div></div>
+  <div class="cl"><span class="n">3.4</span><div><p><b>Car.</b> A development trend that drifts as a random walk, with steps scaled by the weeks between events, plus a fit to each track that does not carry over. The combined event-to-event variation is sampled with the share due to development, which the data separate far better than the two scales on their own:</p><div class="eq tex" data-tex="\theta_{c,e}=\theta_{c,e-1}+\sigma_{\text{dev}}\sqrt{\Delta_e}\,z_{c,e},\qquad \nu_{c,e}\sim\mathcal N(0,\sigma_\nu),\qquad \sigma_{\text{dev}}=\sqrt{\rho_{\text{dev}}/\bar\Delta}\;\sigma_{ce},\quad \sigma_\nu=\sqrt{1-\rho_{\text{dev}}}\;\sigma_{ce}"></div></div></div>
+  <div class="cl"><span class="n">3.5</span><div><p><b>Driver.</b> One skill per driver for the season, <b>starting from what 2022&ndash;25 says about them</b> (Article 4) and updated by every 2026 lap:</p><div class="eq tex" data-tex="\delta_d \sim \mathcal N(m_d,\ s_d)"></div><p>This is what makes drivers comparable across teams. Within one season a driver's pace can only be compared with their teammate's, because a car and its two drivers always appear together. The history links every garage: drivers who moved between teams carry their measured skill with them.</p></div></div>
+  <div class="cl"><span class="n">3.6</span><div><p><b>Identification.</b> Car pace sums to zero over the field at each event, so it reads against the average car. Driver skill is anchored by its history prior, not forced to average zero, and is shown on the site against the average driver on the grid:</p><div class="eq tex" data-tex="\textstyle\sum_c \theta_{c,e}=0,\qquad \sum_c \nu_{c,e}=0"></div><p>The event baseline <span class="tex" data-tex="\alpha_e"></span> absorbs everything shared by all cars that day (weather, grip, the circuit), so conditions need no explicit model.</p></div></div>
+  <div class="cl"><span class="n">3.7</span><div><p><b>Counterfactuals.</b> Driver <span class="tex" data-tex="d"></span> in car <span class="tex" data-tex="c"></span> has pace <span class="tex" data-tex="\theta_c + \delta_d"></span>, computed draw by draw from the joint posterior, so "Sainz in the Mercedes" carries both the car's and the driver's uncertainty.</p></div></div>
 </article>
 
-<article id="a4"><h2><span>Article 4</span>Priors</h2>
-  <div class="cl"><span class="n">4.1</span><div><p>All values in % of lap time. <span class="tex" data-tex="\mathcal N^{+}"></span> is a half-normal. Hierarchical terms are non-centred.</p>
-    <div class="tw"><table><thead><tr><th>Parameter</th><th>Prior</th><th>Why</th></tr></thead><tbody>
-      <tr><td><span class="tex" data-tex="\sigma_{\text{car}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,1.2)"></span></td><td>Field spreads above ~10% are impossible under the 107% rule</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma_{ce}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.6)"></span></td><td>Combined development and track fit per event; implies the same beliefs about each as v1.2</td></tr>
-      <tr><td><span class="tex" data-tex="\rho_{\text{dev}}"></span></td><td><span class="tex" data-tex="\mathrm{Beta}(2,\,4)"></span></td><td>About a third of it from development, loosely; a season moves a car by 1–3%, track fit by up to ±1%</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma_\delta"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>A driver worth more than 1.5% is implausible</td></tr>
-      <tr><td><span class="tex" data-tex="m_2,\ m_3"></span></td><td><span class="tex" data-tex="\mathcal N(-0.5,\,0.3)"></span></td><td>The track gets faster each segment; slower only in rare cases</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma_\kappa"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>Evolution varies by venue</td></tr>
-      <tr><td><span class="tex" data-tex="\mu_\gamma,\ \sigma_\gamma"></span></td><td><span class="tex" data-tex="\mathcal N(-0.3,\,0.3),\ \mathcal N^{+}(0,\,0.2)"></span></td><td>Per 10 minutes within a segment</td></tr>
-      <tr><td><span class="tex" data-tex="\pi"></span></td><td><span class="tex" data-tex="\mathrm{Beta}(2,\,6)"></span></td><td>Roughly a quarter of push laps compromised, loosely</td></tr>
-      <tr><td><span class="tex" data-tex="\ell_{\text{clean}},\ \ell_{\text{gap}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3),\ \mathcal N^{+}(0,\,1.5)"></span></td><td>Ordered by construction, so the two lap types cannot swap</td></tr>
-      <tr><td><span class="tex" data-tex="\sigma"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.5)"></span></td><td>Lap-to-lap noise</td></tr>
-      <tr><td><span class="tex" data-tex="\beta_m,\ \beta_a"></span></td><td><span class="tex" data-tex="\mathcal N(0.7,\,0.5),\ \mathcal N(0.05,\,0.05)"></span></td><td>Medium tyres and older tyres are slower</td></tr>
-      <tr><td><span class="tex" data-tex="\alpha_e"></span></td><td><span class="tex" data-tex="\mathcal N(\tilde y_e,\,5)"></span></td><td>Centred on the event's median lap; effectively free</td></tr>
+<article id="a4"><h2><span>Article 4</span>The history model (2022&ndash;25)</h2>
+  <div class="cl"><span class="n">4.1</span><div><p><b>Why.</b> Teammate comparisons alone cannot separate a fast driver in a slow car from a slow driver in a fast car. Over 2022&ndash;25, drivers moved between teams often enough to link every 2026 garage into a single network (see Inter): 23 drivers, 65 teammate pairings.</p></div></div>
+  <div class="cl"><span class="n">4.2</span><div><p><b>Likelihood.</b> Each best lap <span class="tex" data-tex="y_i"></span> in season <span class="tex" data-tex="y"></span>, round <span class="tex" data-tex="r"></span>, segment <span class="tex" data-tex="s"></span>, for driver <span class="tex" data-tex="d"></span> in team <span class="tex" data-tex="t"></span>:</p><div class="eq tex" data-tex="y_i \sim \mathrm{Student}\text{-}t_{\nu}\!\left(\alpha_{r,s} + c_{t,y,r} + \kappa_{d,y},\ \sigma\right)"></div><p>Student-t, because even a best lap can be compromised; the fitted <span class="tex" data-tex="\nu \approx 2.3"></span> says that happens often.</p></div></div>
+  <div class="cl"><span class="n">4.3</span><div><p><b>Cars.</b> Every team has a separate car in every season: a random walk over that season's rounds plus a track fit, centred on each round's field. Nothing about a car carries from one season to the next.</p><div class="eq tex" data-tex="c_{t,y,r} = w_{t,y,r} + \sigma_\nu u_{t,y,r} - \overline{(\cdot)}_r,\qquad w_{t,y,r} = w_{t,y,r-1} + \sigma_{\text{dev}}\, z_{t,y,r}"></div></div></div>
+  <div class="cl"><span class="n">4.4</span><div><p><b>Drivers.</b> Skill carries over between seasons but can change, by more in a driver's second and third seasons, when young drivers improve fastest. Skill is centred on each season's grid.</p><div class="eq tex" data-tex="\kappa_{d,y} = \kappa_{d,y-1} + \sqrt{\sigma_{\text{drift}}^2 + \mathbf{1}[\text{2nd or 3rd season}]\;\sigma_{\text{young}}^2}\;\; z_{d,y}"></div><p>Fitted: <span class="tex" data-tex="\sigma_{\text{drift}} \approx 0.03"></span> s per season for established drivers and about twice that, <span class="tex" data-tex="\sqrt{\sigma_{\text{drift}}^2+\sigma_{\text{young}}^2} \approx 0.06"></span> s, for young ones. Driver skill is stable enough to be strong evidence.</p></div></div>
+  <div class="cl"><span class="n">4.5</span><div><p><b>The 2026 prior.</b> Each driver's posterior skill in their last season, plus one season of possible change (wider for drivers entering their second or third season, and wider again for each season out of F1), becomes <span class="tex" data-tex="\mathcal N(m_d, s_d)"></span> in Article 3.5. A rookie with no history gets the population prior <span class="tex" data-tex="\mathcal N\!\left(0,\ \sqrt{\sigma_{\text{driver}}^2+\sigma_{\text{drift}}^2}\right)"></span>, so 2026 alone decides.</p></div></div>
+</article>
+
+<article id="a5"><h2><span>Article 5</span>Priors</h2>
+  <div class="cl"><span class="n">5.1</span><div><p>All values in % of lap time. <span class="tex" data-tex="\mathcal N^{+}"></span> is a half-normal. Hierarchical terms are non-centred.</p>
+    <div class="tw"><table><thead><tr><th>Model</th><th>Parameter</th><th>Prior</th><th>Why</th></tr></thead><tbody>
+      <tr><td>2026</td><td><span class="tex" data-tex="\delta_d"></span></td><td><span class="tex" data-tex="\mathcal N(m_d,\,s_d)"></span></td><td>From the history model (Article 4.5)</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="\sigma_{\text{car}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,1.2)"></span></td><td>Field spreads above ~10% are impossible under the 107% rule</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="\sigma_{ce},\ \rho_{\text{dev}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.6),\ \mathrm{Beta}(2,\,4)"></span></td><td>Development plus track fit; implies a season moves a car by 1&ndash;3% and track fit up to &plusmn;1%</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="m_2,\ m_3,\ \sigma_\kappa"></span></td><td><span class="tex" data-tex="\mathcal N(-0.5,\,0.3),\ \mathcal N^{+}(0,\,0.3)"></span></td><td>The track gets faster each segment</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="\mu_\gamma,\ \sigma_\gamma"></span></td><td><span class="tex" data-tex="\mathcal N(-0.3,\,0.3),\ \mathcal N^{+}(0,\,0.2)"></span></td><td>Per 10 minutes within a segment</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="\pi,\ \ell_{\text{clean}},\ \ell_{\text{gap}}"></span></td><td><span class="tex" data-tex="\mathrm{Beta}(2,6),\ \mathcal N^{+}(0,0.3),\ \mathcal N^{+}(0,1.5)"></span></td><td>About a quarter of laps compromised, loosely; the two lap types cannot swap</td></tr>
+      <tr><td>2026</td><td><span class="tex" data-tex="\sigma,\ \beta_m,\ \beta_a"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,0.5),\ \mathcal N(0.7,0.5),\ \mathcal N(0.05,0.05)"></span></td><td>Lap noise; mediums and older tyres are slower</td></tr>
+      <tr><td>History</td><td><span class="tex" data-tex="\sigma_{\text{driver}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.3)"></span></td><td>A driver worth more than 1.5% is implausible</td></tr>
+      <tr><td>History</td><td><span class="tex" data-tex="\sigma_{\text{drift}},\ \sigma_{\text{young}}"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,\,0.1),\ \mathcal N^{+}(0,\,0.2)"></span></td><td>Skill changes slowly; young drivers can change faster, by an amount the data decide</td></tr>
+      <tr><td>History</td><td><span class="tex" data-tex="\sigma_{\text{car}},\ \sigma_{\text{dev}},\ \sigma_\nu"></span></td><td><span class="tex" data-tex="\mathcal N^{+}(0,1.2),\ \mathcal N^{+}(0,0.2),\ \mathcal N^{+}(0,0.5)"></span></td><td>As in 2026, per round instead of per week</td></tr>
+      <tr><td>History</td><td><span class="tex" data-tex="\nu,\ \sigma"></span></td><td><span class="tex" data-tex="\Gamma(2,\,0.1)\ \text{on}\ [1,100],\ \ \mathcal N^{+}(0,\,0.5)"></span></td><td>Heavy tails allowed for compromised best laps</td></tr>
     </tbody></table></div></div></div>
-  <div class="cl"><span class="n">4.2</span><div><p><b>Prior predictive check.</b> Before seeing lap times, 3,000 fake seasons were simulated on the real 2026 design and checked against limits set from F1 knowledge. Each implausible outcome now occurs in about 5% of simulated seasons or fewer: median field spread above 10% (5.4%), any event spread above 15% (2.3%), median teammate gap above 1.5% (0.1%), any driver worth more than 1.5% (3.0%), the track getting slower from Q1 to Q2 (5.8%).</p></div></div>
-  <div class="cl"><span class="n">4.3</span><div><p><b>Sensitivity.</b> The informative prior puts the car share near 0.98 before any data. A second version (v1-B) with a neutral <span class="tex" data-tex="\rho\sim\mathrm{Beta}(1,1)"></span> prior on the share (prior median 0.82) gives the same posterior: 0.985 against 0.983. The result comes from the data.</p></div></div>
+  <div class="cl"><span class="n">5.2</span><div><p><b>Prior predictive check.</b> Before seeing lap times, 3,000 fake seasons were simulated on the real 2026 design and checked against limits set from F1 knowledge. Each implausible outcome occurs in about 5% of simulated seasons or fewer: median field spread above 10% (5.4%), any event spread above 15% (2.3%), median teammate gap above 1.5% (0.1%), any driver worth more than 1.5% (3.0%), the track getting slower from Q1 to Q2 (5.8%).</p></div></div>
 </article>
 
-<article id="a5"><h2><span>Article 5</span>Inference</h2>
-  <div class="cl"><span class="n">5.1</span><div><p>Stan (CmdStan 2.36 via CmdStanPy): 4 chains, 1,000 warm-up and 2,000 sampling iterations each, <code>adapt_delta = 0.95</code>.</p></div></div>
-  <div class="cl"><span class="n">5.2</span><div><p><b>Quality gate</b>, applied to every fit before anything is published:</p>
+<article id="a6"><h2><span>Article 6</span>Inference</h2>
+  <div class="cl"><span class="n">6.1</span><div><p>Stan (CmdStan 2.36 via CmdStanPy): 4 chains, 1,000 warm-up and 2,000 sampling iterations each, <code>adapt_delta = 0.95</code> (0.99 when a fit has three rounds or fewer).</p></div></div>
+  <div class="cl"><span class="n">6.2</span><div><p><b>Quality gate</b>, applied to every 2026 fit before anything is published:</p>
     <div class="tw"><table><thead><tr><th>Status</th><th>R-hat (worst parameter)</th><th>Divergent draws</th><th>Effect</th></tr></thead><tbody>
       <tr><td><span class="badge pass">pass</span></td><td>&le; 1.01</td><td>&le; 0.2%</td><td>Published</td></tr>
       <tr><td><span class="badge">warn</span></td><td>&le; 1.05</td><td>&le; 1%</td><td>Published with a lower-confidence flag</td></tr>
       <tr><td><span class="badge">fail</span></td><td>&gt; 1.05</td><td>&gt; 1%</td><td>Blocked; the site keeps the previous round</td></tr>
     </tbody></table></div></div></div>
-  <div class="cl"><span class="n">5.3</span><div><p><b>Pipeline.</b> Every Sunday at 06:00 UTC (retry on Monday), GitHub Actions fetches new sessions, refits, applies the gate, writes the site's data and redeploys. The history behind Medium and Inter is one fit per round using only the data available up to that round.</p></div></div>
+  <div class="cl"><span class="n">6.3</span><div><p><b>Pipeline.</b> Every Sunday at 06:00 UTC (retry on Monday), GitHub Actions runs the tests, fetches new sessions, refits v2.0, applies the gate, writes the site's data, forecasts the next round and redeploys. The history model runs once per season, or whenever an earlier season's results change, and its driver priors are committed to the repository. The season history behind Medium is one fit per round using only the data available up to that round.</p></div></div>
 </article>
 
-<article id="a6"><h2><span>Article 6</span>Validation</h2>
-  <div class="cl"><span class="n">6.1</span><div><p><b>Parameter recovery.</b> Seasons simulated from known parameters on the real design were fitted, and the share of true values inside the 90% intervals measured (target about 90%):</p>
-    <div class="tw"><table><thead><tr><th>Version</th><th>Driver</th><th>Car trend</th><th>Car &times; track</th><th>Track evolution</th><th>New terms</th></tr></thead><tbody>
-      <tr><td>v1</td><td>91%</td><td>90%</td><td>82%</td><td>87%</td><td class="muted">n/a</td></tr>
-      <tr><td>v1.1</td><td>91%</td><td>89%</td><td>92%</td><td>94%</td><td>&gamma;: 100% (16 events)</td></tr>
-      <tr><td>v1.2</td><td>91%</td><td>88%</td><td>90%</td><td>94%</td><td>&pi;, &ell; recovered within 90%</td></tr>
-      <tr><td>v1.3</td><td>83%</td><td>92%</td><td>88%</td><td>91%</td><td>all 6 hyperparameters inside their 90% intervals</td></tr>
+<article id="a7"><h2><span>Article 7</span>Validation</h2>
+  <div class="cl"><span class="n">7.1</span><div><p><b>The cross-team test.</b> The history model was fitted on 2022&ndash;24 only and asked to predict every 2025 teammate gap before seeing 2025. Several pairings had never raced together, so the only way to predict them was through the chain of teammates. Gaps in seconds; positive means the first driver is slower.</p>
+    <div class="tw"><table><thead><tr><th>2025 pair</th><th>Team</th><th class="r">Predicted</th><th class="r">90% interval</th><th class="r">Actual</th><th></th></tr></thead><tbody>
+      <tr><td>Tsunoda vs Verstappen</td><td>Red Bull</td><td class="r">+0.55</td><td class="r">+0.20 to +0.86</td><td class="r">+0.47</td><td class="ok">inside</td></tr>
+      <tr><td>Hamilton vs Leclerc</td><td>Ferrari</td><td class="r">+0.28</td><td class="r">+0.01 to +0.55</td><td class="r">+0.11</td><td class="ok">inside</td></tr>
+      <tr><td>Albon vs Sainz</td><td>Williams</td><td class="r">+0.32</td><td class="r">&minus;0.06 to +0.68</td><td class="r">+0.05</td><td class="ok">inside</td></tr>
+      <tr><td>Bearman vs Ocon</td><td>Haas</td><td class="r">+0.10</td><td class="r">&minus;0.20 to +0.40</td><td class="r">&minus;0.14</td><td class="muted">inside, wrong driver ahead</td></tr>
+      <tr><td>Colapinto vs Gasly</td><td>Alpine</td><td class="r">+0.14</td><td class="r">&minus;0.15 to +0.43</td><td class="r">+0.32</td><td class="ok">inside</td></tr>
+      <tr><td>Doohan vs Gasly</td><td>Alpine</td><td class="r">+0.29</td><td class="r">&minus;0.15 to +0.66</td><td class="r">+0.32</td><td class="ok">inside</td></tr>
+      <tr><td>Alonso vs Stroll</td><td>Aston Martin</td><td class="r">&minus;0.22</td><td class="r">&minus;0.32 to &minus;0.12</td><td class="r">&minus;0.21</td><td class="ok">inside</td></tr>
+      <tr><td>Norris vs Piastri</td><td>McLaren</td><td class="r">&minus;0.11</td><td class="r">&minus;0.27 to +0.06</td><td class="r">&minus;0.07</td><td class="ok">inside</td></tr>
+    </tbody></table></div>
+    <p>All 8 inside their 90% intervals, 7 of 8 with the right driver ahead, correlation 0.79 between predicted and actual gaps.</p></div></div>
+  <div class="cl"><span class="n">7.2</span><div><p><b>Parameter recovery.</b> Seasons simulated from known parameters on the real design were fitted, and the share of true values inside the 90% intervals measured (target about 90%):</p>
+    <div class="tw"><table><thead><tr><th>Model</th><th>Driver</th><th>Car trend</th><th>Car &times; track</th><th>Track evolution</th><th>Hyperparameters</th></tr></thead><tbody>
+      <tr><td>2026 v1.2</td><td>91%</td><td>88%</td><td>90%</td><td>94%</td><td class="muted">all recovered</td></tr>
+      <tr><td>2026 v1.3</td><td>83%</td><td>92%</td><td>88%</td><td>91%</td><td>6 of 6 inside 90%</td></tr>
+      <tr><td>2026 v2.0</td><td>91%</td><td>88%</td><td>89%</td><td>91%</td><td>5 of 5 inside 90%</td></tr>
+      <tr><td>History 2022&ndash;25</td><td>96%</td><td class="muted">n/a</td><td class="muted">n/a</td><td class="muted">n/a</td><td>all close to truth</td></tr>
     </tbody></table></div></div></div>
-  <div class="cl"><span class="n">6.2</span><div><p><b>Model comparison</b> (PSIS-LOO, higher is better):</p>
-    <div class="tw"><table><thead><tr><th>Version</th><th>Change</th><th class="r">elpd</th><th class="r">vs previous</th><th class="r">Pareto k &gt; 0.7</th></tr></thead><tbody>
-      <tr><td>v1</td><td>Ex-Gaussian, segment steps</td><td class="r">&minus;1308.8</td><td class="r muted">n/a</td><td class="r">19 laps</td></tr>
-      <tr><td>v1.1</td><td>+ within-segment evolution</td><td class="r">&minus;1079.5</td><td class="r ok">+229 &plusmn; 21</td><td class="r">18 laps</td></tr>
-      <tr><td>v1.2</td><td>+ clean / compromised mixture</td><td class="r">&minus;1037.2</td><td class="r ok">+42 &plusmn; 13</td><td class="r">4 laps</td></tr>
-      <tr><td>v1.3</td><td>development vs track fit as total + share</td><td class="r muted">17 rounds</td><td class="r">&minus;1.3 &plusmn; 1.0 (level)</td><td class="r">7 laps</td></tr>
-    </tbody></table></div></div></div>
-  <div class="cl"><span class="n">6.3</span><div><p><b>Posterior predictive checks.</b> v1.2 reproduces the shape of lap times (skewness and kurtosis, which earlier versions failed). Statistics built from each driver's <i>best</i> lap (teammate gap, field spread, Q1&rarr;Q2 step) still fall in the tails; see 7.2.</p></div></div>
+  <div class="cl"><span class="n">7.3</span><div><p><b>Model comparison</b> (PSIS-LOO on 2026 laps, higher is better):</p>
+    <div class="tw"><table><thead><tr><th>Version</th><th>Change</th><th class="r">vs previous</th><th class="r">Pareto k &gt; 0.7</th></tr></thead><tbody>
+      <tr><td>v1</td><td>Ex-Gaussian, segment steps</td><td class="r muted">n/a</td><td class="r">19 laps</td></tr>
+      <tr><td>v1.1</td><td>+ within-segment evolution</td><td class="r ok">+229 &plusmn; 21</td><td class="r">18 laps</td></tr>
+      <tr><td>v1.2</td><td>+ clean / compromised mixture</td><td class="r ok">+42 &plusmn; 13</td><td class="r">4 laps</td></tr>
+      <tr><td>v1.3</td><td>development vs track fit as total + share</td><td class="r">&minus;1.3 &plusmn; 1.0 (level)</td><td class="r">7 laps</td></tr>
+      <tr><td>v2.0</td><td>driver skill from 2022&ndash;25 history</td><td class="r">&minus;2.0 &plusmn; 3.1 (level)</td><td class="r">4 laps</td></tr>
+    </tbody></table></div>
+    <p>v1.3 and v2.0 predict 2026 laps as well as before; they change how pace is attributed, which LOO cannot see. That is what 7.1 tests.</p></div></div>
+  <div class="cl"><span class="n">7.4</span><div><p><b>Forecasts (live).</b> <span id="live-score">Loading the scorecard&hellip;</span></p></div></div>
+  <div class="cl"><span class="n">7.5</span><div><p><b>Posterior predictive checks.</b> The model reproduces the shape of lap times (skewness and kurtosis). Statistics built from each driver's <i>best</i> lap (teammate gap, field spread, Q1&rarr;Q2 step) still fall in the tails; see 8.3.</p></div></div>
 </article>
 
-<article id="a7"><h2><span>Article 7</span>Limitations</h2>
-  <div class="cl"><span class="n">7.1</span><div><p><b>Drivers are compared within teams only.</b> With one car per driver, a pair's shared quality is indistinguishable from car pace. Cross-team driver rankings need drivers who changed teams, which a multi-season version (2023–2026) would add.</p></div></div>
-  <div class="cl"><span class="n">7.2</span><div><p><b>Head-to-head probabilities are conservative.</b> Drivers adapt within a session (abort, go again, stop after a good lap), so a real best lap is tighter than "the best of several independent laps". The model overstates how uncertain best laps are, by about 20%.</p></div></div>
-  <div class="cl"><span class="n">7.3</span><div><p><b>Development and track fit trade off</b> (resolved in v1.3). The data pin down their combined effect better than the split, so in v1.2 <span class="tex" data-tex="\sigma_{\text{dev}}"></span> mixed slowly and three rounds passed the gate with a warning. v1.3 samples the total and the share instead (3.1–3.4): the effective sample size of <span class="tex" data-tex="\sigma_{\text{dev}}"></span> rose 1.7&ndash;3.3&times; and round 14 went from R-hat 1.016 to 1.001, with identical estimates elsewhere.</p></div></div>
-  <div class="cl"><span class="n">7.4</span><div><p><b>Early rounds are uncertain by design.</b> After one session the model has about 100 laps; its intervals are wide and honest, not wrong.</p></div></div>
-  <div class="cl"><span class="n">7.5</span><div><p><b>Wet sessions</b> and laps flagged for rain are excluded rather than modelled.</p></div></div>
+<article id="a8"><h2><span>Article 8</span>Limitations</h2>
+  <div class="cl"><span class="n">8.1</span><div><p><b>Cross-team comparisons rest on three assumptions.</b> A driver's skill is the same in any car (no car&ndash;driver fit), it changes only gradually between seasons (faster in a driver's second and third seasons), and best laps from 2022&ndash;25 measure it fairly. Comparisons that run through long chains of teammates are less certain, and the intervals show it.</p></div></div>
+  <div class="cl"><span class="n">8.2</span><div><p><b>Counterfactuals ignore adaptation.</b> "Any driver in any car" assumes the driver is immediately at home in that car.</p></div></div>
+  <div class="cl"><span class="n">8.3</span><div><p><b>Head-to-head and forecast probabilities are cautious.</b> Drivers adapt within a session (abort, go again, stop after a good lap), so a real best lap is tighter than "the best of several independent laps". The model overstates how uncertain best laps are, by about 20%.</p></div></div>
+  <div class="cl"><span class="n">8.4</span><div><p><b>Rookies.</b> A driver with no earlier season (in 2026, Lindblad) is learned from 2026 alone, so his comparisons across teams are the least certain on the grid.</p></div></div>
+  <div class="cl"><span class="n">8.5</span><div><p><b>Early rounds are uncertain by design,</b> and wet sessions and rain-flagged laps are excluded rather than modelled.</p></div></div>
 </article>
 
-<article id="a8"><h2><span>Article 8</span>Current fit (live)</h2>
-  <div class="cl"><span class="n">8.1</span><div><p id="live-sum">Loading the latest fit&hellip;</p></div></div>
-  <div class="cl"><span class="n">8.2</span><div><div class="tw"><table id="live-params"><thead><tr><th>Parameter</th><th class="r">Median</th><th class="r">90% interval</th><th>In plain terms</th></tr></thead><tbody></tbody></table></div></div></div>
+<article id="a9"><h2><span>Article 9</span>Current fit (live)</h2>
+  <div class="cl"><span class="n">9.1</span><div><p id="live-sum">Loading the latest fit&hellip;</p></div></div>
+  <div class="cl"><span class="n">9.2</span><div><div class="tw"><table id="live-params"><thead><tr><th>Parameter</th><th class="r">Median</th><th class="r">90% interval</th><th>In plain terms</th></tr></thead><tbody></tbody></table></div></div></div>
 </article>
 
-<article id="a9"><h2><span>Article 9</span>Reproducibility</h2>
-  <div class="cl"><span class="n">9.1</span><div><p>All code, data and model versions are public at <a href="https://github.com/Tahahaha7/purple-sectors">github.com/Tahahaha7/purple-sectors</a>, with the full development record in <code>docs/model_log.md</code>.</p></div></div>
-  <div class="cl"><span class="n">9.2</span><div><pre>pip install -r requirements.txt
+<article id="a10"><h2><span>Article 10</span>Reproducibility</h2>
+  <div class="cl"><span class="n">10.1</span><div><p>All code, data and model versions are public at <a href="https://github.com/Tahahaha7/purple-sectors">github.com/Tahahaha7/purple-sectors</a>, with the full development record in <code>docs/model_log.md</code>.</p></div></div>
+  <div class="cl"><span class="n">10.2</span><div><pre>pip install -r requirements.txt
+export PYTHONPATH=src
+python -m purple_sectors.history --from 2022 --to 2025          # 2022-25 results, debuts, network
+python -m purple_sectors.history_fit --last 2025 --priors data/priors/drivers_2026.json
 python -m purple_sectors.fetch --year 2026
-python -m purple_sectors.fit --stan stan/quali_v13.stan --out posterior_v13.npz
-python -m purple_sectors.export --posterior posterior_v13.npz --out site/data --snapshot-dir site/data/snapshots</pre>
-    <p>Run with <code>PYTHONPATH=src</code>. The same data and seeds reproduce the published numbers to the third decimal.</p></div></div>
+python -m purple_sectors.fit --stan stan/quali_v20.stan --out posterior_v20.npz
+python -m purple_sectors.export --posterior posterior_v20.npz --out site/data --snapshot-dir site/data/snapshots</pre>
+    <p>The same data and seeds reproduce the published numbers to the third decimal.</p></div></div>
 </article>
 
 <section class="router" aria-label="More">
@@ -260,6 +272,7 @@ const PLAIN = {
   sigma: ['Lap noise', v => (v * .9).toFixed(2) + ' s', 'random lap-to-lap variation'],
   sigma_car: ['Car spread at round 1', v => (v * .9).toFixed(2) + ' s', 'how far apart the cars started'],
   sigma_dev: ['Development rate', v => (v * .9).toFixed(3) + ' s', 'car pace drift per √week'],
+  rho_dev: ['Development share', v => Math.round(v * 100) + '%', 'share of car-to-car change that is development, not track fit'],
   sigma_nu: ['Track suitability', v => (v * .9).toFixed(2) + ' s', 'how much a car\'s pace swings by circuit'],
   mu_gamma: ['Track rubbering', v => sgn(v * .9) + ' s', 'change per 10 minutes within a segment (negative = quicker)'],
   beta_m: ['Medium tyre', v => sgn(v * .9) + ' s', 'cost of qualifying on mediums instead of softs'],
@@ -278,6 +291,10 @@ fetch('data/snapshots/index.json', { cache: 'no-cache' }).then(r => r.json()).th
     return `<tr><td>${label}</td><td class="r">${f(m)}</td><td class="r">${f(lo)} to ${f(hi)}</td><td class="muted">${plain}</td></tr>`;
   }).join('');
 }).catch(() => { $('live-sum').textContent = 'The latest fit is refreshing. Check back in a few minutes.'; });
+fetch('data/forecasts/scorecard.json', { cache: 'no-cache' }).then(r => r.json()).then(sc => {
+  const S = sc.summary; if (!S) throw 0;
+  $('live-score').textContent = `Before every round, the model simulates the session 2,000 times from data up to the round before. Over ${S.forecasts} forecasts so far, the favourite took pole ${S.favourite_right} times, which is about what favourites' typical 20\u201325% chances imply; Q3 calls are ${Math.round(S.q3_skill * 100)}% better than picking 10 at random (Brier skill); and the predicted and actual grid orders correlate at ${S.mean_rank_corr}. The pole-sitter had been given ${Math.round(S.mean_p_actual_pole * 100)}% on average.`;
+}).catch(() => { $('live-score').textContent = 'The forecast scorecard appears after the first scored round.'; });
 </script>
 </body>
 </html>
