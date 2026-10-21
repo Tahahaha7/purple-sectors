@@ -96,6 +96,16 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 /* shared header badge */
 .badge{display:inline-block;border:1px solid var(--rule);padding:1px 7px;font-size:12px;color:var(--ink-2)}
 .badge.pass{border-color:var(--accent);color:var(--accent)}
+/* compact hero: title and the two headline numbers in one band, so the chart fits the first screen */
+.hero2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);border-bottom:1px solid var(--rule)}
+.hero2 > div{padding:16px 24px;border-right:1px solid var(--rule);min-width:0}.hero2 > div:last-child{border-right:0}
+.hero2 .hello{color:var(--ink-2);font-size:12px;margin-bottom:6px}
+.hero2 h1{font-weight:500;font-size:clamp(26px,3vw,38px);line-height:1.05;letter-spacing:-.03em}
+.hero2 .k{color:var(--ink-2);font-size:12px}
+.hero2 .v{font-size:clamp(18px,1.9vw,24px);font-weight:500;letter-spacing:-.02em;margin-top:4px;white-space:nowrap}
+.hero2 .v b{color:var(--accent);font-weight:500}
+.hero2 .s{color:var(--ink-2);font-size:12px;margin-top:2px}
+@media (max-width:860px){.hero2{grid-template-columns:1fr}.hero2 > div{border-right:0;border-bottom:1px solid var(--rule)}}
 /* hero */
 .hero{display:grid;grid-template-columns:1.15fr 1fr;border-bottom:1px solid var(--rule)}
 .hero .copy{padding:40px 24px 30px;border-right:1px solid var(--rule)}
@@ -115,7 +125,7 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 .maphead h2{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0}
 .maphead p{color:var(--ink-2);font-size:12.5px;margin:0;max-width:80ch}
 /* the whole chart fits on one screen: as tall as the window allows, between 440 and 620 px */
-.mapbox{position:relative;width:100%;height:clamp(440px,calc(100vh - 120px),620px);min-width:900px}
+.mapbox{position:relative;width:100%;height:560px;min-width:900px}
 .mapscroll{overflow-x:auto}
 .mapbox svg{position:absolute;inset:0;width:100%;height:100%}
 .mapbox svg text{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;fill:var(--ink-2)}
@@ -205,21 +215,15 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
   <span class="stamp" id="stamp"></span>
 </nav>
 
-<header class="hero">
-  <div class="copy">
-    <p class="hello" id="hello">2026 qualifying</p>
-    <h1>The grid, decoded.</h1>
-    <p class="lede">Every lap time is a car and a driver together. This model pulls them apart, so you can see who is fast once the car is taken away, and which car is fast once the driver is. Everything is in seconds over a 90-second lap.</p>
-  </div>
-  <div class="heads">
-    <div><div class="k slash">Fastest driver, car removed</div><div class="v" id="h-drv"></div><div class="s" id="h-drv-s"></div></div>
-    <div><div class="k slash">Fastest car, driver removed</div><div class="v" id="h-car"></div><div class="s" id="h-car-s"></div></div>
-  </div>
+<header class="hero2">
+  <div class="t"><p class="hello" id="hello">2026 qualifying</p><h1>The grid, decoded.</h1></div>
+  <div class="stat"><div class="k slash">Fastest driver, car removed</div><div class="v" id="h-drv"></div><div class="s" id="h-drv-s"></div></div>
+  <div class="stat"><div class="k slash">Fastest car, driver removed</div><div class="v" id="h-car"></div><div class="s" id="h-car-s"></div></div>
 </header>
 
 <section class="mapwrap" aria-labelledby="h2-map">
   <div class="maphead"><h2 id="h2-map">Driver vs car</h2>
-    <p>One column per car, slowest on the left; each helmet sits as high as its driver is fast. Stars in slower cars are top left.</p></div>
+    <p>Every lap time is a car and a driver together; the model pulls them apart. Each column is a car, slowest on the left; each helmet sits as high as its driver is fast, so stars in slower cars are top left. Seconds over a 90-second lap.</p></div>
 <div class="mapscroll"><div class="mapbox" id="map"><svg id="map-svg" viewBox="0 0 1160 600" preserveAspectRatio="none" aria-hidden="true"></svg><div class="tip" id="tip" role="status"></div></div></div>
 </section>
 
@@ -285,10 +289,10 @@ function render(D) {
   const d0 = drivers[0], c0 = cars[0];
   if (d0) {
     $('h-drv').innerHTML = `<b>${last(d0.name)}</b> ${sec(d0.skill[1])}`;
-    $('h-drv-s').textContent = `against the average driver; ${pct(d0.p_fastest)} chance he is the fastest. Drives the ${d0.team}, car #${carRank[d0.team]}.`;
+    $('h-drv-s').textContent = `vs the average driver \u00b7 ${pct(d0.p_fastest)} chance he's the fastest \u00b7 ${d0.team}, car P${carRank[d0.team]}`;
   }
   $('h-car').innerHTML = `<b>${c0.team}</b> ${sec(c0.med)}`;
-  $('h-car-s').textContent = `against the average car; ${pct(c0.p_fast)} chance it is the fastest.`;
+  $('h-car-s').textContent = `vs the average car \u00b7 ${pct(c0.p_fast)} chance it's the fastest`;
   if (drivers.length) { window.__MAP = [drivers, cars, carRank]; drawMap(drivers, cars, carRank); }
   // drivers table
   const dl = Math.min(...drivers.map(d => d.skill[0])) - 0.02, dh = Math.max(...drivers.map(d => d.skill[2])) + 0.02;
@@ -316,7 +320,11 @@ function render(D) {
 function drawMap(drivers, cars, carRank) {
   // across: one column per car, slowest left to fastest right; up: driver skill (faster up)
   // the drawing scale follows the box's real shape, so text never stretches when the height changes
-  const box = $('map'), svg = $('map-svg'), W = 1160, H = Math.round(W * box.clientHeight / Math.max(1, box.clientWidth)), L = 64, R = 1136, T = 30, B = H - 72;
+  const box = $('map'), svg = $('map-svg');
+  // fill exactly what is left of the first screen (between 380 and 660 px), so the whole chart is visible on arrival
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  box.style.height = Math.max(380, Math.min(660, window.innerHeight - top - 10)) + 'px';
+  const W = 1160, H = Math.round(W * box.clientHeight / Math.max(1, box.clientWidth)), L = 64, R = 1136, T = 30, B = H - 66;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const order = [...cars].reverse(), C = order.length, col = (R - L) / C;
   const colX = Object.fromEntries(order.map((c, i) => [c.team, L + (i + 0.5) * col]));
@@ -326,7 +334,7 @@ function drawMap(drivers, cars, carRank) {
   g += `<line class="ax" x1="${L}" y1="${B}" x2="${R}" y2="${B}"/><line class="zero" x1="${L}" y1="${Y(0)}" x2="${R}" y2="${Y(0)}"/>
     <text class="q gem" x="${L + 10}" y="${T + 18}">fast driver, slower car</text><text class="q" x="${R - 10}" y="${T + 18}" text-anchor="end">fast driver, fast car</text>
     <text class="q" x="${L + 10}" y="${B - 12}">slower driver, slower car</text><text class="q" x="${R - 10}" y="${B - 12}" text-anchor="end">car doing the work</text>
-    <text x="${L - 10}" y="${T - 14}" text-anchor="start">\u2191 faster driver</text><text x="${R}" y="${B + 58}" text-anchor="end">faster car \u2192</text>`;
+    <text x="${L - 10}" y="${T - 14}" text-anchor="start">\u2191 faster driver</text><text x="${R}" y="${B + 54}" text-anchor="end">faster car \u2192</text>`;
   order.forEach(c => g += `<text x="${colX[c.team]}" y="${B + 20}" text-anchor="middle" style="fill:var(--ink)">${c.team}</text>
     <text x="${colX[c.team]}" y="${B + 36}" text-anchor="middle">${sec(c.med)}</text>`);
   [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3].forEach(v => { if (v <= y0 && v >= y1) g += `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${v === 0 ? 'avg' : minus((v > 0 ? '+' : '') + v.toFixed(1))}</text>`; });
