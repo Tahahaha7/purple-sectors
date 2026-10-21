@@ -124,24 +124,32 @@ button b{color:var(--accent);font-weight:500}
 .fan .g{stroke:var(--rule)}
 .fan .z{stroke:var(--ink-3);stroke-dasharray:2 3}
 
-/* bump charts */
-.seg{display:flex;gap:4px;padding:0 24px 12px}
-.seg button{font-size:12px;padding:4px 10px}.seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--fill)}
-.bump{display:block;width:100%;height:auto}
-.bump text{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px}
-.bump .tk{fill:var(--ink-2);font-size:10px}
-.bump .g{stroke:var(--rule)}
-.bump .ln{fill:none;stroke-width:1.6;opacity:.28;stroke-linejoin:round;cursor:pointer}
-@media (prefers-color-scheme:dark){.bump .ln{opacity:.5}}
-.bump .ln.sel,.bump .ln.hov{stroke-width:3.6;opacity:1}
-.bump .lab{fill:var(--ink-2);cursor:pointer}.bump .lab.sel,.bump .lab.hov{fill:var(--ink);font-weight:600}
-.bump .band{fill:var(--accent);opacity:.12}
-.bump .now-line{stroke:var(--accent);stroke-width:1}
-.bump .hist{stroke:var(--accent);stroke-dasharray:3 3}.bump .histpt{fill:var(--accent)}
-.bump .start{fill:var(--bg);stroke-width:1.6}
-.bump .lead{stroke:var(--ink-3);stroke-width:1}
-.btext{padding:4px 24px 22px;color:var(--ink-2);font-size:13px;max-width:110ch}.btext b{color:var(--ink);font-weight:600}
-.bwrap{overflow-x:auto}.bwrap svg{min-width:760px}
+/* timing tower */
+.tw-head,.tw{display:grid;grid-template-columns:40px 44px minmax(0,1.3fr) minmax(0,2fr) 76px 128px;gap:0 12px;align-items:center;padding:0 24px}
+.tw-head{min-height:36px;border-bottom:1px solid var(--rule);color:var(--ink-2);font-size:12px}
+.tower{position:relative;border-bottom:1px solid var(--rule)}
+.tw{position:absolute;left:0;right:0;top:0;height:36px;border-bottom:1px solid var(--rule);background:var(--bg);cursor:pointer;
+  transition:transform .65s cubic-bezier(.2,.8,.2,1),opacity .3s;font-size:13px}
+.tw:hover,.tw:focus-visible{background:var(--fill);outline:none}
+.tw.sel{background:var(--fill);box-shadow:inset 3px 0 0 var(--accent);z-index:2}
+.tw.absent{opacity:.38;cursor:default}
+.tw .pos{font-weight:600}.tw.lead .pos,.tw.lead .nm{color:var(--accent)}
+.tw .chg{font-size:11px;color:var(--ink-3)}.tw .chg.up{color:var(--accent)}.tw .chg.dn{color:var(--ink-2)}
+.tw .nm{font-weight:600;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
+.tw .nm .sub{color:var(--ink-2);font-weight:400;font-size:12px}
+.tw .tc{display:inline-block;width:4px;height:18px;background:var(--team);flex:none}
+.tw .rng{position:relative;height:18px}
+.tw .rng .ax0{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--ink-3)}
+.tw .rng .bar{position:absolute;top:6px;height:6px;background:repeating-linear-gradient(90deg,var(--ink-3) 0 6px,var(--fill) 6px 12px);transition:left .65s,width .65s}
+.tw .rng .dot{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:var(--team);transform:translateX(-50%);transition:left .65s}
+.tw .r{text-align:right}
+.tw .spk svg{display:block;width:120px;height:28px}
+.tw .spk path{fill:none;stroke:var(--team);stroke-width:1.8;opacity:.8}
+.tw .spk circle{fill:var(--ink)}
+.tw.sel .spk path{stroke-width:2.2;opacity:1}
+.btext{padding:12px 24px 22px;color:var(--ink-2);font-size:13px;max-width:110ch}.btext b{color:var(--ink);font-weight:600}
+@media (max-width:860px){.tw-head,.tw{grid-template-columns:28px 36px minmax(0,1fr) 64px;padding:0 14px}.tw-head .hide,.tw .hide{display:none}}
+@media (prefers-reduced-motion:reduce){.tw,.tw .rng .bar,.tw .rng .dot{transition:none}}
 /* scorecard */
 .sc .thead,.sc .trow{display:grid;grid-template-columns:36px minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) 110px 70px 60px;gap:0 12px;align-items:center;padding:0 24px}
 .sc .thead{min-height:38px;border-bottom:1px solid var(--rule);color:var(--ink-2);font-size:12px}
@@ -181,17 +189,17 @@ button b{color:var(--accent);font-weight:500}
 
 <section aria-labelledby="h-bd">
   <div class="head"><div><h2 id="h-bd">Drivers, round by round</h2>
-    <p>Each line is a driver's position in the ranking with the car removed. Switch to pace to see the seconds and how sure the model was, including where each driver started the season on 2022&ndash;25 form.</p></div></div>
-  <div class="seg" role="group" aria-label="Driver chart"><button type="button" data-kind="d" data-mode="rank" aria-pressed="true">Rank</button><button type="button" data-kind="d" data-mode="pace" aria-pressed="false">Pace</button></div>
-  <div class="bwrap"><svg class="bump" id="bump-d" role="img" aria-label="Driver ranking after each round"></svg></div>
+    <p>The ranking with the car removed, after the round selected above. Play the season and watch the order change: &#9650; and &#9660; show places gained or lost since the previous round, and the small line on the right is each driver's whole season.</p></div></div>
+  <div class="tw-head"><span class="slash">Pos</span><span class="slash">&plusmn;</span><span class="slash">Driver</span><span class="slash hide">Pace (90%)</span><span class="slash r">vs avg</span><span class="slash hide">Season</span></div>
+  <div class="tower" id="tower-d" role="list" aria-label="Driver ranking after the selected round"></div>
   <p class="btext" id="bump-d-text" aria-live="polite"></p>
 </section>
 
 <section aria-labelledby="h-bc">
   <div class="head"><div><h2 id="h-bc">Cars, round by round</h2>
-    <p>Each line is a car's position with the drivers removed. Pace shows who found time through the season, and who lost it.</p></div></div>
-  <div class="seg" role="group" aria-label="Car chart"><button type="button" data-kind="c" data-mode="rank" aria-pressed="true">Rank</button><button type="button" data-kind="c" data-mode="pace" aria-pressed="false">Pace</button></div>
-  <div class="bwrap"><svg class="bump" id="bump-c" role="img" aria-label="Car ranking after each round"></svg></div>
+    <p>The ranking with the drivers removed. The pace bar uses one scale for the whole season, so a bar moving left is a car finding time.</p></div></div>
+  <div class="tw-head"><span class="slash">Pos</span><span class="slash">&plusmn;</span><span class="slash">Car</span><span class="slash hide">Pace (90%)</span><span class="slash r">vs avg</span><span class="slash hide">Season</span></div>
+  <div class="tower" id="tower-c" role="list" aria-label="Car ranking after the selected round"></div>
   <p class="btext" id="bump-c-text" aria-live="polite"></p>
 </section>
 
@@ -488,88 +496,75 @@ function rankAt(k, kind) {                       // rank of every driver ('d') o
   const s = SNAPS[k], items = kind === 'd' ? s.drivers.map(d => [d.code, d.skill[10]]) : s.cars.map(c => [c.team, c.pace[10]]);
   return Object.fromEntries(items.sort((a, b) => a[1] - b[1]).map(([id], i) => [id, i + 1]));
 }
-const BUMP = { d: { sel: null, mode: 'rank' }, c: { sel: null, mode: 'rank' } };
-function buildBumps() {
-  const lastS = SNAPS[SNAPS.length - 1];
-  const soft = Object.keys(HIST);
-  // default: the driver who moved furthest from their history; the car that changed most over the season
-  const mv = lastS.drivers.map(d => [d.code, HIST[d.code] != null ? Math.abs(d.skill[10] - HIST[d.code]) : 0]).sort((a, b) => b[1] - a[1]);
-  BUMP.d.sel = mv[0][0];
-  const first = SNAPS[0], cm = lastS.cars.map(c => { const f = first.cars.find(x => x.team === c.team); return [c.team, f ? Math.abs(c.pace[10] - f.pace[10]) : 0]; }).sort((a, b) => b[1] - a[1]);
-  BUMP.c.sel = cm[0][0];
-  document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
-    BUMP[b.dataset.kind].mode = b.dataset.mode;
-    document.querySelectorAll(`[data-kind="${b.dataset.kind}"]`).forEach(x => x.setAttribute('aria-pressed', x === b)); renderBumps();
-  }));
+const TW = { d: { sel: null, rows: {}, spark: {} }, c: { sel: null, rows: {}, spark: {} } }, RH = 36;
+const itemsOf = (s, isD) => isD ? s.drivers.map(d => ({ id: d.code, q: d.skill, o: d })) : s.cars.map(c => ({ id: c.team, q: c.pace, o: c }));
+function buildBumps() { buildTower('d'); buildTower('c'); }
+function buildTower(kind) {
+  const isD = kind === 'd', box = $('tower-' + kind), st = TW[kind], n = SNAPS.length;
+  const ids = [...new Set(SNAPS.flatMap(s => itemsOf(s, isD).map(x => x.id)))];
+  const latest = id => { for (const s of [...SNAPS].reverse()) { const x = itemsOf(s, isD).find(x => x.id === id); if (x) return x.o; } };
+  // one fixed pace axis for the whole season, so movement on the bar is real movement
+  const all = SNAPS.flatMap(s => itemsOf(s, isD).map(x => x.q));
+  st.lo = Math.min(...all.map(q => q[1])) - 0.02; st.hi = Math.max(...all.map(q => q[19])) + 0.02;
+  st.ids = ids; st.info = Object.fromEntries(ids.map(id => [id, latest(id)]));
+  st.ranks = SNAPS.map((_, k) => rankAt(k, kind));
+  // default selection: the driver who moved furthest from history / the car that changed most
+  const last = SNAPS[n - 1];
+  if (isD) st.sel = itemsOf(last, true).map(x => [x.id, HIST[x.id] != null ? Math.abs(x.q[10] - HIST[x.id]) : 0]).sort((p, q) => q[1] - p[1])[0][0];
+  else st.sel = itemsOf(last, false).map(x => { const f = itemsOf(SNAPS[0], false).find(y => y.id === x.id); return [x.id, f ? Math.abs(x.q[10] - f.q[10]) : 0]; }).sort((p, q) => q[1] - p[1])[0][0];
+  box.innerHTML = ''; box.style.height = ids.length * RH + 'px';
+  const X = v => ((v - st.lo) / (st.hi - st.lo) * 100).toFixed(2) + '%';
+  ids.forEach(id => {
+    const o = st.info[id], team = isD ? o.team : id, row = document.createElement('div');
+    row.className = 'tw'; row.dataset.id = id; row.tabIndex = 0; row.style.setProperty('--team', tcol(team));
+    // season sparkline of rank (P1 at the top)
+    const N = ids.length, W = 120, Hs = 28, sx = i => (i * W / Math.max(1, n - 1)).toFixed(1), sy = r => (2 + (r - 1) * (Hs - 4) / Math.max(1, N - 1)).toFixed(1);
+    let d = '', on = false;
+    st.ranks.forEach((rk, i) => { if (rk[id] == null) { on = false; return; } d += (on ? 'L' : 'M') + sx(i) + ' ' + sy(rk[id]); on = true; });
+    st.spark[id] = { sx, sy };
+    row.innerHTML = `<span class="pos"></span><span class="chg"></span>
+      <span class="nm"><i class="tc"></i>${isD ? last2(o.name) : id}<span class="sub">${isD ? '#' + o.number + ' ' + o.team : ''}</span></span>
+      <span class="rng hide"><i class="ax0" style="left:${X(0)}"></i><i class="bar"></i><i class="dot"></i></span>
+      <span class="val r"></span>
+      <span class="spk hide"><svg viewBox="0 0 ${W} ${Hs}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"/><circle r="2.6"/></svg></span>`;
+    const pick = () => { st.sel = id; renderTower(kind); };
+    row.addEventListener('click', pick); row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+    st.rows[id] = row; box.appendChild(row);
+  });
 }
-function bumpChart(kind) {
-  const svg = $('bump-' + kind), n = SNAPS.length, isD = kind === 'd';
-  const st = BUMP[kind], W = 1160, R = isD ? 1060 : 1010, T = 20;
-  const L = isD ? (st.mode === 'rank' ? 96 : 150) : 140;
-  const ids = [...new Set(SNAPS.flatMap(s => isD ? s.drivers.map(d => d.code) : s.cars.map(c => c.team)))];
-  const val = (s, id) => { const o = isD ? s.drivers.find(d => d.code === id) : s.cars.find(c => c.team === id); return o && (isD ? o.skill : o.pace); };
-  const info = id => { for (const s of [...SNAPS].reverse()) { const o = isD ? s.drivers.find(d => d.code === id) : s.cars.find(c => c.team === id); if (o) return o; } };
-  const N = ids.length, H = st.mode === 'rank' ? T + N * (isD ? 21 : 32) + 40 : (isD ? 420 : 380), B = H - 40;
-  const X = i => L + i * (R - L) / Math.max(1, n - 1);
-  let Y, yTicks = [];
-  if (st.mode === 'rank') { Y = r => T + (r - 0.5) * (B - T) / N; }
-  else {
-    const all = SNAPS.flatMap(s => ids.map(id => val(s, id)).filter(Boolean).map(q => q[10]));
-    const lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.06;
-    Y = v => T + (v - (lo - pad)) / ((hi + pad) - (lo - pad)) * (B - T);       // faster (more negative) at the top
-    const step = isD ? 0.1 : 0.5;
-    for (let v = Math.ceil((lo - pad) / step) * step; v <= hi + pad + 1e-9; v += step) yTicks.push(Math.round(v * 100) / 100);
-  }
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  let g = SNAPS.map((s, i) => `<text x="${X(i)}" y="${H - 14}" text-anchor="middle" class="tk">${code(s.location)}</text>`).join('');
-  const HX = L - 48;                                   // the 2022-25 starting point gets its own column
-  g += `<line class="now-line" x1="${X(K)}" x2="${X(K)}" y1="${T - 8}" y2="${B + 4}"/>`;
-  if (st.mode !== 'rank') g += yTicks.map(v => `<line class="g" x1="${L}" x2="${R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tk" x="${isD ? L - 72 : L - 10}" y="${Y(v) + 4}" text-anchor="end">${Math.abs(v) < 1e-9 ? 'avg' : sec(v, 1)}</text>`).join('');
-  const ranks = SNAPS.map((_, k) => rankAt(k, kind));
-  const pts = id => SNAPS.map((s, k) => { const q = val(s, id); return q ? [X(k), st.mode === 'rank' ? Y(ranks[k][id]) : Y(q[10])] : null; });
-  const path = p => { let d = '', on = false; p.forEach(pt => { if (!pt) { on = false; return; } d += (on ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1); on = true; }); return d; };
-  // the selected line's uncertainty band (pace mode) and history point (drivers)
-  if (st.mode !== 'rank') {
-    const q = SNAPS.map((s, k) => [k, val(s, st.sel)]).filter(x => x[1]);
-    g += `<path class="band" d="M${q.map(([k, v]) => `${X(k)} ${Y(v[1])}`).join('L')}L${[...q].reverse().map(([k, v]) => `${X(k)} ${Y(v[19])}`).join('L')}Z"/>`;
-  }
-  ids.forEach(id => { const o = info(id), team = isD ? o.team : id;
-    g += `<path class="ln${id === st.sel ? ' sel' : ''}" data-id="${id}" d="${path(pts(id))}" stroke="${tcol(team)}"/>`; });
-  // end labels: in pace mode several lines can end close together, so spread the labels apart (min 13 px)
-  const ends = ids.map(id => { const p = pts(id), lastPt = [...p].reverse().find(Boolean); return lastPt && { id, x: lastPt[0], y: lastPt[1], k: p.lastIndexOf(lastPt) }; }).filter(Boolean)
-    .sort((a, b) => a.y - b.y);
-  ends.forEach((e, i) => e.ly = i ? Math.max(e.y, ends[i - 1].ly + 13) : e.y);
-  const over = ends.length ? ends[ends.length - 1].ly - (B - 4) : 0;
-  if (over > 0) ends.forEach(e => e.ly -= over * (e.ly - ends[0].ly) / Math.max(1, ends[ends.length - 1].ly - ends[0].ly));
-  ends.forEach(e => {
-    if (Math.abs(e.ly - e.y) > 2) g += `<line class="lead" x1="${e.x + 2}" y1="${e.y}" x2="${e.x + 8}" y2="${e.ly}"/>`;
-    g += `<text class="lab${e.id === st.sel ? ' sel' : ''}" data-id="${e.id}" x="${e.x + 10}" y="${e.ly + 4}">${st.mode === 'rank' ? ranks[e.k][e.id] + ' ' : ''}${e.id}</text>`;
+const last2 = n => last(n);
+function renderTower(kind) {
+  const isD = kind === 'd', st = TW[kind], s = SNAPS[K];
+  if (!st.ids) return;
+  const now = Object.fromEntries(itemsOf(s, isD).map(x => [x.id, x])), rk = st.ranks[K], prev = K > 0 ? st.ranks[K - 1] : null;
+  const present = st.ids.filter(id => now[id]).sort((a, b) => rk[a] - rk[b]), absent = st.ids.filter(id => !now[id]);
+  const X = v => ((v - st.lo) / (st.hi - st.lo) * 100).toFixed(2) + '%';
+  [...present, ...absent].forEach((id, slot) => {
+    const row = st.rows[id], x = now[id];
+    row.style.transform = `translateY(${slot * RH}px)`;
+    row.classList.toggle('absent', !x); row.classList.toggle('sel', id === st.sel); row.classList.toggle('lead', !!x && rk[id] === 1);
+    const q = x && x.q;
+    row.querySelector('.pos').textContent = x ? String(rk[id]).padStart(2, '0') : '\u2013';
+    const ch = x && prev && prev[id] != null ? prev[id] - rk[id] : 0, c = row.querySelector('.chg');
+    c.textContent = !x || !prev || prev[id] == null ? '' : ch > 0 ? '\u25B2' + ch : ch < 0 ? '\u25BC' + (-ch) : '\u2013';
+    c.className = 'chg' + (ch > 0 ? ' up' : ch < 0 ? ' dn' : '');
+    row.querySelector('.val').textContent = x ? sec(q[10]) : 'not yet';
+    const bar = row.querySelector('.bar'), dot = row.querySelector('.dot');
+    if (x) { bar.style.left = X(q[1]); bar.style.width = `calc(${X(q[19])} - ${X(q[1])})`; dot.style.left = X(q[10]); }
+    bar.style.opacity = dot.style.opacity = x ? '' : 0;
+    const sp = st.spark[id], cir = row.querySelector('.spk circle');
+    if (x) { cir.setAttribute('cx', sp.sx(K)); cir.setAttribute('cy', sp.sy(rk[id])); cir.style.display = ''; } else cir.style.display = 'none';
   });
-  ids.forEach(id => { const p = pts(id), lastPt = [...p].reverse().find(Boolean), o = info(id);
-    if (!lastPt) return;
-    const lab = id;
-    const f = p.findIndex(Boolean);
-    if (st.mode === 'rank' && f === 0) g += `<text class="lab l${id === st.sel ? ' sel' : ''}" data-id="${id}" x="${p[f][0] - 10}" y="${p[f][1] + 4}" text-anchor="end">${lab} ${ranks[f][id]}</text>`;
-    else if (f > 0) g += `<circle class="start" cx="${p[f][0]}" cy="${p[f][1]}" r="3.2" stroke="${tcol(isD ? o.team : id)}"/>`;      // joined the ranking later
-  });
-  if (isD && HIST[st.sel] != null && st.mode !== 'rank') {
-    const y = Y(HIST[st.sel]), q0 = val(SNAPS[0], st.sel);
-    g += `<line class="hist" x1="${HX}" x2="${X(0)}" y1="${y}" y2="${q0 ? Y(q0[10]) : y}"/><circle class="histpt" cx="${HX}" cy="${y}" r="5"/><text class="tk" x="${HX}" y="${H - 14}" text-anchor="middle" style="fill:var(--accent)">22\u201325</text>`;
-  }
-  svg.innerHTML = g;
-  svg.querySelectorAll('[data-id]').forEach(e => {
-    e.addEventListener('mouseenter', () => { svg.querySelectorAll(`[data-id="${e.dataset.id}"]`).forEach(x => x.classList.add('hov')); });
-    e.addEventListener('mouseleave', () => svg.querySelectorAll('.hov').forEach(x => x.classList.remove('hov')));
-    e.addEventListener('click', () => { st.sel = e.dataset.id; renderBumps(); });
-  });
-  // the line under the chart: what the selected item looks like right now
-  const s = SNAPS[K], q = val(s, st.sel), o = info(st.sel);
-  $('bump-' + kind + '-text').innerHTML = q
-    ? `<b>${isD ? o.name : st.sel}</b>${isD ? `, ${o.team}` : ''}: P${ranks[K][st.sel]} after round ${s.round}, ${sec(q[10])} against the average ${isD ? 'driver' : 'car'}` +
-      (isD && HIST[st.sel] != null ? `; started the season at ${sec(HIST[st.sel])} on 2022\u201325 form.` : isD ? '; a rookie, so 2026 alone decides.' : '.') + ` Click any line to follow it.`
-    : `${st.sel} has no data yet after round ${s.round}.`;
+  // the line under the tower: the selected driver or car right now
+  const x = now[st.sel], o = st.info[st.sel];
+  const startRank = (() => { for (let k = 0; k < SNAPS.length; k++) if (st.ranks[k][st.sel] != null) return [k, st.ranks[k][st.sel]]; })();
+  $('bump-' + kind + '-text').innerHTML = x
+    ? `<b>${isD ? o.name : st.sel}</b>${isD ? `, ${o.team}` : ''}: P${rk[st.sel]} after round ${s.round}, ${sec(x.q[10])} against the average ${isD ? 'driver' : 'car'}` +
+      (startRank ? ` (P${startRank[1]} after round ${SNAPS[startRank[0]].round})` : '') +
+      (isD && HIST[st.sel] != null ? `; started the season at ${sec(HIST[st.sel])} on 2022\u201325 form.` : isD ? '; a rookie, so 2026 alone decides.' : '.') + ` Select any row to follow it.`
+    : `${isD ? o.name : st.sel} is not in the model yet after round ${s.round}.`;
 }
-function renderBumps() { if (SNAPS.length) { bumpChart('d'); bumpChart('c'); } }
+function renderBumps() { if (SNAPS.length) { renderTower('d'); renderTower('c'); } }
 
 /* ---------- forecast scorecard by round ---------- */
 function renderScore() {
