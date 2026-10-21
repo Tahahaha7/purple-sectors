@@ -214,7 +214,7 @@ button:hover{background:var(--fill)}
 <section aria-labelledby="h-net">
   <div class="selbar" id="selbar" aria-live="polite"></div>
   <div class="netwrap"><div class="net" id="net"><svg id="net-svg" viewBox="0 0 1160 620" preserveAspectRatio="none" aria-hidden="true"></svg><div class="ntip" id="ntip"></div></div></div>
-  <div class="legendrow"><span id="h-net" style="color:var(--ink);font-weight:600">The teammate network</span><span>Helmet: on the 2026 grid, in its team colours</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ink-3);vertical-align:-1px;margin-right:6px"></i>no longer racing, still part of the chain</span><span>Thicker line: more races together</span></div>
+  <div class="legendrow"><span id="h-net" style="color:var(--ink);font-weight:600">The teammate network</span><span>Helmet: on the 2026 grid, in its team colours</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ink-3);vertical-align:-1px;margin-right:6px"></i>not on the 2026 grid, still part of the chains</span><span>Thicker line: more races together</span></div>
 </section>
 
 <section class="cmp" id="cmp" hidden aria-live="polite">
@@ -241,6 +241,7 @@ button:hover{background:var(--fill)}
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. "In every car" assumes a driver's skill carries over unchanged, ignoring time to adapt.</p>
 </div>
+<script src="config.js"></script>
 <script>
 const TEAM = {"Mercedes":"#00A19B","Red Bull":"#3671C6","Ferrari":"#E8002D","McLaren":"#FF8000","Alpine":"#FF87BC",
   "Racing Bulls":"#6692FF","Audi":"#B5112E","Haas":"#9BA1A6","Williams":"#3FA9F5","Aston Martin":"#1E8C68","Cadillac":"#C9A227"};
@@ -337,9 +338,9 @@ function drawNet() {
     el.className = 'nd' + (d ? '' : ' gone') + (n.id === SEL.a ? ' sel' : '') + (n.id === SEL.b ? ' sel2' : '') + (near.size && !near.has(n.id) ? ' dim' : '');
     el.style.left = (p.x / W * 100) + '%'; el.style.top = (p.y / H * 100) + '%'; el.tabIndex = d ? 0 : -1;
     el.innerHTML = (d ? helmet(d, d.team, false) : '<i class="pip"></i>') + `<span class="lb">${n.id}</span>`;
-    el.setAttribute('aria-label', d ? `${n.name}, ${d.team}` : `${n.name}, no longer racing`);
+    el.setAttribute('aria-label', d ? `${n.name}, ${d.team}` : `${n.name}, not ranked on this site`);
     const tip = () => { const t = $('ntip'), seasons = n.seasons.map(s => `${s.season} ${s.teams.map(cleanTeam).join(' / ')}`).join('<br>');
-      t.innerHTML = `<b>${n.name}</b>${d ? '' : ' (not on the 2026 grid)'}<br>${seasons}`; t.style.display = 'block';
+      t.innerHTML = `<b>${n.name}</b>${d ? '' : PS.HIDE_DRIVERS.includes(n.id) ? ' (substitute in 2026, not ranked here)' : ' (not on the 2026 grid)'}<br>${seasons}`; t.style.display = 'block';
       t.style.left = Math.min(box.clientWidth - 270, p.x / W * box.clientWidth + 26) + 'px'; t.style.top = Math.max(0, p.y / H * box.clientHeight - 20) + 'px'; };
     el.addEventListener('mouseenter', tip); el.addEventListener('mouseleave', () => $('ntip').style.display = 'none');
     if (d) { el.addEventListener('click', () => pick(n.id)); el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n.id); } }); }
@@ -515,7 +516,8 @@ function buildDuels() {
 /* ---------- boot ---------- */
 Promise.all([getJSON('data/soft.json'), getJSON('data/snapshots/index.json'), getJSON('data/network.json')]).then(([soft, idx, net]) => {
   SOFT = soft; NET = net;
-  (soft.drivers || []).forEach(d => DRV[d.code] = d);
+  soft.drivers = (soft.drivers || []).filter(PS.shown);
+  soft.drivers.forEach(d => DRV[d.code] = d);
   const latest = idx.rounds[idx.rounds.length - 1];
   return Promise.all([getJSON('data/snapshots/' + latest.file.replace('.json', '_draws.json')), ...idx.rounds.map(r => getJSON('data/snapshots/' + r.file))]);
 }).then(([draws, ...snaps]) => {
