@@ -174,7 +174,7 @@ button b{color:var(--accent);font-weight:500}
     <div class="now" id="now"></div>
     <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
     <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
-    <p class="note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
+    <p class="note" id="warn-note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
   </div>
 </header>
 
@@ -212,7 +212,7 @@ button b{color:var(--accent);font-weight:500}
 
 <section class="router" aria-label="More">
   <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
-  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] Comparisons</div><p>Teammate battles, any driver in any car, and the network that links them all.</p></a>
+  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
   <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, the history behind it, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. Driver rankings are with the car removed, using 2022&ndash;25 results as background evidence.</p>
@@ -528,6 +528,7 @@ function buildTower(kind) {
   });
 }
 const last2 = n => last(n);
+const pretty = n => n.split(' ').map((w, i) => i ? cap(w) : w).join(' ');   // 'Isack HADJAR' -> 'Isack Hadjar'
 function renderTower(kind) {
   const isD = kind === 'd', st = TW[kind], s = SNAPS[K];
   if (!st.ids) return;
@@ -554,10 +555,10 @@ function renderTower(kind) {
   const x = now[st.sel], o = st.info[st.sel];
   const startRank = (() => { for (let k = 0; k < SNAPS.length; k++) if (st.ranks[k][st.sel] != null) return [k, st.ranks[k][st.sel]]; })();
   $('bump-' + kind + '-text').innerHTML = x
-    ? `<b>${isD ? o.name : st.sel}</b>${isD ? `, ${o.team}` : ''}: P${rk[st.sel]} after round ${s.round}, ${sec(x.q[10])} against the average ${isD ? 'driver' : 'car'}` +
+    ? `<b>${isD ? pretty(o.name) : st.sel}</b>${isD ? `, ${o.team}` : ''}: P${rk[st.sel]} after round ${s.round}, ${sec(x.q[10])} against the average ${isD ? 'driver' : 'car'}` +
       (startRank ? ` (P${startRank[1]} after round ${SNAPS[startRank[0]].round})` : '') +
       (isD && HIST[st.sel] != null ? `; started the season at ${sec(HIST[st.sel])} on 2022\u201325 form.` : isD ? '; a rookie, so 2026 alone decides.' : '.') + ` Select any row to follow it.`
-    : `${isD ? o.name : st.sel} is not in the model yet after round ${s.round}.`;
+    : `${isD ? pretty(o.name) : st.sel} is not in the model yet after round ${s.round}.`;
 }
 function renderBumps() { if (SNAPS.length) { renderTower('d'); renderTower('c'); } }
 
@@ -568,6 +569,7 @@ function init() {
   SNAPS.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = code(s.location);
     b.title = s.name; b.addEventListener('click', () => { stop(); setRound(i); }); tl.appendChild(b); });
   $('stamp').textContent = SNAPS[SNAPS.length - 1].date;
+  $('warn-note').hidden = !SNAPS.some(s => s.diagnostics && s.diagnostics.status === 'warn');   // only when a round needs it
   $('play').addEventListener('click', () => timer ? stop() : play());
   const latest = SNAPS[SNAPS.length - 1];
   SEL = 'c' + latest.cars.reduce((a, b) => b.p_fast > a.p_fast ? b : a).team;
