@@ -217,6 +217,7 @@ button b{color:var(--accent);font-weight:500}
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. Driver rankings are with the car removed, using 2022&ndash;25 results as background evidence.</p>
 </div>
+<script src="config.js"></script>
 <script>
 const $ = id => document.getElementById(id), NS = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
@@ -252,7 +253,7 @@ Promise.all([getJSON('data/snapshots/index.json'), getJSON('data/soft.json')])
     (soft && soft.drivers || []).forEach(d => HIST[d.code] = d.skill[1] - d.vs_history);
     return Promise.all(idx.rounds.map(r => getJSON('data/snapshots/' + r.file)));
   })
-  .then(snaps => { SNAPS = snaps.filter(Boolean).sort((a, b) => a.round - b.round); init(); })
+  .then(snaps => { SNAPS = snaps.filter(Boolean).sort((a, b) => a.round - b.round); SNAPS.forEach(s => s.drivers = s.drivers.filter(PS.shown)); init(); })
   .catch(() => { $('now').textContent = 'History is refreshing. Check back in a few minutes.'; });
 
 /* ---------- layout ---------- */

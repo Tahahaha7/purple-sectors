@@ -264,6 +264,7 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <p class="fine">An independent fan project, not associated with Formula 1. Lap timing from OpenF1; 2022&ndash;25 results from Jolpica.</p>
 </div>
 
+<script src="config.js"></script>
 <script>
 const TEAM = {"Mercedes":"#00A19B","Red Bull":"#3671C6","Ferrari":"#E8002D","McLaren":"#FF8000","Alpine":"#FF87BC",
   "Racing Bulls":"#6692FF","Audi":"#B5112E","Haas":"#9BA1A6","Williams":"#3FA9F5","Aston Martin":"#1E8C68","Cadillac":"#C9A227"};
@@ -276,7 +277,7 @@ const last = n => cap(n.split(' ').slice(-1)[0]);
 const helmet = (d, team, mirror) => `<div class="helm${mirror ? ' mirror' : ''}" style="--team:${TEAM[team] || '#888888'}" aria-hidden="true"><i class="base"></i><i class="paint"></i><i class="ink"></i><b class="num">${d.number}</b></div>`;
 
 function render(D) {
-  const drivers = D.drivers || [], cars = [...D.cars].sort((a, b) => a.med - b.med);
+  const drivers = (D.drivers || []).filter(PS.shown), cars = [...D.cars].sort((a, b) => a.med - b.med);
   if (!drivers.length) {                       // data from before v2.0: no cross-team driver ranking yet
     document.querySelectorAll('.mapwrap, .rk:not(:has(.cars))').forEach(el => el.hidden = true);
     $('h-drv').textContent = 'Arriving with the next update';
@@ -374,7 +375,7 @@ function changes() {
     if (!pair) return;
     const [prev, now] = pair, m = q => q[10];
     const cm = now.cars.map(c => { const p = prev.cars.find(x => x.team === c.team); return p && { team: c.team, d: m(c.pace) - m(p.pace), now: m(c.pace) }; }).filter(Boolean);
-    const dm = now.drivers.map(c => { const p = prev.drivers.find(x => x.code === c.code); return p && { c, d: m(c.skill) - m(p.skill) }; }).filter(Boolean);
+    const dm = now.drivers.filter(PS.shown).map(c => { const p = prev.drivers.find(x => x.code === c.code); return p && { c, d: m(c.skill) - m(p.skill) }; }).filter(Boolean);
     const gain = cm.reduce((a, b) => b.d < a.d ? b : a), drop = cm.reduce((a, b) => b.d > a.d ? b : a);
     const up = dm.reduce((a, b) => b.d < a.d ? b : a), down = dm.reduce((a, b) => b.d > a.d ? b : a);
     const cell = (k, v, s) => `<div><div class="k slash">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
@@ -399,6 +400,7 @@ function nextUp() {
       const done = card.rounds.some(r => r.round === fc.for_round);
       $('h2-next').textContent = done ? `Last forecast: ${fc.name}` : `Next qualifying: ${fc.name}`;
       $('next-sub').textContent = `${fc.location ? fc.location + ', ' : ''}${fc.date.replace(/-/g, '.')}. Forecast made after round ${fc.made_after_round}, ${Math.round(fc.weeks_ahead) === 1 ? 'one week' : Math.round(fc.weeks_ahead) + ' weeks'} ahead.`;
+      fc.drivers = fc.drivers.filter(PS.shown);
       const N = fc.drivers.length, fav = fc.drivers.reduce((a, b) => b.p_pole > a.p_pole ? b : a), maxP = Math.max(...fc.drivers.map(d => d.p_pole));
       $('next-rows').innerHTML = fc.drivers.map((d, i) => {
         const cells = Array.from({ length: N }, (_, k) => `<b class="${k + 1 === d.pos_median ? 'md' : k + 1 >= d.pos_lo && k + 1 <= d.pos_hi ? 'in' : ''}"></b>`).join('');
