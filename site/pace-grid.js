@@ -2,8 +2,10 @@
  *
  * Drop-in: <div data-pace-grid data-src="data/pace.json"></div> <script src="pace-grid.js" defer></script>
  * Reads site/data/pace.json written by `python -m purple_sectors.pace.export`.
- * Inherits the page's font and text colour; override the tokens below from your own CSS if you like:
- *   --pg-p1 (the purple for P1), --pg-line (hairlines), --pg-muted (secondary text).
+ * Rows are cars (fastest at the top), columns are drivers (fastest on the left).
+ * Inherits the page's font and text colour; override the tokens from your own CSS if you like:
+ *   --pg-front (front of the grid), --pg-back (back of the grid), --pg-accent (selection),
+ *   --pg-line (hairlines), --pg-muted (secondary text).
  * Add data-no-heading when the page already has a heading for the section.
  * No dependencies, no build step. pace.json carries seconds on a 90-second lap.
  */
@@ -11,47 +13,48 @@
   "use strict";
 
   const CSS = `
-  .pg { max-width: 72rem; line-height: 1.45; }
+  .pg { line-height: 1.45; --front: var(--pg-front, #5b9dff); --back: var(--pg-back, #c98b4a); }
   .pg h2 { font-size: 1.35rem; font-weight: 600; margin: 0 0 .25rem; }
-  .pg p { margin: 0 0 1rem; color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); max-width: 60ch; }
+  .pg > p { margin: 0 0 1rem; color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); max-width: 60ch; }
   .pg-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .pg table { border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; }
   .pg th, .pg td { padding: 0; text-align: center; font-weight: 400; }
-  .pg thead th { font-size: .78rem; padding-bottom: .35rem;
-                 color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); }
-  .pg thead th.pg-fast { color: inherit; }
-  .pg tbody th { text-align: left; padding-right: .6rem; position: sticky; left: 0; background: inherit; }
-  .pg .pg-name { all: unset; cursor: pointer; display: inline-flex; gap: .5rem; align-items: baseline;
-                 padding: .15rem .35rem; border-radius: 3px; white-space: nowrap; }
-  .pg .pg-name:hover, .pg .pg-name:focus-visible { outline: 2px solid var(--pg-p1, #7c3aed); outline-offset: 1px; }
-  .pg .pg-name[aria-pressed="true"] { background: var(--pg-p1, #7c3aed); color: #fff; }
-  .pg .pg-name small { font-size: .74rem; opacity: .7; }
-  .pg .pg-cell { all: unset; cursor: pointer; display: grid; place-items: center; width: 2.6rem; height: 2.1rem;
-                 border-radius: 4px; font-size: .9rem; box-sizing: border-box;
+  .pg thead th { padding-bottom: .3rem; vertical-align: bottom; }
+  .pg tbody th { text-align: left; padding-right: .7rem; position: sticky; left: 0; background: inherit; white-space: nowrap;
+                 font-size: .82rem; color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); }
+  .pg tbody th b { font-weight: 600; color: inherit; }
+  .pg tbody tr:first-child th b { color: var(--front); }
+  .pg .pg-name { all: unset; cursor: pointer; display: block; padding: .2rem .15rem; border-radius: 3px; font-size: .78rem;
+                 font-weight: 600; letter-spacing: .02em; }
+  .pg .pg-name:hover, .pg .pg-name:focus-visible { outline: 2px solid var(--pg-accent, #7c3aed); outline-offset: 1px; }
+  .pg .pg-name[aria-pressed="true"] { background: var(--pg-accent, #7c3aed); color: #fff; }
+  .pg .pg-cell { all: unset; cursor: pointer; display: grid; place-items: center; width: 2.3rem; height: 2rem; border-radius: 4px;
+                 font-size: .86rem; box-sizing: border-box;
                  border: 1px solid var(--pg-line, color-mix(in srgb, currentColor 14%, transparent)); }
   .pg .pg-cell:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
   .pg .pg-cell.pg-seat { border: 2px solid currentColor; }
   .pg .pg-cell.pg-guess { border-style: dashed; }
-  .pg .pg-cell[aria-pressed="true"] { outline: 3px solid var(--pg-p1, #7c3aed); outline-offset: 1px; }
-  .pg-key { display: flex; flex-wrap: wrap; gap: 1.1rem; margin: .8rem 0 0;
-            font-size: .82rem; color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); }
+  .pg .pg-cell[aria-pressed="true"] { outline: 3px solid var(--pg-accent, #7c3aed); outline-offset: 1px; }
+  .pg-key { display: flex; flex-wrap: wrap; gap: 1.1rem; margin: .8rem 0 0; font-size: .82rem;
+            color: var(--pg-muted, color-mix(in srgb, currentColor 62%, transparent)); }
   .pg-key span { display: inline-flex; align-items: center; gap: .4rem; }
   .pg-key i { display: inline-block; width: 1rem; height: .9rem; border-radius: 3px; box-sizing: border-box;
               border: 1px solid var(--pg-line, color-mix(in srgb, currentColor 14%, transparent)); }
   .pg-detail { min-height: 3.2rem; margin: 1rem 0 0; padding: .75rem 0 0;
                border-top: 1px solid var(--pg-line, color-mix(in srgb, currentColor 14%, transparent)); }
-  .pg-detail b { font-weight: 600; }
-  @media (max-width: 640px) { .pg .pg-cell { width: 2.2rem; height: 1.9rem; font-size: .8rem; } }
+  @media (max-width: 640px) { .pg .pg-cell { width: 2rem; height: 1.8rem; font-size: .78rem; } }
   `;
 
   const fmtS = (sec) => sec.toFixed(2);
   const pos = (p) => `P${p}`;
 
-  // Fill: one purple, strongest at the front of the grid. Text flips to white on strong fills.
-  function fill(p, n, p1) {
-    const share = Math.max(0.07, 1 - (p - 1) / Math.max(1, n - 1));
-    return { background: `color-mix(in srgb, ${p1} ${Math.round(share * 100)}%, transparent)`,
-             color: share > 0.55 ? "#fff" : "inherit" };
+  // Two quiet hues: the front of the grid in blue, the back in a warm tone, the midfield almost bare.
+  function fill(p, n) {
+    const share = 1 - (p - 1) / Math.max(1, n - 1);           // 1 at pole, 0 at the back
+    const k = Math.abs(share - 0.5) * 2;                       // 0 in the midfield, 1 at either end
+    const hue = share >= 0.5 ? "var(--front)" : "var(--back)";
+    const alpha = Math.round(6 + k * (share >= 0.5 ? 86 : 70));
+    return { background: `color-mix(in srgb, ${hue} ${alpha}%, transparent)`, color: share >= 0.5 && k > 0.6 ? "#fff" : "inherit" };
   }
 
   function el(tag, attrs, children) {
@@ -70,7 +73,7 @@
     const who = d.name || d.code;
     const best = Math.min(...data.grid.cells.map((row) => row.find((x) => x.seat).pace[1]));
     const behind = c.pace[1] - best;
-    const where = c.seat ? `in the ${team}, their current seat` : `in the ${team}`;
+    const where = c.seat ? `in the ${team} (their current seat)` : `in the ${team}`;
     const guess = c.seen ? `` : ` ${who} has never driven this car, so the fit between them is a guess from the prior.`;
     return `${who} ${where} would qualify around ${pos(c.pos[1])} (${pos(c.pos[0])} to ${pos(c.pos[2])}), `
          + `${Math.abs(behind).toFixed(2)} s ${behind >= 0 ? "behind" : "ahead of"} the quickest seat on the grid.${guess}`;
@@ -88,46 +91,49 @@
   }
 
   function render(root, data) {
-    const p1 = getComputedStyle(root).getPropertyValue("--pg-p1").trim() || "#7c3aed";
     const n = data.drivers.length;
     root.classList.add("pg");
     root.replaceChildren();
 
     if (!root.hasAttribute("data-no-heading")) {
       root.append(el("h2", { text: "Where would each driver qualify in each car?" }));
-      root.append(el("p", { text: `Drivers are ranked with the car taken out, cars with the driver taken out, `
-        + `and every square puts one driver into one car against the rest of today's grid. `
-        + `Click a square for the detail, or two names to swap their seats. `
+      root.append(el("p", { text: `Cars down the side, fastest at the top; drivers across, fastest on the left. `
+        + `Every square puts one driver into one car against the rest of today's grid. `
+        + `Click a square for the detail, or two drivers to swap their seats. `
         + `After ${data.event || "round " + data.round} ${data.season}.` }));
     }
 
     const detail = el("div", { class: "pg-detail", "aria-live": "polite",
-      text: "Pick a square. Purple means the front of the grid; a bold border marks where the driver actually sits." });
+      text: "Pick a square. Blue is the front of the grid, warm is the back; a bold border marks where the driver actually sits." });
     const picked = [];
     let pressedCell = null;
+    const nameButtons = [];
 
     const head = el("tr", {}, [el("th", { text: "" })]);
-    data.grid.cars.forEach((code, j) => head.append(el("th", {
-      text: code, title: data.grid.teams[j], class: j === 0 ? "pg-fast" : "" })));
-
-    const body = el("tbody");
     data.drivers.forEach((d, i) => {
-      const name = el("button", { class: "pg-name", type: "button", "aria-pressed": "false",
-        title: `${d.name}: ${fmtS(d.skill[1])} s against the average driver, `
-             + `${d.moved ? "has driven more than one team" : "one team only, so this rests partly on the prior"}` },
-        [document.createTextNode(d.code), el("small", { text: d.short })]);
+      const name = el("button", { class: "pg-name", type: "button", "aria-pressed": "false", text: d.code,
+        title: `${d.name}, ${d.team}: ${fmtS(d.skill[1])} s against the average driver, `
+             + `${d.moved ? "has driven more than one team" : "one team only, so this rests partly on the prior"}` });
       name.addEventListener("click", () => {
         const k = picked.indexOf(i);
         if (k >= 0) picked.splice(k, 1); else { picked.push(i); if (picked.length > 2) picked.shift(); }
-        body.querySelectorAll(".pg-name").forEach((b, idx) => b.setAttribute("aria-pressed", String(picked.includes(idx))));
+        nameButtons.forEach((b, idx) => b.setAttribute("aria-pressed", String(picked.includes(idx))));
         detail.textContent = picked.length === 2 ? swapSentence(data, picked[0], picked[1])
           : picked.length === 1 ? `${data.drivers[picked[0]].name} selected. Pick a second driver to swap seats.`
-          : "Pick a square, or two names to swap seats.";
+          : "Pick a square, or two drivers to swap seats.";
       });
-      const tr = el("tr", {}, [el("th", { scope: "row" }, [name])]);
-      data.grid.cells[i].forEach((c, j) => {
+      nameButtons.push(name);
+      head.append(el("th", { scope: "col" }, [name]));
+    });
+
+    const body = el("tbody");
+    data.grid.cars.forEach((code, j) => {
+      const tr = el("tr", {}, [el("th", { scope: "row", title: data.grid.teams[j] },
+        [el("b", { text: code }), document.createTextNode(" " + data.grid.teams[j])])]);
+      data.drivers.forEach((d, i) => {
+        const c = data.grid.cells[i][j];
         const btn = el("button", { class: "pg-cell" + (c.seat ? " pg-seat" : "") + (c.seen ? "" : " pg-guess"),
-          type: "button", "aria-pressed": "false", style: fill(c.pos[1], n, p1), text: String(c.pos[1]),
+          type: "button", "aria-pressed": "false", style: fill(c.pos[1], n), text: String(c.pos[1]),
           "aria-label": `${d.name} in the ${data.grid.teams[j]}: ${pos(c.pos[1])}, ${pos(c.pos[0])} to ${pos(c.pos[2])}` });
         btn.addEventListener("click", () => {
           if (pressedCell) pressedCell.setAttribute("aria-pressed", "false");
@@ -143,12 +149,11 @@
       [el("thead", {}, [head]), body]);
     root.append(el("div", { class: "pg-scroll" }, [table]));
     root.append(el("div", { class: "pg-key" }, [
-      el("span", {}, [el("i", { style: fill(1, n, p1) }), document.createTextNode("front of the grid")]),
-      el("span", {}, [el("i", { style: fill(n, n, p1) }), document.createTextNode("back of the grid")]),
+      el("span", {}, [el("i", { style: fill(1, n) }), document.createTextNode("front of the grid")]),
+      el("span", {}, [el("i", { style: fill(n, n) }), document.createTextNode("back of the grid")]),
       el("span", {}, [el("i", { style: { border: "2px solid currentColor" } }), document.createTextNode("actual seat")]),
       el("span", {}, [el("i", { style: { borderStyle: "dashed" } }), document.createTextNode("never driven that car")]),
-      el("span", {}, [document.createTextNode(`fastest car on the left, fastest driver at the top, `
-        + `${data.units.interval} intervals in the detail`)]),
+      el("span", {}, [document.createTextNode(`${data.units.interval} intervals in the detail`)]),
     ]));
     root.append(detail);
   }

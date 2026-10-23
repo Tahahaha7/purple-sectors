@@ -52,8 +52,6 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 .changes .stats .v{font-size:19px;line-height:1.25}
 .changes .stats .s{color:var(--ink-2);font-size:12px;margin-top:4px}
 .changes .dn{color:var(--accent)}
-.next .thead,.next .trow{grid-template-columns:40px minmax(0,1fr) 170px 60px 240px}
-.next .trow{min-height:40px}
 /* router */
 .router{display:grid;grid-template-columns:repeat(3,1fr)}
 .router > a,.router > div{padding:22px 24px;border-right:1px solid var(--rule);display:block}
@@ -64,12 +62,24 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 .fine{padding:18px 24px 40px;color:var(--ink-2);font-size:12px;max-width:100ch}
 
 
-.pbar{display:flex;align-items:center;gap:8px}.pbar i{display:block;height:8px;background:var(--accent);min-width:1px}
-.strip{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:1px;height:12px}
-.strip b{background:var(--fill)} .strip b.in{background:var(--ink-3)} .strip b.md{background:var(--ink)}
-.next .trow.fav .nm2{color:var(--accent)}
 .next .stats .v{font-size:19px;line-height:1.25}.next .stats .s{color:var(--ink-2);font-size:12px;margin-top:4px}
-@media (max-width:860px){.next .thead,.next .trow{grid-template-columns:28px minmax(0,1fr) 92px 48px}.next .hide{display:none}}
+/* the starting grid: two staggered files, pole at the top left, a painted line ahead of each car */
+.gridbox{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;padding:26px 24px 8px;max-width:680px}
+.gridbox .col{display:flex;flex-direction:column;gap:16px}
+.gridbox .col.r{padding-top:38px}
+.slot{position:relative;padding-top:10px}
+.slot::before{content:"";position:absolute;left:0;top:0;width:62%;height:2px;background:var(--ink-2)}
+.slot::after{content:"";position:absolute;left:0;top:0;width:2px;height:16px;background:var(--ink-2)}
+.car{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:baseline;padding:8px 12px 9px;
+  border:1px solid var(--rule);border-left:7px solid var(--team);border-radius:3px 14px 14px 3px;background:var(--fill)}
+.car .pos{font-weight:600;font-size:18px;letter-spacing:-.02em}
+.car .drv{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.car .sub{grid-column:1 / -1;color:var(--ink-2);font-size:12px;margin-top:2px}
+.slot.fav .car{border-color:var(--accent);border-left-color:var(--team)}
+.slot.fav .car .pos{color:var(--accent)}
+.slot.q2out .car{opacity:.78}
+.slot.q1out .car{opacity:.55}
+@media (max-width:560px){.gridbox{column-gap:14px;padding:18px 14px 6px}.gridbox .col.r{padding-top:30px}.car{padding:6px 8px;column-gap:8px}.car .pos{font-size:15px}.car .sub{font-size:11px}}
 
 /* section heads */
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:30px 24px 16px;border-bottom:1px solid var(--rule)}
@@ -180,22 +190,14 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 .vd b{font-weight:600}
 .vd .sub{display:block}
 
-.next .thead,.next .trow{grid-template-columns:40px minmax(0,1fr) 170px 60px 240px}
-.next .trow{min-height:40px}
-.pbar{display:flex;align-items:center;gap:8px}.pbar i{display:block;height:8px;background:var(--accent);min-width:1px}
-.strip{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:1px;height:12px}
-.strip b{background:var(--fill)} .strip b.in{background:var(--ink-3)} .strip b.md{background:var(--ink)}
-.next .trow.fav .nm2{color:var(--accent)}
 .next .stats .v{font-size:19px;line-height:1.25}.next .stats .s{color:var(--ink-2);font-size:12px;margin-top:4px}
 
-.next .trow{min-height:40px}
 
 @media (max-width:860px){
   .hero{grid-template-columns:1fr}.hero .copy{border-right:0;border-bottom:1px solid var(--rule)}
   .rk .thead,.rk .trow{grid-template-columns:30px minmax(0,1fr) 92px 64px;padding:0 14px}
   .rk .hide{display:none}
   .rk .cars .thead,.rk .cars .trow{grid-template-columns:30px minmax(0,1fr) 92px 70px}
-  .next .thead,.next .trow{grid-template-columns:28px minmax(0,1fr) 92px 48px}.next .hide{display:none}
   .router{grid-template-columns:1fr}.router > a,.router > div{border-right:0;border-bottom:1px solid var(--rule)}
   .stats{grid-template-columns:1fr 1fr}.stats > div{min-width:0;border-bottom:1px solid var(--rule)}
 }
@@ -245,16 +247,15 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 
 <section class="rk" aria-labelledby="h2-grid">
   <div class="head"><div><h2 id="h2-grid">Every driver in every car</h2>
-    <p>Each square puts one driver into one car and asks where they would qualify against the rest of today's grid in their real seats. Purple is the front of the grid. A bold border is the seat they actually have; a dashed square is a car they have never driven, where the fit between driver and car is a guess from the prior.</p></div></div>
+    <p>Cars down the side, fastest at the top; drivers across, fastest on the left. Each square puts one driver into one car and asks where they would qualify against the rest of today's grid in their real seats: blue is the front of the grid, warm is the back. A bold border is the seat they actually have; a dashed square is a car they have never driven, where the fit between driver and car is a guess from the prior. Click two drivers to swap their seats.</p></div></div>
   <div data-pace-grid data-src="data/pace.json" data-no-heading style="padding:18px 24px 22px;--pg-p1:var(--accent);--pg-line:var(--rule);--pg-muted:var(--ink-2)"></div>
 </section>
 
 <section class="next" id="next" aria-labelledby="h2-next" hidden>
   <div class="head"><div><h2 id="h2-next"></h2><p id="next-sub"></p></div></div>
   <div class="stats" id="next-card"></div>
-  <div class="thead"><span class="slash">Exp</span><span class="slash">Driver</span><span class="slash">Pole</span><span class="slash r">Q3</span><span class="slash hide">Likely grid (80%)</span></div>
-  <div id="next-rows"></div>
-  <p class="fine" style="padding:14px 24px 22px">Each probability comes from 2,000 simulated qualifying sessions, played out through Q1, Q2 and Q3.</p>
+  <div class="gridbox" id="next-grid" role="list" aria-label="Likely starting grid, pole at the top left"></div>
+  <p class="fine" style="padding:14px 24px 22px">The grid as the model expects it, pole at the top left. Each slot shows the driver's likely range of positions and chance of pole; cars drawn fainter are expected to drop out in Q1. Every probability comes from the posterior's simulated qualifying sessions, played out through Q1, Q2 and Q3.</p>
 </section>
 
 <section class="changes" id="changes" aria-labelledby="h2-changes" hidden>
@@ -408,15 +409,17 @@ function nextUp() {
       $('h2-next').textContent = done ? `Last forecast: ${fc.name}` : `Next qualifying: ${fc.name}`;
       $('next-sub').textContent = `${fc.location ? fc.location + ', ' : ''}${fc.date.replace(/-/g, '.')}. Forecast made after round ${fc.made_after_round}, ${Math.round(fc.weeks_ahead) === 1 ? 'one week' : Math.round(fc.weeks_ahead) + ' weeks'} ahead.`;
       fc.drivers = fc.drivers.filter(PS.shown);
-      const N = fc.drivers.length, fav = fc.drivers.reduce((a, b) => b.p_pole > a.p_pole ? b : a), maxP = Math.max(...fc.drivers.map(d => d.p_pole));
-      $('next-rows').innerHTML = fc.drivers.map((d, i) => {
-        const cells = Array.from({ length: N }, (_, k) => `<b class="${k + 1 === d.pos_median ? 'md' : k + 1 >= d.pos_lo && k + 1 <= d.pos_hi ? 'in' : ''}"></b>`).join('');
-        return `<div class="trow${d === fav ? ' fav' : ''}" role="group" aria-label="${d.name}: pole ${pct(d.p_pole)}, Q3 ${pct(d.p_q3)}, likely P${d.pos_lo} to P${d.pos_hi}">
-          <span>${String(i + 1).padStart(2, '0')}</span><span class="nm2">${last(d.name)} <span class="sub">#${d.number} ${d.team}</span></span>
-          <span class="pbar"><i style="width:${(d.p_pole / maxP * 110).toFixed(1)}px"></i>${pct(d.p_pole)}</span>
-          <span class="r">${pct(d.p_q3)}</span>
-          <span class="hide"><span class="strip" style="--n:${N}">${cells}</span><span class="sub">P${d.pos_lo}\u2013P${d.pos_hi}</span></span></div>`;
-      }).join('');
+      const N = fc.drivers.length, fav = fc.drivers.reduce((a, b) => b.p_pole > a.p_pole ? b : a);
+      const q1out = N > 10 ? Math.floor((N - 10) / 2) : 0, q2cut = N - q1out;                 // 22 cars: 6 out in Q1, 6 in Q2
+      const slot = (d, i) => {
+        const p = i + 1, tier = p > q2cut ? ' q1out' : p > 10 ? ' q2out' : '';
+        return `<div class="slot${d === fav ? ' fav' : ''}${tier}" role="listitem" style="--team:${TEAM[d.team] || 'var(--ink-3)'}"
+            aria-label="${d.name}, ${d.team}: expected P${p}, likely P${d.pos_lo} to P${d.pos_hi}, pole ${pct(d.p_pole)}, Q3 ${pct(d.p_q3)}">
+          <div class="car"><span class="pos">P${p}</span><span class="drv">${last(d.name)}</span>
+            <span class="sub">${d.team} &middot; P${d.pos_lo}&ndash;P${d.pos_hi}${p <= 10 ? ` &middot; pole ${pct(d.p_pole)}` : ` &middot; Q3 ${pct(d.p_q3)}`}</span></div></div>`;
+      };
+      $('next-grid').innerHTML = `<div class="col">${fc.drivers.filter((_, i) => i % 2 === 0).map((d, k) => slot(d, 2 * k)).join('')}</div>`
+        + `<div class="col r">${fc.drivers.filter((_, i) => i % 2 === 1).map((d, k) => slot(d, 2 * k + 1)).join('')}</div>`;
       const S = card.summary, lastScored = card.rounds[card.rounds.length - 1];
       const cell = (k, v, sub) => `<div><div class="k slash">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
       $('next-card').innerHTML = S ? (

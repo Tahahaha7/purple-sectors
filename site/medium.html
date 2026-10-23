@@ -57,21 +57,24 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 
 
 /* header + timeline */
-.mhead{display:grid;grid-template-columns:1.1fr 1fr;border-bottom:1px solid var(--rule)}
-.mhead .copy{padding:40px 24px 30px;border-right:1px solid var(--rule)}
+.mhead{display:grid;grid-template-columns:1fr;border-bottom:1px solid var(--rule)}
+.mhead .copy{padding:40px 24px 30px}
 .hello{color:var(--ink-2);margin-bottom:18px}
 h1{font-weight:500;font-size:clamp(28px,3.8vw,46px);line-height:1.08;letter-spacing:-.03em}
 .lede{margin-top:20px;max-width:52ch}
-.controls{padding:28px 24px;display:flex;flex-direction:column;justify-content:flex-end;gap:16px}
-.now{font-size:22px;font-weight:500;letter-spacing:-.02em}
-.now small{display:block;font-size:12px;color:var(--ink-2);font-weight:400;letter-spacing:0}
+.transport{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--rule);
+  display:grid;grid-template-columns:minmax(150px,auto) auto minmax(0,1fr);gap:8px 22px;align-items:center;padding:10px 24px}
+.transport .note{grid-column:1 / -1;margin:0}
+.now{font-size:16px;font-weight:500;letter-spacing:-.02em;line-height:1.2}
+.now small{display:block;font-size:11px;color:var(--ink-2);font-weight:400;letter-spacing:0}
+@media (max-width:860px){.transport{grid-template-columns:1fr auto;padding:8px 14px}.transport .timeline{grid-column:1 / -1}}
 .row{display:flex;gap:10px;align-items:center}
 button{font:inherit;color:inherit;background:transparent;border:1px solid var(--rule);padding:6px 12px;cursor:pointer}
 button:hover{background:var(--fill)}
 button b{color:var(--accent);font-weight:500}
 .timeline{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
 .timeline button{overflow:hidden;white-space:nowrap}
-.timeline button{padding:8px 0 6px;border:0;border-top:3px solid var(--rule);font-size:10px;color:var(--ink-3)}
+.timeline button{padding:6px 0 4px;border:0;border-top:3px solid var(--rule);font-size:10px;color:var(--ink-3)}
 .timeline button.seen{border-top-color:var(--ink);color:var(--ink-2)}
 .timeline button.cur{border-top-color:var(--accent);color:var(--ink)}
 .timeline button.warn::after{content:"*";color:var(--ink-2)}
@@ -138,11 +141,12 @@ button b{color:var(--accent);font-weight:500}
 .tw .tc{display:inline-block;width:4px;height:18px;background:var(--team);flex:none}
 .tw .rng{position:relative;height:18px}
 .tw .rng .ax0{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--ink-3)}
-.tw .rng .bar{position:absolute;top:6px;height:6px;background:repeating-linear-gradient(90deg,var(--ink-3) 0 6px,var(--fill) 6px 12px);transition:left .65s,width .65s}
+.tw .rng .bar{position:absolute;top:7px;height:4px;border-radius:2px;background:var(--team);opacity:.38;transition:left .65s,width .65s}
 .tw .rng .dot{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:var(--team);transform:translateX(-50%);transition:left .65s}
 .tw .r{text-align:right}
 .tw .spk svg{display:block;width:120px;height:28px}
-.tw .spk path{fill:none;stroke:var(--team);stroke-width:1.8;opacity:.8}
+.tw .spk path{fill:none;stroke:var(--ink-3);stroke-width:1.8;opacity:.9}
+.tw .spk.up path{stroke:#4ADE80}.tw .spk.dn path{stroke:#F87171}
 .tw .spk circle{fill:var(--ink)}
 .tw.sel .spk path{stroke-width:2.2;opacity:1}
 .btext{padding:12px 24px 22px;color:var(--ink-2);font-size:13px;max-width:110ch}.btext b{color:var(--ink);font-weight:600}
@@ -168,15 +172,15 @@ button b{color:var(--accent);font-weight:500}
   <div class="copy">
     <p class="hello">Medium: the season</p>
     <h1>How we got here.</h1>
-    <p class="lede">The rankings after every round, from the first session to now. Drivers start from their 2022&ndash;25 form and the 2026 laps take over from there. Play the season, or pick a round.</p>
-  </div>
-  <div class="controls">
-    <div class="now" id="now"></div>
-    <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
-    <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
-    <p class="note" id="warn-note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
+    <p class="lede">The rankings after every round, from the first session to now. Drivers start from their earlier seasons and the 2026 laps take over from there. Play the season, or pick a round; the controls stay with you as you scroll.</p>
   </div>
 </header>
+<div class="transport" id="transport">
+  <div class="now" id="now"></div>
+  <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
+  <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
+  <p class="note" id="warn-note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
+</div>
 
 <section aria-labelledby="h-bd">
   <div class="head"><div><h2 id="h-bd">Drivers, round by round</h2>
@@ -310,7 +314,7 @@ function buildGraph(nodes) {
     const bx = 1150;
     el('path', { class: 'edge hist', d: `M${bx} ${Math.min(...hy) - 12}V${Math.max(...hy) + 12}` }, E);
     nodes.drivers.filter(d => HIST[d.code] != null).forEach(d => el('path', { class: 'edge hist', d: `M${bx} ${drvY[d.code]}H${bx - 10}` }, E));
-    el('text', { class: 'col', x: bx, y: 30, 'text-anchor': 'end' }, svg).textContent = '/History 2022\u201325';
+    el('text', { class: 'col', x: bx, y: 30, 'text-anchor': 'end' }, svg).textContent = '/Earlier seasons';
   }
   el('path', { class: 'edge tie', d: `M${L.fx} ${L.gy}H1110` }, E);
 
@@ -549,8 +553,12 @@ function renderTower(kind) {
     const bar = row.querySelector('.bar'), dot = row.querySelector('.dot');
     if (x) { bar.style.left = X(q[1]); bar.style.width = `calc(${X(q[19])} - ${X(q[1])})`; dot.style.left = X(q[10]); }
     bar.style.opacity = dot.style.opacity = x ? '' : 0;
-    const sp = st.spark[id], cir = row.querySelector('.spk circle');
+    const sp = st.spark[id], cir = row.querySelector('.spk circle'), spk = row.querySelector('.spk');
     if (x) { cir.setAttribute('cx', sp.sx(K)); cir.setAttribute('cy', sp.sy(rk[id])); cir.style.display = ''; } else cir.style.display = 'none';
+    // the season line turns green when the driver or car sits higher than where it started, red when lower
+    const first = st.ranks.find(r => r[id] != null), nowRank = x ? rk[id] : null;
+    spk.classList.toggle('up', !!first && nowRank != null && nowRank < first[id]);
+    spk.classList.toggle('dn', !!first && nowRank != null && nowRank > first[id]);
   });
   // the line under the tower: the selected driver or car right now
   const x = now[st.sel], o = st.info[st.sel];
@@ -558,7 +566,7 @@ function renderTower(kind) {
   $('bump-' + kind + '-text').innerHTML = x
     ? `<b>${isD ? pretty(o.name) : st.sel}</b>${isD ? `, ${o.team}` : ''}: P${rk[st.sel]} after round ${s.round}, ${sec(x.q[10])} against the average ${isD ? 'driver' : 'car'}` +
       (startRank ? ` (P${startRank[1]} after round ${SNAPS[startRank[0]].round})` : '') +
-      (isD && HIST[st.sel] != null ? `; started the season at ${sec(HIST[st.sel])} on 2022\u201325 form.` : isD ? '; a rookie, so 2026 alone decides.' : '.') + ` Select any row to follow it.`
+      (isD && HIST[st.sel] != null ? `; last season put him at ${sec(HIST[st.sel])}.` : isD ? '; his first season in the model, so 2026 alone decides.' : '.') + ` Select any row to follow it.`
     : `${isD ? pretty(o.name) : st.sel} is not in the model yet after round ${s.round}.`;
 }
 function renderBumps() { if (SNAPS.length) { renderTower('d'); renderTower('c'); } }
