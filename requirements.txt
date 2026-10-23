@@ -1,7 +1,0 @@
-# Runtime dependencies of the weekly pipeline. Upper bounds block breaking major releases;
-# the exact versions in use are printed by CI (see the "Installed versions" step).
-cmdstanpy>=1.2,<2
-numpy>=2.0,<3
-pandas>=2.2,<4
-scipy>=1.11,<2
-requests>=2.31,<3
