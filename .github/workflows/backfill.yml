@@ -1,0 +1,135 @@
+name: Backfill history
+
+# One-off: fit the model on rounds 1..k of the current season (with every earlier season) for every k,
+# so Medium and Inter can replay the season. The weekly "Update model" job adds new rounds afterwards.
+on:
+  workflow_dispatch:
+    inputs:
+      rounds:
+        description: "Rounds to fit, e.g. 1-17 or 3,8,12 (default: every round in the data)"
+        default: "all"
+      samples:
+        description: "Sampling draws per chain"
+        default: "1000"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-model          # never overlaps with the weekly update (both commit to main)
+  cancel-in-progress: false
+
+env:
+  YEAR: "2026"
+  FIRST_YEAR: "2023"
+  CMDSTAN_VERSION: "2.36.0"
+  PYTHONPATH: src
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      rounds: ${{ steps.rounds.outputs.rounds }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: List rounds
+        id: rounds
+        env:
+          SEL: ${{ inputs.rounds }}
+        run: |
+          python - >> "$GITHUB_OUTPUT" << 'PY'
+          import json, os, pandas as pd
+          have = sorted(int(r) for r in pd.read_csv(f"data/raw/quali_laps_{os.environ['YEAR']}.csv")["round"].unique())
+          sel = os.environ.get("SEL", "all").strip()
+          if sel in ("", "all"):
+              want = have
+          else:
+              want = set()
+              for part in sel.split(","):
+                  a, _, b = part.partition("-")
+                  want |= set(range(int(a), int(b or a) + 1))
+              want = [r for r in have if r in want]
+          print("rounds=" + json.dumps(want))
+          PY
+      - name: Restore CmdStan
+        id: cmdstan
+        uses: actions/cache@v5
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
+      - name: Install CmdStan once (warms the cache for the fit jobs)
+        if: steps.cmdstan.outputs.cache-hit != 'true'
+        run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
+
+  fit:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        round: ${{ fromJSON(needs.plan.outputs.rounds) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: Restore CmdStan
+        uses: actions/cache@v5
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-${{ env.CMDSTAN_VERSION }}-${{ runner.os }}
+      - name: Install CmdStan if the cache missed
+        run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
+      - name: Fit rounds 1..${{ matrix.round }}
+        run: >
+          python -m purple_sectors.pace.fit --years $(seq "$FIRST_YEAR" "$YEAR") --max-round ${{ matrix.round }}
+          --samples ${{ inputs.samples }} --out post.npz --report report.json --retry --allow-fail
+      - name: Export snapshot
+        run: >
+          python -m purple_sectors.pace.export --posterior post.npz --laps "data/raw/quali_laps_${YEAR}.csv"
+          --out out --snapshot-dir out/snapshots --only-snapshot
+      - uses: actions/upload-artifact@v6
+        with:
+          name: snapshot-r${{ matrix.round }}
+          path: |
+            out/snapshots/r*.json
+            out/forecasts/r*.json
+          retention-days: 7
+
+  publish:
+    needs: fit
+    if: always() && needs.fit.result != 'cancelled'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v7      # overwrites only the rounds refit in this run
+        with:
+          pattern: snapshot-*
+          merge-multiple: true
+          path: site/data
+      - name: Rebuild index and scorecard
+        run: python -m purple_sectors.pace.export --index-only site/data/snapshots --laps "data/raw/quali_laps_${YEAR}.csv"
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "Backfill posterior history: $(ls site/data/snapshots | grep -cE '^r[0-9]+\.json$') rounds"
+          for attempt in 1 2 3; do                           # another job may have committed meanwhile:
+            if git pull --rebase -X theirs origin main \
+               && python -m purple_sectors.pace.export --index-only site/data/snapshots --laps "data/raw/quali_laps_${YEAR}.csv" \
+               && git add site/data && git commit --amend --no-edit --allow-empty \
+               && git push; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 10))
+          done
+          exit 1

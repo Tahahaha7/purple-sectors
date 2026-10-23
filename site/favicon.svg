@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 2 60 60">
+  <style>
+    .s1{stroke:#8B5CF6}.s2{stroke:#6E2BF2}.s3{stroke:#5420C9}.base{stroke:#6E2BF2}.line{fill:#17181B}
+    @media (prefers-color-scheme: dark){.s1{stroke:#DCCBFF}.s2{stroke:#B794FF}.s3{stroke:#9461FF}.base{stroke:#B794FF}.line{fill:#FFFFFF}}
+  </style>
+  <!-- a circuit map with all three sectors purple: the fastest anyone has been through each -->
+  <g fill="none" stroke-width="7.2" stroke-linejoin="round">
+    <path class="base" d="M24 15 H45 C55 15 58 26 51 31 L39 37.5 C33.5 40.5 34 48.5 26 49 H17.5 C9 49 6 40.5 8 32 C9.8 24 13 15 24 15 Z"/>
+    <path class="s1" d="M24 15 H45 C55 15 58 26 51 31"/>
+    <path class="s2" d="M51 31 L39 37.5 C33.5 40.5 34 48.5 26 49"/>
+    <path class="s3" d="M26 49 H17.5 C9 49 6 40.5 8 32 C9.8 24 13 15 24 15"/>
+  </g>
+  <!-- start / finish line, where sector 3 hands over to sector 1 -->
+  <rect class="line" x="21.8" y="8.6" width="4.4" height="12.8" rx="1.5"/>
+</svg>

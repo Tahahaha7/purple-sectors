@@ -1,0 +1,13 @@
+.venv/
+cache/
+outputs/
+out/
+__pycache__/
+.DS_Store
+.ipynb_checkpoints/
+*.hpp
+stan/pace
+*.npz
+posteriors_*.zip
+pace_outputs.zip
+data/raw/openf1_cache/
