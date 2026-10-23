@@ -1,7 +1,7 @@
 name: Backfill history
 
-# One-off: fit the model on rounds 1..k for every k, so the site can show how the
-# posterior evolved race by race. The weekly "Update model" job adds new rounds afterwards.
+# One-off: fit the model on rounds 1..k of the current season (with every earlier season) for every k,
+# so Medium and Inter can replay the season. The weekly "Update model" job adds new rounds afterwards.
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +10,7 @@ on:
         default: "all"
       samples:
         description: "Sampling draws per chain"
-        default: "2000"
+        default: "1000"
 
 permissions:
   contents: write
@@ -21,6 +21,7 @@ concurrency:
 
 env:
   YEAR: "2026"
+  FIRST_YEAR: "2023"
   CMDSTAN_VERSION: "2.36.0"
   PYTHONPATH: src
 
@@ -66,7 +67,7 @@ jobs:
   fit:
     needs: plan
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -86,11 +87,11 @@ jobs:
         run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
       - name: Fit rounds 1..${{ matrix.round }}
         run: >
-          python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v20.stan
-          --out post.npz --max-round ${{ matrix.round }} --samples ${{ inputs.samples }} --allow-fail
+          python -m purple_sectors.pace.fit --years $(seq "$FIRST_YEAR" "$YEAR") --max-round ${{ matrix.round }}
+          --samples ${{ inputs.samples }} --out post.npz --report report.json --retry --allow-fail
       - name: Export snapshot
         run: >
-          python -m purple_sectors.export --posterior post.npz --laps "data/raw/quali_laps_${YEAR}.csv"
+          python -m purple_sectors.pace.export --posterior post.npz --laps "data/raw/quali_laps_${YEAR}.csv"
           --out out --snapshot-dir out/snapshots --only-snapshot
       - uses: actions/upload-artifact@v6
         with:
@@ -114,8 +115,8 @@ jobs:
           pattern: snapshot-*
           merge-multiple: true
           path: site/data
-      - name: Rebuild index
-        run: python -m purple_sectors.export --index-only site/data/snapshots
+      - name: Rebuild index and scorecard
+        run: python -m purple_sectors.pace.export --index-only site/data/snapshots --laps "data/raw/quali_laps_${YEAR}.csv"
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
@@ -125,7 +126,7 @@ jobs:
           git commit -m "Backfill posterior history: $(ls site/data/snapshots | grep -cE '^r[0-9]+\.json$') rounds"
           for attempt in 1 2 3; do                           # another job may have committed meanwhile:
             if git pull --rebase -X theirs origin main \
-               && python -m purple_sectors.export --index-only site/data/snapshots \
+               && python -m purple_sectors.pace.export --index-only site/data/snapshots --laps "data/raw/quali_laps_${YEAR}.csv" \
                && git add site/data && git commit --amend --no-edit --allow-empty \
                && git push; then exit 0; fi
             git rebase --abort 2>/dev/null || true

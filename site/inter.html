@@ -206,7 +206,7 @@ button:hover{background:var(--fill)}
 <section class="router" aria-label="More">
   <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
   <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The season</div><p>The rankings round by round, and how the model learned.</p></a>
-  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, the history behind it, and every check it passes.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, its priors, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. "In every car" assumes a driver's skill carries over unchanged, ignoring time to adapt.</p>
 </div>
@@ -229,15 +229,28 @@ const helmet = (d, team, mirror) => `<div class="helm${mirror ? ' mirror' : ''}"
 const getJSON = u => fetch(u, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
 let SOFT, DRAWS, NET, SNAPS = [], DRV = {};
 
+// driver-by-car fit: the posterior for pairs that happened, a fixed draw from the prior for pairs that did not
+const seeded = key => { let h = 2166136261; for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; };
+const FITZ = {};
+function fitDraws(code, car) {
+  const seen = DRAWS.fit && DRAWS.fit[code] && DRAWS.fit[code][car];
+  if (seen) return seen;
+  const key = code + '|' + car;
+  if (!FITZ[key]) { const u = seeded(key), sf = DRAWS.sigma_fit || [];
+    FITZ[key] = Array.from({ length: DRAWS.n }, (_, i) => (sf[i] || 0) * Math.sqrt(-2 * Math.log(1 - u())) * Math.cos(2 * Math.PI * u())); }
+  return FITZ[key];
+}
 function counterfactual(code, car) {
   const n = DRAWS.n, grid = SOFT.drivers.filter(d => DRAWS.drivers[d.code] && DRAWS.cars[d.team]);
-  const me = DRAWS.drivers[code], C = DRAWS.cars[car], ranks = [];
+  const me = DRAWS.drivers[code], C = DRAWS.cars[car], F = fitDraws(code, car), ranks = [];
+  const seatPace = grid.map(d => { const f = fitDraws(d.code, d.team); return DRAWS.cars[d.team].map((v, i) => v + DRAWS.drivers[d.code][i] + f[i]); });
   for (let i = 0; i < n; i++) {
-    const mine = C[i] + me[i];
-    let r = 1; grid.forEach(d => { if (d.code !== code && DRAWS.cars[d.team][i] + DRAWS.drivers[d.code][i] < mine) r++; });
+    const mine = C[i] + me[i] + F[i];
+    let r = 1; grid.forEach((d, k) => { if (d.code !== code && seatPace[k][i] < mine) r++; });
     ranks.push(r);
   }
-  const pace = me.map((v, i) => v + C[i]), own = DRV[code].team, ownPace = me.map((v, i) => v + DRAWS.cars[own][i]);
+  const pace = me.map((v, i) => v + C[i] + F[i]), own = DRV[code].team, OF = fitDraws(code, own), ownPace = me.map((v, i) => v + DRAWS.cars[own][i] + OF[i]);
   const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor((s.length - 1) * p)]; };
   return { ranks, N: grid.length, med: q(ranks, 0.5), lo: q(ranks, 0.1), hi: q(ranks, 0.9), pole: ranks.filter(r => r === 1).length / n,
            pace: q(pace, 0.5), delta: q(pace.map((v, i) => v - ownPace[i]), 0.5) };
@@ -283,10 +296,10 @@ function renderProfile() {
   const cars = [...SOFT.cars].sort((x, y) => x.med - y.med), carRank = cars.findIndex(c => c.team === d.team) + 1;
   $('p-who').innerHTML = helmet(d, d.team, true) + `<div><div class="nm">${last(d.name)}</div><div class="sub">#${d.number} ${d.name.split(' ')[0]} &middot; ${d.team} (car P${carRank})</div></div>`;
   const mates = PAIRS.filter(p => p.a === code || p.b === code).map(p => ({ id: p.a === code ? p.b : p.a, list: p.list })).filter(m => PS.shown(m.id)).sort((x, y) => Math.max(...y.list.map(e => e.season)) - Math.max(...x.list.map(e => e.season)));
-  const vh = d.vs_history, hist = d.history ? (Math.abs(vh) < 0.02 ? 'right in line with his 2022\u201325 form' : `${Math.abs(vh).toFixed(2)} s a lap ${vh < 0 ? 'faster' : 'slower'} than his 2022\u201325 form`) : 'a rookie: no history, so 2026 alone decides';
+  const vh = d.vs_history, hist = d.history ? (Math.abs(vh) < 0.02 ? 'right in line with last season' : `${Math.abs(vh).toFixed(2)} s a lap ${vh < 0 ? 'faster' : 'slower'} than last season`) : 'his first season in the model, so 2026 alone decides';
   $('p-facts').innerHTML = `
     <div><div class="k slash">Driver ranking, car removed</div><div class="v"><b>P${rank}</b> of ${SOFT.drivers.length}, ${sec(d.skill[1])} against the average driver</div></div>
-    <div><div class="k slash">2026 so far</div><div class="v">${hist}</div></div>
+    <div><div class="k slash">Against last season</div><div class="v">${hist}</div></div>
     <div><div class="k slash">Teammates since 2022 (${mates.length})</div><div class="mates">${mates.map(m => `<span>${nameOf(m.id)} ${[...new Set(m.list.map(e => e.season))].sort().join(', ')}</span>`).join('')}</div></div>`;
   // where he would qualify in each car (counterfactual against everyone else in their seats)
   const rows = cars.map(c => ({ c: c.team, r: counterfactual(code, c.team) })).sort((x, y) => x.r.med - y.r.med || y.r.pole - x.r.pole);

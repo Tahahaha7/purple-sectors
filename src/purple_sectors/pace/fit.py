@@ -158,11 +158,13 @@ def driver_names(des) -> dict:
     import pandas as pd
     laps = des.laps
     out = {}
+    name_col = next((c for c in ("full_name", "name") if c in laps), None)
+    num_col = next((c for c in ("driver_number", "number") if c in laps), None)
     for d in des.drivers:
         rows = laps[laps["driver"] == d]
         last = rows.iloc[-1]
-        number = pd.to_numeric(rows["number"], errors="coerce").dropna() if "number" in rows else pd.Series(dtype=float)
-        out[d] = dict(name=str(last["name"]) if "name" in rows else d,
+        number = pd.to_numeric(rows[num_col], errors="coerce").dropna() if num_col else pd.Series(dtype=float)
+        out[d] = dict(name=str(last[name_col]) if name_col else d,
                       number=int(number.iloc[-1]) if len(number) else 0,
                       team=str(last["team"]), season=int(last["season"]))
     return out

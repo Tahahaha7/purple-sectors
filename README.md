@@ -1,74 +1,70 @@
 # purple-sectors
 
-[![Update model](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml)
-[![Deploy site](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml)
-[![CI](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml)
+[![Update model](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml) [![Deploy site](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml) [![CI](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml)
 
-A Bayesian model of Formula 1 qualifying, refit automatically after every session of the 2026 season.
-Every push lap is decomposed into **car**, **driver**, **track evolution** and **execution**, with full uncertainty.
+Who is quick because of the car, and who is quick anyway. A Bayesian model of Formula 1
+qualifying, refit after every session.
 
 **Live site: [tahahaha7.github.io/purple-sectors](https://tahahaha7.github.io/purple-sectors/)**
 
 | Page | For | What it shows |
 |---|---|---|
-| [**[S] Soft**](https://tahahaha7.github.io/purple-sectors/) | Every fan | Quickest cars, teammate battles as dot plots, what changed this weekend, season movers |
-| [**[M] Medium**](https://tahahaha7.github.io/purple-sectors/medium.html) | Enthusiasts | Factor graph of the model, animated round by round; teammate gaps as distributions that narrow over the season |
-| [**[H] Hard**](https://tahahaha7.github.io/purple-sectors/hard.html) | Statisticians | Equations, priors, inference, validation, limitations, and the live current fit |
-| [**[I] Inter**](https://tahahaha7.github.io/purple-sectors/inter.html) | The curious | How each session moves the model: evidence particles and joint posterior clouds |
+| **Soft** | fans | quickest drivers with the car removed, quickest cars with the driver removed, every driver in every car, the next qualifying forecast |
+| **Medium** | enthusiasts | how the picture moved round by round |
+| **Inter** | the curious | one driver at a time: ranking, where they would qualify in every car, their teammate battle |
+| **Hard** | statisticians | the model, its priors, every check, and the live diagnostics |
 
-## Headline findings (2026, 17 rounds)
-- **Cars span about 2.5 s a lap; teammates differ by about 0.14 s.** The car sets the order, the driver settles the garage.
-- **About 1 in 10 push laps is compromised** (traffic, mistakes, yellows) and costs about 1.1 s; a clean lap is about 0.25 s off the limit.
-- Drivers are compared **with their teammate only**; cross-team rankings need a multi-season model (planned).
+## The model
 
-## Model (production: `stan/quali_v20.stan`)
-`y = 100·log(lap time)`, so every parameter is in % of lap time.
+Every push lap since 2023, in % of lap time (1% ≈ 0.9 s):
+
 ```
-y ~ (1 − π)·ExGauss(μ, σ, 1/loss_clean) + π·ExGauss(μ, σ, 1/loss_bad)
-μ = event + segment step + within-segment evolution · t
-  + car trend (random walk in √weeks) + car × track fit + driver + tyres
+lap = baseline(session, segment) + evolution × time + car + driver + fit(driver, car) + tyres + execution
 ```
-v1.3 samples car development and track fit as a total plus a share, which fixed slow mixing in v1.2.
-v2.0 starts each driver's skill from a 2022–25 history model (`stan/history.stan`), where drivers moved between teams,
-so drivers are comparable across teams and car pace means the car alone.
-Full details on the [Hard page](https://tahahaha7.github.io/purple-sectors/hard.html); development record in [`docs/model_log.md`](docs/model_log.md).
+
+A car is a team in one season. Driver skill carries across seasons, so drivers who changed
+team link every car to every other, and the car and driver parts can be told apart. `fit` is
+a shrunk driver-by-car term: it is what lets the site put a driver in a car he never drove and
+say how unsure that is. Details, limits and checks: [`docs/pace_model.md`](docs/pace_model.md).
 
 ## Pipeline
-1. **Every Sunday 06:00 UTC** (retry Monday), `update.yml`: fetch new sessions from [OpenF1](https://openf1.org) → fit v2.0 in Stan → quality gate → export site data and a per-round snapshot → commit → redeploy.
-2. **Quality gate:** pass (R-hat ≤ 1.01, divergences ≤ 0.2%) publishes; warn (≤ 1.05, ≤ 1%) publishes with a flag; fail blocks.
-3. **History:** `backfill.yml` refits rounds 1..k for every k in parallel, so Medium and Inter can replay the season.
 
-## Repository
+Every Sunday 06:00 UTC (retry Monday), `update.yml`: fetch new sessions from
+[OpenF1](https://openf1.org) → fit `stan/pace.stan` on 2023–now → sampler checks (zero
+divergences, R-hat ≤ 1.01, ESS ≥ 400, or one careful refit) → export the site's JSON and the
+next-round forecast → commit → redeploy. `backfill.yml` refits rounds 1..k for every k, so
+Medium and Inter can replay the season.
+
 ```
-src/purple_sectors/fetch.py      OpenF1 → data/raw/quali_laps_<year>.csv (rate-limited, cached)
-src/purple_sectors/prepare.py    push-lap filter, one car per driver, design
-src/purple_sectors/fit.py        CmdStan fit + three-level quality gate
-src/purple_sectors/export.py     posterior → site JSON, per-round snapshots and joint draws
-src/purple_sectors/simulate.py   NumPy mirror of the Stan models (prior checks, recovery)
-stan/                            v1, v1-B, v1.1, v1.2, v1.3, v2.0 (production), history (2022-25)
-notebooks/                       recovery and model-comparison notebooks (Colab)
-site/                            the static website (GitHub Pages)
-tests/                           pytest suites (fake OpenF1, synthetic posteriors)
-.github/workflows/               update, backfill, pages, ci, stan
+src/purple_sectors/fetch.py          OpenF1 → data/raw/quali_laps_<year>.csv (rate-limited, cached)
+src/purple_sectors/history.py        Jolpica → driver debuts and the teammate network
+src/purple_sectors/pace/data.py      laps → design
+src/purple_sectors/pace/fit.py       CmdStan fit, checks, posterior file
+src/purple_sectors/pace/export.py    posterior → site/data (soft, pace grid, snapshots)
+src/purple_sectors/pace/forecast.py  next qualifying session and the scorecard
+src/purple_sectors/pace/simulate.py  NumPy mirror of the Stan model (prior checks, recovery)
+src/purple_sectors/rollover.py       end-of-season archive (docs/rollover.md)
+stan/pace.stan                       the model
+site/                                the static site (GitHub Pages)
+notebooks/01_pace_model.ipynb        the whole pipeline in Colab, with the recovery check
+tests/                               pytest, no network or CmdStan needed
 ```
 
 ## Reproduce
-```bash
+
+```
 pip install -r requirements.txt
 export PYTHONPATH=src
-python -m purple_sectors.fetch --year 2026
-python -m purple_sectors.fit --stan stan/quali_v20.stan --out posterior_v20.npz
-python -m purple_sectors.export --posterior posterior_v20.npz --out site/data --snapshot-dir site/data/snapshots
+for y in 2023 2024 2025 2026; do python -m purple_sectors.fetch --year $y; done
+python -m purple_sectors.pace.fit --years 2023 2024 2025 2026 --out posterior_pace.npz --report fit.json --retry
+python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps data/raw/quali_laps_2026.csv \
+    --out site/data --snapshot-dir site/data/snapshots
 ```
 
-## Development
-```bash
+```
 pip install -r requirements-dev.txt
-pytest                      # about 5 s, no network or CmdStan needed
+pytest                      # a few seconds
 ```
-CI runs the tests on every pull request and before every weekly fit; any change to `stan/` also compiles all models.
-At the end of a season, see [`docs/rollover.md`](docs/rollover.md).
 
-## Data and licence
-Lap timing from [OpenF1](https://openf1.org). Code under the MIT licence.
-An independent fan project, not associated with Formula 1.
+Lap timing from [OpenF1](https://openf1.org); debuts and teammate history from
+[Jolpica](https://jolpi.ca). MIT licence. A fan project, not associated with Formula 1.

@@ -8,6 +8,7 @@ import pytest
 
 from purple_sectors.pace import data as D
 from purple_sectors.pace import export as X
+from purple_sectors.pace import forecast as FC
 from purple_sectors.pace import simulate as S
 from purple_sectors.pace.fit import gate
 
@@ -128,49 +129,114 @@ def test_gate():
 
 
 def fake_posterior(des, ndraw=120, seed=2):
+    """A posterior in the layout fit.posterior_dict writes, drawn from the prior truth."""
     rng = np.random.default_rng(seed)
     draws = [S.draw_params(des, rng, **S.TRUTH) for _ in range(ndraw)]
     post = {k: np.array([p[k] for p in draws]) for k in S.HYPERS + ["alpha", "gamma", "car", "trend", "skill", "fit"]}
     post["sigma_dev"] = np.sqrt(post["rho"]) * post["sigma_car_round"] / np.sqrt(des.dt_bar)
     post["sigma_nu"] = np.sqrt(1 - post["rho"]) * post["sigma_car_round"]
     post["loss_bad"] = post["loss_clean"] + post["loss_gap"]
-    for k in ("season", "rnd", "team", "driver", "pair", "base", "event", "y"):
+    for k in ("season", "rnd", "team", "driver", "pair", "base", "event", "y", "t", "medium", "tyre_age"):
         post[k] = getattr(des, k)
-    meta = dict(seasons=des.seasons, teams={str(s): des.teams[s] for s in des.seasons}, drivers=des.drivers,
-                events=[dict(season=int(s), round=int(r), name=f"GP{r}", location="", date="2025-01-01")
-                        for s, r in zip(des.events["season"], des.events["round"])],
-                pairs=[list(p) for p in des.pairs], rookie=des.rookie.tolist(), young=des.young.tolist(),
-                names={d: dict(name=f"Name {d}", number=1) for d in des.drivers}, connectivity=D.connectivity(des))
-    return post, meta, dict(status="pass")
+    post["p_bad_mean"] = np.full(des.N, 0.1)
+    ev = des.events
+    meta = dict(seasons=des.seasons, teams={str(x): des.teams[x] for x in des.seasons}, drivers=des.drivers,
+                events=[dict(season=int(s_), round=int(r), r=int(k), e=int(e), date=str(d)[:10], name=f"GP{r}", location=f"Town{r}")
+                        for s_, r, k, e, d in zip(ev["season"], ev["round"], ev["r"], ev["e"], ev["date"])],
+                pairs=[list(p) for p in des.pairs], bases=[list(b) for b in des.bases], present=des.present.tolist(),
+                rookie=des.rookie.tolist(), young=des.young.tolist(),
+                names={d: dict(name=f"Name {d}", number=i + 1) for i, d in enumerate(des.drivers)}, connectivity=D.connectivity(des))
+    diag = dict(status="pass", divergences=0, draws=4000, max_rhat=1.003, worst="skill[1,1]", min_ess_bulk=900, min_ess_tail=800)
+    return post, meta, diag
 
 
-def test_export_grid_and_rankings(tmp_path):
+def view(tmp_path):
     des = D.build_design(D.load_laps(fake_laps(tmp_path)))
-    out = X.build(*fake_posterior(des))
-    assert out["season"] == 2025 and out["round"] == 3 and out["status"] == "pass"
-    assert len(out["cars"]) == 3 and len(out["drivers"]) == 6 and len(out["teammates"]) == 3
-    assert abs(sum(c["p_fastest"] for c in out["cars"]) - 1) < 2e-3   # rounded to 3 decimals
-    assert abs(sum(d["p_fastest"] for d in out["drivers"]) - 1) < 4e-3
-    assert [c["pace"][1] for c in out["cars"]] == sorted(c["pace"][1] for c in out["cars"])
-    assert all(c["last"][0] >= 0 and c["gap"][0] >= 0 for c in out["cars"])
-    skills = [d["skill"][1] for d in out["drivers"]]
-    assert skills == sorted(skills)
-    mov = next(d for d in out["drivers"] if d["code"] == "MOV")
-    assert mov["moved"] and mov["teams_driven"] == 2 and mov["team"] == "Gamma"
-    assert not next(d for d in out["drivers"] if d["code"] == "BBB")["moved"]
-    assert next(d for d in out["drivers"] if d["code"] == "NEW")["rookie"]
-    g = out["grid"]
+    post, meta, diag = fake_posterior(des)
+    return X.season_view(post, meta, diag), post, meta, diag
+
+
+def test_season_view(tmp_path):
+    V, post, meta, diag = view(tmp_path)
+    assert V["season"] == 2025 and V["R"] == 3 and V["T"] == 3 and V["rounds"] == [1, 2, 3]
+    assert len(V["drivers"]) == 6 and "EEE" not in V["drivers"], "EEE left after 2024"
+    assert V["theta"].shape == (120, 3, 3) and V["delta"].shape == (120, 6) and V["fit_seat"].shape == (120, 6)
+    assert np.allclose(V["theta"].sum(axis=2), 0) and np.allclose(V["pace"].sum(axis=2), 0)
+    new = V["drivers"].index("NEW")
+    assert not V["has_prev"][new] and V["has_prev"][V["drivers"].index("MOV")]
+    assert V["tau"].shape == (120, 3, 3) and (V["tau"][:, :, 0] == 0).all() and (V["tau"][:, :, 1] < 0).mean() > 0.5
+    assert V["hypers"]["m"].shape == (120, 2) and set(V["fits"]["MOV"]) == {"Gamma"}
+    assert len(V["lap_y"]) == V["laps_season"] == (post["season"] == 2).sum()
+
+
+def test_soft_snapshot_and_draws(tmp_path):
+    V = view(tmp_path)[0]
+    soft = X.soft(V)
+    assert soft["model"] == "pace" and soft["round"] == 3 and soft["cross_team"] and soft["status"] == "pass"
+    assert [c["med"] for c in soft["cars"]] == sorted(c["med"] for c in soft["cars"])
+    skills = [d["skill"][1] for d in soft["drivers"]]
+    assert skills == sorted(skills) and len(soft["drivers"]) == 6
+    mov = next(d for d in soft["drivers"] if d["code"] == "MOV")
+    assert mov["history"] and mov["moved_teams"] and mov["team"] == "Gamma"
+    assert not next(d for d in soft["drivers"] if d["code"] == "NEW")["history"]
+    assert len(soft["pairs"]) == 3 and all(p["p"] >= 0.5 and len(p["dots"]) == 20 for p in soft["pairs"])
+    assert all(len(v) == 96 for v in soft["draws"].values())
+    snap = X.snapshot(V)
+    assert len(snap["cars"]) == 3 and len(snap["cars"][0]["pace"]) == 21 and len(snap["drivers"]) == 6
+    assert len(snap["events"]) == 3 and snap["events"][0]["gamma"] and "density" in snap["teammates"][0]
+    assert snap["diagnostics"]["passed"] and snap["diagnostics"]["status"] == "pass" and "sigma_fit" in snap["params"]
+    dr = X.draws_snapshot(V, 50)
+    assert dr["n"] == 50 and len(dr["cars"]["Alpha"]) == 50 and len(dr["drivers"]["MOV"]) == 50
+    assert set(dr["fit"]["MOV"]) == {"Gamma"} and len(dr["sigma_fit"]) == 50
+    json.dumps([soft, snap, dr])
+
+
+def test_grid(tmp_path):
+    V = view(tmp_path)[0]
+    g = X.grid(V)["grid"]
     assert len(g["cells"]) == 6 and all(len(row) == 3 for row in g["cells"])
-    for i, row in enumerate(g["cells"]):
+    for row in g["cells"]:
         seats = [c for c in row if c["seat"]]
-        assert len(seats) == 1 and seats[0]["seen"] and seats[0]["laps"] > 0
+        assert len(seats) == 1 and seats[0]["seen"]
         for c in row:
-            assert 1 <= c["pos"][0] <= c["pos"][1] <= c["pos"][2] <= 6
-            assert c["pace"][0] <= c["pace"][1] <= c["pace"][2]
-    mates = {(m["a"], m["b"]) for m in out["teammates"]}
-    assert all(m["p_a_ahead"] >= 0.5 for m in out["teammates"]) and ("AAA", "NEW") in mates or ("NEW", "AAA") in mates
-    json.dumps(out)  # must be serialisable
+            assert 1 <= c["pos"][0] <= c["pos"][1] <= c["pos"][2] <= 6 and c["pace"][0] <= c["pace"][1] <= c["pace"][2]
+    assert abs(sum(row[j]["p_first"] for row in g["cells"] for j in range(3) if row[j]["seat"]) - 1) < 1e-2
+
+
+def test_forecast(tmp_path):
+    V = view(tmp_path)[0]
+    F, pos = FC.simulate(V, weeks=2.0, n=80)
+    assert pos.shape == (80, 6) and all(sorted(row) == list(range(1, 7)) for row in pos)
+    fc = FC.forecast(V, {"round": 4, "name": "Next GP", "date": "2025-05-01"}, weeks=2.0, n=80)
+    assert abs(sum(r["p_pole"] for r in fc["drivers"]) - 1) < 1e-6 and fc["made_after_round"] == 3
+    assert all(r["pos_lo"] <= r["pos_median"] <= r["pos_hi"] for r in fc["drivers"])
+    laps = pd.read_csv(fake_laps(tmp_path)[-1])
+    sched = tmp_path / "schedule_2025.json"
+    sched.write_text(json.dumps([{"round": 4, "name": "Next GP", "location": "X", "date": "2025-04-12T12:00:00+00:00"}]))
+    tgt, weeks = FC.next_target(V, laps, sched)
+    assert tgt["round"] == 4 and 1.5 < weeks < 2.5
+    order = FC.classification(laps, 3)
+    assert len(order) == 6 and order[0] in laps["driver"].unique()
+    fcd = tmp_path / "forecasts"; fcd.mkdir(); (fcd / "r04.json").write_text(json.dumps(fc))
+    card = FC.scorecard(fcd, laps)
+    assert card["latest"] == "r04.json" and (fcd / "scorecard.json").exists()
+
+
+def test_export_main_writes_everything(tmp_path):
+    des = D.build_design(D.load_laps(fake_laps(tmp_path)))
+    post, meta, diag = fake_posterior(des)
+    post["meta_json"] = np.array(json.dumps(meta)); post["diag_json"] = np.array(json.dumps(diag))
+    npz = tmp_path / "post.npz"; np.savez(npz, **post)
+    laps = fake_laps(tmp_path)[-1]
+    out = tmp_path / "site"
+    X.main(npz, laps, out, snapshot_dir=out / "snapshots")
+    for f in ["soft.json", "pace.json", "snapshots/r03.json", "snapshots/r03_draws.json", "snapshots/index.json",
+              "forecasts/scorecard.json"]:
+        assert (out / f).exists(), f
+    idx = json.loads((out / "snapshots/index.json").read_text())
+    assert idx["latest"] == 3 and idx["rounds"][0]["status"] == "pass"
 
 
 def test_short_names():
-    assert X.short("Red Bull Racing") == "RBR" and X.short("Kick Sauber") == "SAU" and X.short("Zed Motors") == "ZED"
+    assert X.short_code("Red Bull Racing") == "RBR" and X.short_code("Kick Sauber") == "SAU" and X.short_code("Zed Motors") == "ZED"
+    assert X._short("Haas F1 Team") == "Haas"

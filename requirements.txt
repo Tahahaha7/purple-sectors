@@ -3,4 +3,5 @@
 cmdstanpy>=1.2,<2
 numpy>=2.0,<3
 pandas>=2.2,<4
+scipy>=1.11,<2
 requests>=2.31,<3

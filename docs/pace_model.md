@@ -60,49 +60,41 @@ with their own teammates. The notebook prints the components.
 - **Quality gate** on every fit: zero divergences, R-hat ≤ 1.01, bulk and tail ESS ≥ 400,
   E-BFMI ≥ 0.3 and no saturated tree depths to pass; a narrow warn band; `--retry` refits
   once more carefully before anything is published.
-- **Still to do** (tracked as issues): rolling-origin hold-out (fit ≤ 2023 → predict 2024,
-  ≤ 2024 → 2025, ≤ 2025 → 2026) scoring sign, Brier/log score and coverage of teammate gaps;
-  a forecast-and-scorecard page; best-lap calibration of head-to-head probabilities.
+- **Forecast scorecard** (live on Soft and Hard): every round is forecast before it happens and
+  scored after (favourite right, Brier skill for Q3, rank correlation).
+- **Still to do**: rolling-origin hold-out (fit ≤ 2023 → predict 2024, ≤ 2024 → 2025,
+  ≤ 2025 → 2026) scoring sign, Brier/log score and coverage of teammate gaps, rookies included;
+  best-lap calibration of head-to-head probabilities.
 
 ## Running it
 
 ```
 python -m purple_sectors.fetch --year 2023      # and 2024, 2025, 2026
 python -m purple_sectors.pace.fit --out posterior_pace.npz --report fit.json --retry
-python -m purple_sectors.pace.export --posterior posterior_pace.npz --out site/data/pace.json
-pytest tests/test_pace.py                        # a few seconds, no CmdStan or network
+python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps data/raw/quali_laps_2026.csv \
+    --out site/data --snapshot-dir site/data/snapshots
+pytest                                            # a few seconds, no CmdStan or network
 ```
 
-`notebooks/03_pace_model.ipynb` does all of this in Colab, the same way as the earlier notebooks.
+`notebooks/01_pace_model.ipynb` does all of this in Colab, the same way as the earlier notebooks.
 
-## Integration plan (the next zip, once the current repo is at hand)
+## What changed from the previous model (October 2026)
 
-This drop is additive: nothing existing is overwritten. The second pass makes it production
-and removes the old road:
+The site used to run two models: a history model on 2022–25 best laps whose per-driver summary
+became the prior of a 2026 lap model (v2.0; before that v1 → v1.3 added within-segment track
+evolution, the clean/compromised mixture and the total-plus-share car parametrisation). Keeping
+what those versions taught and dropping the hand-off:
 
-**Replace**
-
-- `update.yml`: fit with `purple_sectors.pace.fit --years 2023 2024 2025 2026 --retry`, export with
-  `purple_sectors.pace.export`; fetch all four seasons (older ones are cached, the API is only hit for new sessions).
-- `backfill.yml`: `--max-round k` on the latest season, writing per-round `pace_rXX.json` for Medium and Inter.
-- `requirements.txt`: add `scipy>=1.11`.
-- README: swap in `docs/README.next.md`.
-
-**Delete** (one model, one history)
-
-- `stan/quali.stan`, `quali_share.stan`, `quali_v11.stan`, `quali_v12.stan`, `quali_v13.stan`, `quali_v20.stan`, `stan/history.stan`
-- `src/purple_sectors/prepare.py`, `simulate.py`, `recovery.py`, `fit.py`, `export.py` (the pace package replaces them),
-  `history_fit.py`, and the prior export in `history.py` (keep the Jolpica debut fetch, which the pace model reads)
-- `data/priors/`, `history_fit.yml`, the matching tests, `notebooks/01` and `02`
-- `docs/model_log.md` becomes one short "what changed and why" section in this file
-
-**Site**
-
-- Soft: the counterfactual grid (`<div data-pace-grid></div>` + `pace-grid.js`), car ranking with the
-  driver taken out, driver ranking with the car taken out, teammate battles; one caveat line
-  next to any probability.
-- Medium and Inter: read the per-round files; label the replay as a replay (today's model on
-  yesterday's data).
-- Hard: the table above, the priors, the live `diagnostics` block and `hypers` from `pace.json`.
-- All pages: one shared `nav.js` and `site.css`, the plain-language descriptor under each
-  tyre-name tab, the font self-hosted, prose in a proportional face and numbers in mono.
+- **One fit, 2023 onward, lap level.** The two-stage export passed only each driver's marginal
+  mean and sd, losing the strong posterior correlations between teammates and across the
+  network; and it put a best-lap prior on an all-laps parameter. One posterior removes both.
+- **Driver-by-car fit.** Previously the car and driver were strictly additive, which over-credits
+  a driver whose teammates all struggle in the same car. `fit` absorbs that, and it makes the
+  counterfactual grid honest for pairs that never happened.
+- **Rookies** start from an estimated debut offset with a directional improvement in years two
+  and three, instead of "average driver, wider variance".
+- **Deleted laps are kept** (track limits do not slow a car down); **substitutes stay in the
+  model** and are only filtered on the pages.
+- **Quality gate** now checks ESS, E-BFMI and tree depth, and refits once before publishing.
+- The **best-lap calibration** problem (head-to-head and pole probabilities about 20% too
+  cautious) is unchanged and still open, as is a rolling-origin hold-out.

@@ -19,14 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  YEAR: "2026"
+  YEAR: "2026"            # the season on the site; the model also uses every season from FIRST_YEAR
+  FIRST_YEAR: "2023"      # OpenF1 lap data starts here
   CMDSTAN_VERSION: "2.36.0"
   PYTHONPATH: src
 
 jobs:
   update:
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
 
@@ -45,11 +46,14 @@ jobs:
         uses: actions/cache@v5
         with:
           path: data/raw/openf1_cache
-          key: openf1-${{ env.YEAR }}-${{ github.run_id }}
-          restore-keys: openf1-${{ env.YEAR }}-
+          key: openf1-${{ github.run_id }}
+          restore-keys: openf1-
 
-      - name: Fetch qualifying sessions
-        run: python -m purple_sectors.fetch --year "$YEAR" --strict
+      - name: Fetch qualifying sessions (older seasons come from the cache)
+        run: |
+          for y in $(seq "$FIRST_YEAR" "$YEAR"); do
+            python -m purple_sectors.fetch --year "$y" --strict
+          done
 
       - name: Check for new data
         id: changes
@@ -72,23 +76,27 @@ jobs:
         if: steps.changes.outputs.new == 'true'
         run: python -c "import cmdstanpy; cmdstanpy.install_cmdstan(version='${CMDSTAN_VERSION}', cores=4)"
 
-      - name: Fit production model (v2.0)
+      - name: Fit the pace model
         if: steps.changes.outputs.new == 'true'
-        run: python -m purple_sectors.fit --laps "data/raw/quali_laps_${YEAR}.csv" --stan stan/quali_v20.stan --out posterior_v20.npz
+        run: >
+          python -m purple_sectors.pace.fit --years $(seq "$FIRST_YEAR" "$YEAR") --out posterior_pace.npz
+          --report fit_report.json --retry
 
       - name: Upload posterior
         if: always() && steps.changes.outputs.new == 'true'
         uses: actions/upload-artifact@v6
         with:
-          name: posterior-v20-run-${{ github.run_number }}
-          path: posterior_v20.npz
+          name: posterior-pace-run-${{ github.run_number }}
+          path: |
+            posterior_pace.npz
+            fit_report.json
           if-no-files-found: ignore
           retention-days: 30
 
       - name: Export website data
         if: steps.changes.outputs.new == 'true'
         run: >
-          python -m purple_sectors.export --posterior posterior_v20.npz --laps "data/raw/quali_laps_${YEAR}.csv"
+          python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps "data/raw/quali_laps_${YEAR}.csv"
           --out site/data --snapshot-dir site/data/snapshots
 
       - name: Commit and push
@@ -96,12 +104,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "data/raw/quali_laps_${YEAR}.csv" "data/raw/schedule_${YEAR}.json" site/data
+          git add data/raw/quali_laps_*.csv data/raw/schedule_*.json site/data
           if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
           git commit -m "Update model: $(date -u +%Y-%m-%d)"
           for attempt in 1 2 3; do                           # another job may have committed meanwhile:
             if git pull --rebase -X theirs origin main \
-               && python -m purple_sectors.export --index-only site/data/snapshots \
+               && python -m purple_sectors.pace.export --index-only site/data/snapshots --laps "data/raw/quali_laps_${YEAR}.csv" \
                && git add site/data && git commit --amend --no-edit --allow-empty \
                && git push; then exit 0; fi
             git rebase --abort 2>/dev/null || true

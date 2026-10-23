@@ -4,7 +4,8 @@
  * Reads site/data/pace.json written by `python -m purple_sectors.pace.export`.
  * Inherits the page's font and text colour; override the tokens below from your own CSS if you like:
  *   --pg-p1 (the purple for P1), --pg-line (hairlines), --pg-muted (secondary text).
- * No dependencies, no build step. Numbers are shown in seconds on a 90-second lap.
+ * Add data-no-heading when the page already has a heading for the section.
+ * No dependencies, no build step. pace.json carries seconds on a 90-second lap.
  */
 (function () {
   "use strict";
@@ -43,8 +44,7 @@
   @media (max-width: 640px) { .pg .pg-cell { width: 2.2rem; height: 1.9rem; font-size: .8rem; } }
   `;
 
-  const fmtS = (pct, data) => (pct * data.units.sec_per_pct).toFixed(2);
-  const secs = (lo, hi, data) => `${fmtS(lo, data)} to ${fmtS(hi, data)} s`;
+  const fmtS = (sec) => sec.toFixed(2);
   const pos = (p) => `P${p}`;
 
   // Fill: one purple, strongest at the front of the grid. Text flips to white on strong fills.
@@ -69,7 +69,7 @@
     const d = data.drivers[i], team = data.grid.teams[j], c = data.grid.cells[i][j];
     const who = d.name || d.code;
     const best = Math.min(...data.grid.cells.map((row) => row.find((x) => x.seat).pace[1]));
-    const behind = (c.pace[1] - best) * data.units.sec_per_pct;
+    const behind = c.pace[1] - best;
     const where = c.seat ? `in the ${team}, their current seat` : `in the ${team}`;
     const guess = c.seen ? `` : ` ${who} has never driven this car, so the fit between them is a guess from the prior.`;
     return `${who} ${where} would qualify around ${pos(c.pos[1])} (${pos(c.pos[0])} to ${pos(c.pos[2])}), `
@@ -93,11 +93,13 @@
     root.classList.add("pg");
     root.replaceChildren();
 
-    root.append(el("h2", { text: "Where would each driver qualify in each car?" }));
-    root.append(el("p", { text: `Drivers are ranked with the car taken out, cars with the driver taken out, `
-      + `and every square puts one driver into one car against the rest of today's grid. `
-      + `Click a square for the detail, or two names to swap their seats. `
-      + `After ${data.event || "round " + data.round} ${data.season}.` }));
+    if (!root.hasAttribute("data-no-heading")) {
+      root.append(el("h2", { text: "Where would each driver qualify in each car?" }));
+      root.append(el("p", { text: `Drivers are ranked with the car taken out, cars with the driver taken out, `
+        + `and every square puts one driver into one car against the rest of today's grid. `
+        + `Click a square for the detail, or two names to swap their seats. `
+        + `After ${data.event || "round " + data.round} ${data.season}.` }));
+    }
 
     const detail = el("div", { class: "pg-detail", "aria-live": "polite",
       text: "Pick a square. Purple means the front of the grid; a bold border marks where the driver actually sits." });
@@ -111,7 +113,7 @@
     const body = el("tbody");
     data.drivers.forEach((d, i) => {
       const name = el("button", { class: "pg-name", type: "button", "aria-pressed": "false",
-        title: `${d.name}: ${fmtS(d.skill[1], data)} s against the average driver, `
+        title: `${d.name}: ${fmtS(d.skill[1])} s against the average driver, `
              + `${d.moved ? "has driven more than one team" : "one team only, so this rests partly on the prior"}` },
         [document.createTextNode(d.code), el("small", { text: d.short })]);
       name.addEventListener("click", () => {

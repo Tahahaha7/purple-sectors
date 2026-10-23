@@ -2,10 +2,10 @@
 
 Usage:  python -m purple_sectors.rollover --from 2026 --to 2027
 
-- copies soft.json and car_pace.json to site/archive/<old>/ (the site keeps showing them until
+- copies soft.json and pace.json to site/archive/<old>/ (the site keeps showing them until
   the new season's first fit overwrites them)
-- moves site/data/snapshots/ to the archive (the history must not mix seasons)
-- switches YEAR in the update and backfill workflows
+- moves site/data/snapshots/ and site/data/forecasts/ to the archive (the history must not mix seasons)
+- switches YEAR in the update and backfill workflows (the model keeps using every season since FIRST_YEAR)
 Raw lap data in data/raw/ is kept as is: it is already one file per year.
 """
 import argparse
@@ -23,11 +23,12 @@ def rollover(old: int, new: int, root: Path = Path(".")) -> Path:
     if archive.exists():
         raise SystemExit(f"{archive} already exists: has {old} been rolled over already?")
     archive.mkdir(parents=True)
-    for name in ["soft.json", "car_pace.json"]:
+    for name in ["soft.json", "pace.json"]:
         if (data / name).exists():
             shutil.copy2(data / name, archive / name)
-    if (data / "snapshots").exists():
-        shutil.move(str(data / "snapshots"), str(archive / "snapshots"))
+    for folder in ["snapshots", "forecasts"]:
+        if (data / folder).exists():
+            shutil.move(str(data / folder), str(archive / folder))
     for wf in WORKFLOWS:
         p = root / wf
         if p.exists():

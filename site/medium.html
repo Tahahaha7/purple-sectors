@@ -196,7 +196,7 @@ button b{color:var(--accent);font-weight:500}
 
 <section aria-labelledby="h-graph">
   <div class="head"><div><h2 id="h-graph">Inside the model</h2>
-    <p>Every round's laps inform its track, every car and the shared parameters; cars inform their drivers, and so does each driver's 2022&ndash;25 history. Each band is what the model believes: wide means unsure. Click anything for its season story.</p></div></div>
+    <p>Every round's laps inform its track, every car and the shared parameters; cars inform their drivers, and so do each driver's earlier seasons: every push lap since 2023 is in one model. Each band is what the model believes: wide means unsure. Click anything for its season story.</p></div></div>
   <div class="legend" aria-hidden="true">
     <span><i style="width:9px;height:9px;background:var(--ink)"></i>Laps from one round</span>
     <span><i style="width:9px;height:9px;border-radius:50%;border:1.4px solid var(--ink)"></i>Something the model estimates</span>
@@ -213,7 +213,7 @@ button b{color:var(--accent);font-weight:500}
 <section class="router" aria-label="More">
   <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
   <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
-  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, the history behind it, and every check it passes.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, its priors, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. Driver rankings are with the car removed, using 2022&ndash;25 results as background evidence.</p>
 </div>
@@ -236,9 +236,10 @@ const five = q => [q[1], q[5], q[10], q[15], q[19]];
 const PARAMS = [
   ['pi_bad', 'Compromised laps', v => Math.round(v * 100) + '%', 'share of push laps lost to traffic, mistakes or yellows'],
   ['loss_clean', 'Clean-lap margin', v => (v * 0.9).toFixed(2) + ' s', 'how far a clean lap is from the driver\'s limit'],
-  ['sigma_driver', 'Driver spread', v => (v * 0.9).toFixed(2) + ' s', 'typical driver difference inside a garage'],
+  ['sigma_driver', 'Driver spread', v => (v * 0.9).toFixed(2) + ' s', 'typical skill difference between drivers'],
+  ['sigma_fit', 'Driver-car fit', v => (v * 0.9).toFixed(2) + ' s', 'how far a driver-and-car pair can be from the sum of its parts'],
   ['sigma_dev', 'Development rate', v => (v * 0.9).toFixed(3) + ' s', 'how fast car pace drifts, per week'],
-  ['sigma_nu', 'Track suitability', v => (v * 0.9).toFixed(2) + ' s', 'how much a car\'s pace swings by circuit'],
+  ['sigma_nu', 'One-off per round', v => (v * 0.9).toFixed(2) + ' s', 'how much a car\'s pace swings at a single track'],
   ['sigma', 'Lap noise', v => (v * 0.9).toFixed(2) + ' s', 'random lap-to-lap variation'],
 ];
 
@@ -249,7 +250,7 @@ const glyphs = new Map();     // node id -> {g, x0, x1, lo, hi}
 const getJSON = u => fetch(u, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
 Promise.all([getJSON('data/snapshots/index.json'), getJSON('data/soft.json')])
   .then(([idx, soft]) => {
-    // each driver's 2022-25 starting point, on the same scale: today's skill minus how far 2026 moved them
+    // each driver's last-season level, on the same scale: today's skill minus how far 2026 moved them
     (soft && soft.drivers || []).forEach(d => HIST[d.code] = d.skill[1] - d.vs_history);
     return Promise.all(idx.rounds.map(r => getJSON('data/snapshots/' + r.file)));
   })
@@ -303,7 +304,7 @@ function buildGraph(nodes) {
     edges.bus.push([s.round, el('path', { class: 'edge tie', d: `M${L.fx} ${y + 6}V${L.gy}` }, E)]);
   });
   nodes.drivers.forEach(d => el('path', { class: 'edge tie', d: curve(L.cx + 7, carY[d.team], L.dx - 6, drvY[d.code]) }, E));
-  // 2022-25 history: a bus down the right edge, feeding every driver who has history (rookies get none)
+  // earlier seasons: a bus down the right edge, feeding every driver who has one (rookies get none)
   const hy = nodes.drivers.filter(d => HIST[d.code] != null).map(d => drvY[d.code]);
   if (hy.length) {
     const bx = 1150;
@@ -457,7 +458,7 @@ function describe(id) {
     if (!d) return [id.slice(1), `Not in the model yet after round ${s.round}.`];
     const rk = rankAt(K, 'd')[d.code], h = HIST[d.code];
     return [`${last(d.name)} #${d.number}`, `${d.team}. After round ${s.round}: P${rk} of ${s.drivers.length} with the car removed, ${sec(d.skill[10])} against the average driver (90% between ${sec(d.skill[1])} and ${sec(d.skill[19])}).` +
-      (h != null ? ` The 2022\u201325 history put him at ${sec(h)}.` : ' A rookie: no history, so 2026 alone decides.')];
+      (h != null ? ` Last season put him at ${sec(h)}.` : ' His first season in the model: 2026 alone decides.')];
   }
   if (id[0] === 't') {
     const e = s.events.find(e => 't' + e.round === id), r = SNAPS.find(x => x.round === +id.slice(1));

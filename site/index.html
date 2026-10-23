@@ -229,7 +229,7 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 
 <section class="rk" aria-labelledby="h2-drv">
   <div class="head"><div><h2 id="h2-drv">Fastest drivers, car removed <span class="count" id="n-drv"></span></h2>
-    <p>Each driver's pace against the average driver on the grid, as if everyone had the same car. Possible because drivers who moved teams in 2022&ndash;25 link every garage. "Beats car" marks drivers ranked at least four places above their car.</p></div></div>
+    <p>Each driver's pace against the average driver on the grid, as if everyone had the same car. Possible because every push lap since 2023 is in one model, so drivers who changed team link every garage. "Beats car" marks drivers ranked at least four places above their car.</p></div></div>
   <div class="thead"><span class="slash">Pos</span><span class="slash">Driver</span><span class="slash hide">Pace range (90%)</span><span class="slash r">vs avg</span><span class="slash r">Top 3</span><span class="slash hide">Their car</span></div>
   <div id="drv-rows"></div>
 </section>
@@ -241,6 +241,12 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
   <div class="thead"><span class="slash">Pos</span><span class="slash">Car</span><span class="slash hide">Pace range (90%)</span><span class="slash r">vs avg</span><span class="slash r">Fastest</span></div>
   <div id="car-rows"></div>
   </div>
+</section>
+
+<section class="rk" aria-labelledby="h2-grid">
+  <div class="head"><div><h2 id="h2-grid">Every driver in every car</h2>
+    <p>Each square puts one driver into one car and asks where they would qualify against the rest of today's grid in their real seats. Purple is the front of the grid. A bold border is the seat they actually have; a dashed square is a car they have never driven, where the fit between driver and car is a guess from the prior.</p></div></div>
+  <div data-pace-grid data-src="data/pace.json" data-no-heading style="padding:18px 24px 22px;--pg-p1:var(--accent);--pg-line:var(--rule);--pg-muted:var(--ink-2)"></div>
 </section>
 
 <section class="next" id="next" aria-labelledby="h2-next" hidden>
@@ -259,12 +265,13 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <section class="router" aria-label="More">
   <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The season</div><p>How the rankings moved round by round, and how the model learned.</p></a>
   <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
-  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, the history behind it, and every check it passes.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, its priors, and every check it passes.</p></a>
 </section>
-<p class="fine">An independent fan project, not associated with Formula 1. Lap timing from OpenF1; 2022&ndash;25 results from Jolpica.</p>
+<p class="fine">An independent fan project, not associated with Formula 1. Lap timing from OpenF1; driver debuts and teammate history from Jolpica.</p>
 </div>
 
 <script src="config.js"></script>
+<script src="pace-grid.js" defer></script>
 <script>
 const TEAM = {"Mercedes":"#00A19B","Red Bull":"#3671C6","Ferrari":"#E8002D","McLaren":"#FF8000","Alpine":"#FF87BC",
   "Racing Bulls":"#6692FF","Audi":"#B5112E","Haas":"#9BA1A6","Williams":"#3FA9F5","Aston Martin":"#1E8C68","Cadillac":"#C9A227"};
@@ -278,10 +285,10 @@ const helmet = (d, team, mirror) => `<div class="helm${mirror ? ' mirror' : ''}"
 
 function render(D) {
   const drivers = (D.drivers || []).filter(PS.shown), cars = [...D.cars].sort((a, b) => a.med - b.med);
-  if (!drivers.length) {                       // data from before v2.0: no cross-team driver ranking yet
+  if (!drivers.length) {                       // data from before the pace model: no cross-team driver ranking yet
     document.querySelectorAll('.mapwrap, .rk:not(:has(.cars))').forEach(el => el.hidden = true);
     $('h-drv').textContent = 'Arriving with the next update';
-    $('h-drv-s').textContent = 'The cross-team driver ranking needs the v2.0 model run.';
+    $('h-drv-s').textContent = 'The driver ranking arrives with the next model update.';
   }
   const carRank = Object.fromEntries(cars.map((c, i) => [c.team, i + 1]));
   const carMed = Object.fromEntries(cars.map(c => [c.team, c]));
