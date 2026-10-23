@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .export import SEC, _short
+from .export import _short
 
 
 def field(V) -> list[tuple[int, int]]:

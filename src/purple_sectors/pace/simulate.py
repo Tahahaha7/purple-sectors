@@ -7,7 +7,7 @@ each lap was compromised. Keep this file and the Stan file in step.
 from __future__ import annotations
 
 import numpy as np
-from scipy.special import log_ndtr, logsumexp
+from scipy.special import log_ndtr
 
 from .data import Design
 
@@ -119,11 +119,6 @@ def exgauss_logpdf(y, mu, sigma, loss):
     lam = 1.0 / loss
     return np.log(lam) + lam * (mu - y) + 0.5 * lam ** 2 * sigma ** 2 + log_ndtr((y - mu) / sigma - lam * sigma)
 
-
-def lap_logpdf(y, mu, sigma, loss_clean, loss_bad, pi_bad):
-    good = np.log1p(-pi_bad) + exgauss_logpdf(y, mu, sigma, loss_clean)
-    bad = np.log(pi_bad) + exgauss_logpdf(y, mu, sigma, loss_bad)
-    return logsumexp(np.stack([good, bad]), axis=0)
 
 
 def p_bad(y, mu, sigma, loss_clean, loss_bad, pi_bad):

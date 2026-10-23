@@ -1,10 +1,8 @@
 """Pace model tests: fake laps in, correct design and JSON out. No CmdStan, no network."""
 import json
-import math
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from purple_sectors.pace import data as D
 from purple_sectors.pace import export as X

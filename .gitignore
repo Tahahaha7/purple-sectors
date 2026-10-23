@@ -1,6 +1,4 @@
 .venv/
-cache/
-outputs/
 out/
 __pycache__/
 .DS_Store
@@ -8,6 +6,5 @@ __pycache__/
 *.hpp
 stan/pace
 *.npz
-posteriors_*.zip
 pace_outputs.zip
 data/raw/openf1_cache/
