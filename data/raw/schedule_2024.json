@@ -1,0 +1,170 @@
+[
+ {
+  "round": 1,
+  "name": "Bahrain Grand Prix",
+  "location": "Sakhir",
+  "country": "Bahrain",
+  "date": "2024-02-29T11:30:00+00:00"
+ },
+ {
+  "round": 2,
+  "name": "Saudi Arabian Grand Prix",
+  "location": "Jeddah",
+  "country": "Saudi Arabia",
+  "date": "2024-03-07T13:30:00+00:00"
+ },
+ {
+  "round": 3,
+  "name": "Australian Grand Prix",
+  "location": "Melbourne",
+  "country": "Australia",
+  "date": "2024-03-22T01:30:00+00:00"
+ },
+ {
+  "round": 4,
+  "name": "Japanese Grand Prix",
+  "location": "Suzuka",
+  "country": "Japan",
+  "date": "2024-04-05T02:30:00+00:00"
+ },
+ {
+  "round": 5,
+  "name": "Chinese Grand Prix",
+  "location": "Shanghai",
+  "country": "China",
+  "date": "2024-04-19T03:30:00+00:00"
+ },
+ {
+  "round": 6,
+  "name": "Miami Grand Prix",
+  "location": "Miami",
+  "country": "United States",
+  "date": "2024-05-03T16:30:00+00:00"
+ },
+ {
+  "round": 7,
+  "name": "Emilia Romagna Grand Prix",
+  "location": "Imola",
+  "country": "Italy",
+  "date": "2024-05-17T11:30:00+00:00"
+ },
+ {
+  "round": 8,
+  "name": "Monaco Grand Prix",
+  "location": "Monaco",
+  "country": "Monaco",
+  "date": "2024-05-24T11:30:00+00:00"
+ },
+ {
+  "round": 9,
+  "name": "Canadian Grand Prix",
+  "location": "Montr\u00e9al",
+  "country": "Canada",
+  "date": "2024-06-07T17:30:00+00:00"
+ },
+ {
+  "round": 10,
+  "name": "Spanish Grand Prix",
+  "location": "Barcelona",
+  "country": "Spain",
+  "date": "2024-06-21T11:30:00+00:00"
+ },
+ {
+  "round": 11,
+  "name": "Austrian Grand Prix",
+  "location": "Spielberg",
+  "country": "Austria",
+  "date": "2024-06-28T10:30:00+00:00"
+ },
+ {
+  "round": 12,
+  "name": "British Grand Prix",
+  "location": "Silverstone",
+  "country": "United Kingdom",
+  "date": "2024-07-05T11:30:00+00:00"
+ },
+ {
+  "round": 13,
+  "name": "Hungarian Grand Prix",
+  "location": "Budapest",
+  "country": "Hungary",
+  "date": "2024-07-19T11:30:00+00:00"
+ },
+ {
+  "round": 14,
+  "name": "Belgian Grand Prix",
+  "location": "Spa-Francorchamps",
+  "country": "Belgium",
+  "date": "2024-07-26T11:30:00+00:00"
+ },
+ {
+  "round": 15,
+  "name": "Dutch Grand Prix",
+  "location": "Zandvoort",
+  "country": "Netherlands",
+  "date": "2024-08-23T10:30:00+00:00"
+ },
+ {
+  "round": 16,
+  "name": "Italian Grand Prix",
+  "location": "Monza",
+  "country": "Italy",
+  "date": "2024-08-30T11:30:00+00:00"
+ },
+ {
+  "round": 17,
+  "name": "Azerbaijan Grand Prix",
+  "location": "Baku",
+  "country": "Azerbaijan",
+  "date": "2024-09-13T09:30:00+00:00"
+ },
+ {
+  "round": 18,
+  "name": "Singapore Grand Prix",
+  "location": "Marina Bay",
+  "country": "Singapore",
+  "date": "2024-09-20T09:30:00+00:00"
+ },
+ {
+  "round": 19,
+  "name": "United States Grand Prix",
+  "location": "Austin",
+  "country": "United States",
+  "date": "2024-10-18T17:30:00+00:00"
+ },
+ {
+  "round": 20,
+  "name": "Mexico City Grand Prix",
+  "location": "Mexico City",
+  "country": "Mexico",
+  "date": "2024-10-25T18:30:00+00:00"
+ },
+ {
+  "round": 21,
+  "name": "S\u00e3o Paulo Grand Prix",
+  "location": "S\u00e3o Paulo",
+  "country": "Brazil",
+  "date": "2024-11-01T14:30:00+00:00"
+ },
+ {
+  "round": 22,
+  "name": "Las Vegas Grand Prix",
+  "location": "Las Vegas",
+  "country": "United States",
+  "date": "2024-11-22T02:30:00+00:00"
+ },
+ {
+  "round": 23,
+  "name": "Qatar Grand Prix",
+  "location": "Lusail",
+  "country": "Qatar",
+  "date": "2024-11-29T13:30:00+00:00"
+ },
+ {
+  "round": 24,
+  "name": "Abu Dhabi Grand Prix",
+  "location": "Yas Island",
+  "country": "United Arab Emirates",
+  "date": "2024-12-06T09:30:00+00:00"
+ }
+]
