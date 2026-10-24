@@ -232,23 +232,25 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <noscript><p class="load-notice">Enable JavaScript to explore the qualifying estimates. The assumptions and model description are available on <a href="hard.html">The model</a>.</p></noscript>
 
 <section class="mapwrap" aria-labelledby="h2-map">
-  <div class="maphead">
-    <div><p class="eyebrow">The field / driver × machinery</p><h2 id="h2-map">Who is quick, and why.</h2><p>Faster drivers sit higher; faster cars sit further right. Both axes show pace against the grid average. Select a driver to see the estimates and their uncertainty.</p></div>
-    <label class="map-picker" for="map-driver">Explore a driver<select id="map-driver" disabled><option>Waiting for the latest fit</option></select></label>
+  <div class="maphead garage-map-head">
+    <div><p class="eyebrow">The field / driver × machinery</p><h2 id="h2-map">Who is quick, and why.</h2><p>One garage per column, with the quickest cars first. Teammates share the same driver-pace scale: a higher helmet means a faster driver estimate. The gap beneath each garage compares their medians.</p></div>
+    <div class="garage-tools" role="group" aria-label="Scroll car columns"><span>Explore the garages</span><button id="garage-prev" type="button" aria-label="Previous car columns">←</button><button id="garage-next" type="button" aria-label="Next car columns">→</button></div>
   </div>
-  <div class="map-layout">
-    <div class="mapscroll"><div class="mapbox" id="map" aria-label="Driver versus car pace. Use the driver selector or select a point to inspect the estimates."><svg id="map-svg" aria-hidden="true"></svg><div class="tip" id="tip" hidden></div></div></div>
-    <aside class="map-inspector" id="map-inspector" aria-live="polite">
-      <p class="eyebrow">In focus</p>
-      <div class="map-identity" id="map-identity"><h3>Select a driver</h3></div>
-      <dl class="map-metric"><dt>Driver contribution</dt><dd id="map-skill">—</dd><small id="map-skill-range">90% credible interval</small></dl>
-      <dl class="map-metric"><dt>Car contribution</dt><dd id="map-car">—</dd><small id="map-car-range">90% credible interval</small></dl>
-      <p id="map-reading">The model estimates a driver's contribution separately from their current car.</p>
-      <a class="profile-link" id="map-profile" href="inter.html">Open driver profile →</a>
-    </aside>
+  <div class="garage-scale-note"><span>↑ Faster driver / seconds vs average</span><span>Cars ranked fastest → slowest</span></div>
+  <div class="garage-scroll" id="garage-scroll" tabindex="0" role="region" aria-label="Ranked car columns and teammate gaps; scroll horizontally to explore all garages">
+    <div class="garage-chart" id="map"><svg id="map-svg" aria-hidden="true" hidden></svg><p>Loading the garages…</p></div>
   </div>
-  <p class="map-caption">Seconds on a standardized 90-second lap; negative means faster. Points show medians. The selected cross shows separate 90% driver and car ranges, rather than a joint region.</p>
+  <aside class="map-inspector garage-detail" id="map-inspector" aria-live="polite">
+    <p class="eyebrow">In focus / select a helmet</p>
+    <div class="map-identity" id="map-identity"><h3>Select a driver</h3></div>
+    <dl class="map-metric"><dt>Driver contribution</dt><dd id="map-skill">—</dd><small id="map-skill-range">90% credible interval</small></dl>
+    <dl class="map-metric"><dt>Car contribution</dt><dd id="map-car">—</dd><small id="map-car-range">90% credible interval</small></dl>
+    <p id="map-reading">The model estimates a driver's contribution separately from their current car.</p>
+    <a class="profile-link" id="map-profile" href="inter.html">Open driver profile →</a>
+  </aside>
+  <p class="map-caption">All pace values use a standardized 90-second lap; negative means faster. Columns encode car rank, while helmet height encodes driver pace. The median driver gap is a difference between estimates; it does not express the probability of beating a teammate.</p>
 </section>
+
 
 <section class="changes" id="changes" aria-labelledby="h2-changes" hidden>
   <div class="head"><div><p class="eyebrow">The latest round</p><h2 id="h2-changes">How the picture moved.</h2><p id="changes-sub"></p></div></div>
@@ -258,17 +260,17 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <section class="ranking-block" aria-labelledby="rankings-heading">
   <div class="ranking-top"><div><p class="eyebrow">The estimates / one contribution at a time</p><h2 id="rankings-heading">A closer look at the order.</h2></div><div class="ranking-tabs" role="tablist" aria-label="Pace rankings"><button id="rank-driver-tab" type="button" role="tab" aria-controls="driver-ranking" aria-selected="true">Drivers</button><button id="rank-car-tab" type="button" role="tab" aria-controls="car-ranking" aria-selected="false" tabindex="-1">Cars</button></div></div>
   <section class="rk" id="driver-ranking" role="tabpanel" aria-labelledby="rank-driver-tab">
-    <p class="ranking-intro" id="h2-drv">Driver pace with the car removed <span class="count" id="n-drv"></span>. Each estimate is relative to the average driver, as if everyone had the same car. Ranges show where uncertainty remains; the displayed order follows the medians.</p>
+    <p class="ranking-intro" id="h2-drv">Driver pace with the car removed <span class="count" id="n-drv"></span>. Each estimate is relative to the average driver, as if everyone had the same car. The filled windows show the lower endpoint, median and upper endpoint of the 90% credible interval. Negative is faster; the order follows the medians.</p>
     <div role="table" aria-label="Driver contribution estimates" aria-describedby="h2-drv">
-      <div class="thead" role="row"><span role="columnheader">Pos</span><span role="columnheader">Driver</span><span class="range-head" role="columnheader">Pace range · 90%</span><span class="r" role="columnheader">s vs avg</span><span class="r" role="columnheader">Top 3</span><span class="seat-head" role="columnheader">Their car</span></div>
+      <div class="thead" role="row"><span role="columnheader">Pos</span><span role="columnheader">Driver</span><span class="range-head" role="columnheader">90% credible window · seconds vs average</span><span class="r" role="columnheader">Top 3</span><span class="seat-head" role="columnheader">Their car</span></div>
       <div id="drv-rows" role="rowgroup"></div>
     </div>
   </section>
   <section class="rk" id="car-ranking" role="tabpanel" aria-labelledby="rank-car-tab" hidden>
     <div class="cars">
-      <p class="ranking-intro" id="h2-car">Car pace with the drivers removed <span class="count" id="n-car"></span>. Each car is compared with the average car, as if every car had the same driver. Dot: median. Line: 90% credible interval.</p>
+      <p class="ranking-intro" id="h2-car">Car pace with the drivers removed <span class="count" id="n-car"></span>. Each car is compared with the average car, as if every car had the same driver. The filled windows show the lower endpoint, median and upper endpoint of the 90% credible interval. Negative is faster.</p>
       <div role="table" aria-label="Car contribution estimates" aria-describedby="h2-car">
-        <div class="thead" role="row"><span role="columnheader">Pos</span><span role="columnheader">Car</span><span class="range-head" role="columnheader">Pace range · 90%</span><span class="r" role="columnheader">s vs avg</span><span class="r" role="columnheader">Fastest</span></div>
+        <div class="thead" role="row"><span role="columnheader">Pos</span><span role="columnheader">Car</span><span class="range-head" role="columnheader">90% credible window · seconds vs average</span><span class="r" role="columnheader">Fastest</span></div>
         <div id="car-rows" role="rowgroup"></div>
       </div>
     </div>
@@ -283,8 +285,13 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <section class="next" id="next" aria-labelledby="h2-next" hidden>
   <div class="head"><div><p class="eyebrow">Looking ahead / the qualifying forecast</p><h2 id="h2-next"></h2><p id="next-sub"></p></div></div>
   <div class="stats" id="next-card"></div>
-  <div class="gridbox" id="next-grid" role="list" aria-label="Likely starting grid, pole at the top left"></div>
-  <p class="fine">The grid as the model expects it, pole at the top left. Each seat includes a likely position range and its chance of pole or Q3. The probabilities come from the posterior's simulated qualifying sessions, played out through Q1, Q2 and Q3.</p>
+  <div class="forecast-toolbar">
+    <p class="eyebrow" id="forecast-order-title">Pole probability order</p>
+    <div class="forecast-order-controls" role="group" aria-label="Forecast display order"><button id="forecast-pole-order" type="button" aria-pressed="true">Pole chance</button><button id="forecast-expected-order" type="button" aria-pressed="false">Expected position</button></div>
+  </div>
+  <p class="forecast-order-note" id="forecast-order-note" role="status" aria-live="polite">Ordered by chance of pole, highest first.</p>
+  <div class="gridbox forecast-grid" id="next-grid" role="list" aria-label="Forecast ordered by chance of pole"></div>
+  <p class="fine forecast-method-note">Each seat shows the original forecast probabilities and the middle 80% of simulated qualifying positions. Mean position is calculated from the exported position distribution. The display order describes a forecast, rather than an actual starting grid.</p>
 </section>
 
 <section class="router" aria-label="Continue exploring">
@@ -329,6 +336,17 @@ for (const kind of ['driver', 'car']) {
   });
 }
 
+// Presentation only: use the exported interval endpoints and median verbatim.
+// Requires the page's existing sec(value) and safe(text) helpers.
+function credibleWindow(lo, median, hi) {
+  const description = `90% credible interval ${sec(lo)} to ${sec(hi)}; median ${sec(median)}. Seconds against the grid average; negative is faster.`;
+  return `<span class="credible-window" role="img" aria-label="${safe(description)}">
+    <span class="credible-bound credible-low" aria-hidden="true"><small>Low</small><b>${sec(lo)}</b></span>
+    <span class="credible-bound credible-median" aria-hidden="true"><small>Median</small><b>${sec(median)}</b></span>
+    <span class="credible-bound credible-high" aria-hidden="true"><small>High</small><b>${sec(hi)}</b></span>
+  </span>`;
+}
+
 function render(D) {
   const drivers = (D.drivers || []).filter(PS.shown), cars = [...D.cars].sort((a, b) => a.med - b.med);
   if (!drivers.length) {
@@ -350,112 +368,99 @@ function render(D) {
   $('h-car-s').textContent = `vs the average car · ${pct(c0.p_fast)} chance it's the fastest`;
   if (drivers.length) {
     window.__MAP = [drivers, cars, carRank];
-    const picker = $('map-driver');
-    picker.replaceChildren(...drivers.map(d => { const option = document.createElement('option'); option.value = d.code; option.textContent = d.name + ' / ' + d.team; return option; }));
-    picker.disabled = false;
     MAP_SELECTED = drivers.some(d => d.code === MAP_SELECTED) ? MAP_SELECTED : drivers[0].code;
     drawMap(drivers, cars, carRank);
   }
-  const dl = Math.min(...drivers.map(d => d.skill[0])) - 0.02, dh = Math.max(...drivers.map(d => d.skill[2])) + 0.02;
-  const X = v => ((v - dl) / (dh - dl) * 100).toFixed(2) + '%';
   $('n-drv').textContent = `(${drivers.length})`;
   $('drv-rows').innerHTML = drivers.map((d, i) => {
     const cr = carRank[d.team];
     return `<div class="trow${i === 0 ? ' top' : ''}" role="row">
       <span class="row-pos" role="cell">${String(i + 1).padStart(2, '0')}</span>
       <span class="nm" role="cell"><a href="inter.html#${encodeURIComponent(d.code)}">${safe(last(d.name))}</a><span class="sub">#${d.number} ${safe(d.team)}${d.history ? '' : ', rookie'}</span></span>
-      <span class="range-cell" role="cell"><span class="rng" aria-hidden="true"><i class="ax0" style="left:${X(0)}"></i><i class="bar" style="left:${X(d.skill[0])};width:calc(${X(d.skill[2])} - ${X(d.skill[0])})"></i><i class="dot" style="left:${X(d.skill[1])}"></i></span><small class="ci-label">90%: ${sec(d.skill[0])} to ${sec(d.skill[2])}</small></span>
-      <span class="r" role="cell">${sec(d.skill[1])}</span><span class="r" role="cell">${pct(d.p_top3)}</span>
+      <span class="range-cell" role="cell">${credibleWindow(d.skill[0], d.skill[1], d.skill[2])}</span>
+      <span class="r" role="cell">${pct(d.p_top3)}</span>
       <span class="seat-rank" role="cell">Car P${cr}</span></div>`;
   }).join('');
-  const cl = Math.min(...cars.map(c => c.lo)) - 0.05, ch = Math.max(...cars.map(c => c.hi)) + 0.05;
-  const XC = v => ((v - cl) / (ch - cl) * 100).toFixed(2) + '%';
   $('n-car').textContent = `(${cars.length})`;
   $('car-rows').innerHTML = cars.map((c, i) => `<div class="trow${i === 0 ? ' top' : ''}" role="row">
       <span class="row-pos" role="cell">${String(i + 1).padStart(2, '0')}</span><span class="nm" role="cell">${safe(c.team)}</span>
-      <span class="range-cell" role="cell"><span class="rng" aria-hidden="true"><i class="ax0" style="left:${XC(0)}"></i><i class="bar" style="left:${XC(c.lo)};width:calc(${XC(c.hi)} - ${XC(c.lo)})"></i><i class="dot" style="left:${XC(c.med)}"></i></span><small class="ci-label">90%: ${sec(c.lo)} to ${sec(c.hi)}</small></span>
-      <span class="r" role="cell">${sec(c.med)}</span><span class="r" role="cell">${pct(c.p_fast)}</span></div>`).join('');
+      <span class="range-cell" role="cell">${credibleWindow(c.lo, c.med, c.hi)}</span>
+      <span class="r" role="cell">${pct(c.p_fast)}</span></div>`).join('');
+}
+
+function garageGap(value) {
+  const gap = Math.abs(value);
+  return gap > 1e-12 && gap < .005 ? '<0.01 s' : gap.toFixed(2) + ' s';
+}
+
+function focusMapDriver(code) {
+  if (!window.__MAP) return;
+  const [drivers, cars, carRank] = window.__MAP;
+  const selected = drivers.find(d => d.code === code);
+  if (!selected) return;
+  MAP_SELECTED = selected.code;
+  const car = cars.find(c => c.team === selected.team);
+  $('map').querySelectorAll('.garage-driver').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.driver === code)));
+  $('map').querySelectorAll('.garage-column').forEach(column => column.classList.toggle('is-focused', column.dataset.team === selected.team));
+  $('map-identity').innerHTML = helmet(selected, selected.team, false) + `<div><h3>${safe(last(selected.name))}</h3><small>${safe(selected.team)} / ${safe(selected.code)}</small></div>`;
+  $('map-skill').textContent = sec(selected.skill[1]);
+  $('map-skill-range').textContent = `90%: ${sec(selected.skill[0])} to ${sec(selected.skill[2])}`;
+  $('map-car').textContent = sec(car.med);
+  $('map-car-range').textContent = `90%: ${sec(car.lo)} to ${sec(car.hi)}`;
+  $('map-reading').textContent = `Driver P${drivers.indexOf(selected) + 1} of ${drivers.length}; car P${carRank[selected.team]} of ${cars.length}, ordered by median pace. The garage gap compares driver medians.`;
+  $('map-profile').href = 'inter.html#' + encodeURIComponent(selected.code);
 }
 
 function drawMap(drivers, cars, carRank) {
-  const box = $('map'), svg = $('map-svg'), selected = drivers.find(d => d.code === MAP_SELECTED) || drivers[0];
-  const W = Math.max(240, box.clientWidth), H = W < 480 ? 370 : 480;
-  box.style.height = H + 'px';
-  const L = 53, R = W - 20, T = 51, B = H - 64;
-  const carsByTeam = Object.fromEntries(cars.map(c => [c.team, c]));
-  const cmin = Math.min(0, ...cars.map(c => c.lo)), cmax = Math.max(0, ...cars.map(c => c.hi));
-  const dmin = Math.min(0, ...drivers.map(d => d.skill[0])), dmax = Math.max(0, ...drivers.map(d => d.skill[2]));
-  const cp = Math.max(.03, (cmax - cmin) * .12), dp = Math.max(.03, (dmax - dmin) * .15);
-  const xmin = cmin - cp, xmax = cmax + cp, ymin = dmin - dp, ymax = dmax + dp;
-  const X = v => R - (v - xmin) / (xmax - xmin) * (R - L);
-  const Y = v => T + (v - ymin) / (ymax - ymin) * (B - T);
-  const tickValues = (lo, hi, count) => {
-    const raw = (hi - lo) / count, power = 10 ** Math.floor(Math.log10(raw));
-    const step = [1, 2, 2.5, 5, 10].map(v => v * power).find(v => v >= raw) || power * 10;
-    const values = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step * .01; v += step) values.push(Math.abs(v) < step * .001 ? 0 : v);
-    return values;
+  const box = $('map');
+  const active = document.activeElement;
+  const focusedCode = active && active.classList.contains('garage-driver') ? active.dataset.driver : null;
+  const orderedCars = [...cars].sort((a, b) => a.med - b.med);
+  const groups = orderedCars.map(car => ({ car, members: drivers.filter(d => d.team === car.team).sort((a, b) => a.skill[1] - b.skill[1]) }));
+  const H = window.innerWidth < 600 ? 320 : 360, T = 35, B = H - 72;
+  const low = Math.min(0, ...drivers.map(d => d.skill[0])), high = Math.max(0, ...drivers.map(d => d.skill[2]));
+  const pad = Math.max(.035, (high - low) * .12), ymin = low - pad, ymax = high + pad;
+  const Y = value => T + (value - ymin) / (ymax - ymin) * (B - T);
+  const raw = (ymax - ymin) / 4, power = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(v => v * power).find(v => v >= raw) || power * 10;
+  const ticks = [];
+  for (let value = Math.ceil(ymin / step) * step; value <= ymax + step * .001; value += step) ticks.push(Math.abs(value) < step * .001 ? 0 : value);
+  const tick = value => {
+    const decimals = Math.abs(value - Math.round(value * 10) / 10) < 1e-9 ? 1 : Math.abs(value - Math.round(value * 100) / 100) < 1e-9 ? 2 : 3;
+    return minus((value > 0 ? '+' : '') + value.toFixed(decimals));
   };
-  const tick = v => {
-    const precision = Math.abs(v - Math.round(v * 10) / 10) < 1e-9 ? 1 : Math.abs(v - Math.round(v * 100) / 100) < 1e-9 ? 2 : 3;
-    return minus((v > 0 ? '+' : '') + v.toFixed(precision));
-  };
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  let g = `<rect x="${L}" y="${T}" width="${R-L}" height="${B-T}" fill="none" stroke="var(--rule)"/>`;
-  tickValues(ymin, ymax, 4).forEach(v => g += `<line x1="${L}" x2="${R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rule)" stroke-opacity=".6"/><text x="${L-9}" y="${Y(v)+4}" text-anchor="end">${tick(v)}</text>`);
-  tickValues(xmin, xmax, W < 480 ? 3 : 4).forEach(v => g += `<text x="${X(v)}" y="${B+23}" text-anchor="${X(v)<L+24?'start':X(v)>R-24?'end':'middle'}">${tick(v)}</text>`);
-  g += `<line x1="${X(0)}" x2="${X(0)}" y1="${T}" y2="${B}" stroke="var(--ink-3)" stroke-dasharray="2 5"/><line x1="${L}" x2="${R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink-3)" stroke-dasharray="2 5"/>
-    <text x="${L}" y="17">↑ Faster driver · s vs avg</text><text x="${R}" y="${H-7}" text-anchor="end">Faster car → · s vs avg</text>`;
-  // The four familiar descriptions remain visible above/below their respective sides.
-  g += `<text class="map-q" x="${L}" y="${T-13}">${W<480?'Fast driver / slow car':'Fast driver · slower car'}</text><text class="map-q" x="${R}" y="${T-13}" text-anchor="end">${W<480?'Fast / fast':'Fast driver · fast car'}</text>
-    <text class="map-q" x="${L}" y="${B-10}">${W<480?'Slow / slow':'Slower driver · slower car'}</text><text class="map-q" x="${R}" y="${B-10}" text-anchor="end">${W<480?'Slow driver / fast car':'Slower driver · fast car'}</text>`;
-  const points = drivers.map(d => ({ d, c: carsByTeam[d.team], x: X(carsByTeam[d.team].med), y: Y(d.skill[1]) }));
-  const focus = points.find(p => p.d.code === selected.code);
-  g += `<line x1="${X(focus.c.lo)}" x2="${X(focus.c.hi)}" y1="${focus.y}" y2="${focus.y}" stroke="var(--accent)" stroke-width="1.5"/><line x1="${focus.x}" x2="${focus.x}" y1="${Y(selected.skill[0])}" y2="${Y(selected.skill[2])}" stroke="var(--accent)" stroke-width="1.5"/>`;
-  const labels = [];
-  const ordered = [focus, ...points.filter(p => p !== focus)];
-  ordered.forEach(p => {
-    if (W < 480 && p !== focus) return;
-    const width = 27, height = 15;
-    const candidates = [[11,-9],[11,18],[-width-11,-9],[-width-11,18],[11,-26],[-width-11,34]];
-    let label = null;
-    for (const [dx,dy] of candidates) {
-      const x = Math.max(L+2,Math.min(R-width-2,p.x+dx)), y = Math.max(T+17,Math.min(B-26,p.y+dy));
-      const rect = {x,y:y-height,width,height};
-      if (!labels.some(a => rect.x < a.x+a.width+5 && rect.x+rect.width+5 > a.x && rect.y < a.y+a.height+3 && rect.y+rect.height+3 > a.y)) { label = { ...rect, baseline:y }; break; }
-    }
-    if (label) { labels.push(label); g += `<text class="map-code${p===focus?' selected':''}" x="${label.x}" y="${label.baseline}">${safe(p.d.code)}</text>`; }
-  });
-  svg.innerHTML = g;
-  box.querySelectorAll('.map-point').forEach(node => node.remove());
-  points.forEach(p => {
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'map-point'; button.dataset.driver = p.d.code;
-    button.style.left = p.x + 'px'; button.style.top = p.y + 'px'; button.style.setProperty('--team', TEAM[p.d.team] || 'var(--ink-2)');
-    button.setAttribute('aria-pressed', String(p === focus)); button.setAttribute('aria-label', `${p.d.name}, ${p.d.team}: driver ${sec(p.d.skill[1])}, car ${sec(p.c.med)}. Open estimates.`);
-    button.title = p.d.name + ' / ' + p.d.team;
-    box.appendChild(button);
-  });
-  box.onclick = e => {
-    const target = e.target.closest('.map-point');
-    if (e.detail === 0) {
-      if (target) {
-        MAP_SELECTED = target.dataset.driver; drawMap(...window.__MAP);
-        const activePoint = [...box.querySelectorAll('.map-point')].find(button => button.dataset.driver === MAP_SELECTED);
-        if (activePoint) activePoint.focus({ preventScroll: true });
-      }
-      return;
-    }
-    const bounds = box.getBoundingClientRect(), x = e.clientX - bounds.left, y = e.clientY - bounds.top;
-    const nearest = points.map(p => ({p, distance:Math.hypot(x-p.x,y-p.y)})).sort((a,b) => a.distance-b.distance)[0];
-    if (nearest && nearest.distance <= 32) { MAP_SELECTED = nearest.p.d.code; drawMap(...window.__MAP); }
-  };
-  $('map-driver').value = selected.code;
-  $('map-identity').innerHTML = helmet(selected, selected.team, false) + `<div><h3>${safe(last(selected.name))}</h3><small>${safe(selected.team)} / ${safe(selected.code)}</small></div>`;
-  $('map-skill').textContent = sec(selected.skill[1]); $('map-skill-range').textContent = `90%: ${sec(selected.skill[0])} to ${sec(selected.skill[2])}`;
-  $('map-car').textContent = sec(focus.c.med); $('map-car-range').textContent = `90%: ${sec(focus.c.lo)} to ${sec(focus.c.hi)}`;
-  $('map-reading').textContent = `Driver P${drivers.indexOf(selected)+1} of ${drivers.length}; car P${carRank[selected.team]} of ${cars.length}, ordered by their median estimates.`;
-  $('map-profile').href = 'inter.html#' + encodeURIComponent(selected.code);
+  box.style.setProperty('--garage-count', String(groups.length));
+  box.style.setProperty('--garage-width', Math.max(108, ...groups.map(group => group.members.length * 46)) + 'px');
+  box.style.setProperty('--garage-plot-height', H + 'px');
+  const axis = `<div class="garage-axis" aria-hidden="true"><div class="garage-axis-head">s vs<br>avg</div><div class="garage-axis-plot"><svg id="map-svg" viewBox="0 0 46 ${H}">${ticks.map(value => `<text x="41" y="${Y(value) + 4}" text-anchor="end">${tick(value)}</text>`).join('')}</svg></div></div>`;
+  const columns = groups.map(({ car, members }, rank) => {
+    const guides = ticks.map(value => `<span class="garage-guide${value === 0 ? ' garage-average' : ''}" style="top:${Y(value)}px"></span>`).join('');
+    const ribbon = members.length > 1 ? `<span class="garage-gap-fill" style="top:${Y(members[0].skill[1])}px;height:${Math.max(1, Y(members[members.length - 1].skill[1]) - Y(members[0].skill[1]))}px" aria-hidden="true"></span>` : '';
+    const marks = members.map((d, i) => `<button type="button" class="garage-driver" data-driver="${safe(d.code)}" style="top:${Y(d.skill[1]) - 20}px;left:${i / members.length * 100}%;width:${100 / members.length}%" aria-pressed="${d.code === MAP_SELECTED}" aria-label="${safe(d.name)}, ${safe(d.team)}: driver contribution ${sec(d.skill[1])}. Show pace ranges.">${helmet(d, d.team, false)}<span class="garage-driver-code">${safe(d.code)}</span><span class="garage-driver-pace">${sec(d.skill[1])}</span></button>`).join('');
+    let gap;
+    if (members.length === 2) gap = `<span class="garage-gap-label">Median driver gap</span><strong>${safe(garageGap(members[1].skill[1] - members[0].skill[1]))}</strong>`;
+    else if (members.length > 2) gap = `<span class="garage-gap-label">Adjacent median gaps</span>${members.slice(1).map((d, i) => `<span class="garage-adjacent-gap">${safe(members[i].code)}–${safe(d.code)}<b>${safe(garageGap(d.skill[1] - members[i].skill[1]))}</b></span>`).join('')}`;
+    else gap = `<span class="garage-gap-label">${members.length ? 'One shown driver' : 'No shown drivers'}</span>`;
+    return `<article class="garage-column${members.some(d => d.code === MAP_SELECTED) ? ' is-focused' : ''}" data-team="${safe(car.team)}" aria-label="Car ${rank + 1}: ${safe(car.team)}"><header class="garage-car-head"><span class="garage-rank">Car ${String(rank + 1).padStart(2, '0')}</span><h3>${safe(car.team)}</h3><span class="garage-car-pace">${sec(car.med)}</span></header><div class="garage-plot">${guides}${ribbon}${marks}</div><footer class="garage-gap">${gap}</footer></article>`;
+  }).join('');
+  box.innerHTML = axis + `<div class="garage-columns">${columns}</div>`;
+  focusMapDriver(MAP_SELECTED || drivers[0].code);
+  if (focusedCode) {
+    const replacement = [...box.querySelectorAll('.garage-driver')].find(button => button.dataset.driver === focusedCode);
+    if (replacement) replacement.focus({ preventScroll: true });
+  }
 }
-$('map-driver').addEventListener('change', e => { MAP_SELECTED = e.target.value; if (window.__MAP) drawMap(...window.__MAP); });
+$('map').addEventListener('click', event => {
+  const button = event.target.closest('.garage-driver');
+  if (button) focusMapDriver(button.dataset.driver);
+});
+for (const [id, direction] of [['garage-prev', -1], ['garage-next', 1]]) {
+  $(id).addEventListener('click', () => {
+    const scroll = $('garage-scroll');
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    scroll.scrollBy({ left: direction * Math.max(216, scroll.clientWidth - 46), behavior: reducedMotion ? 'auto' : 'smooth' });
+  });
+}
 
 
 // "What changed this weekend": the latest round against the one before, for drivers and cars
@@ -481,37 +486,88 @@ function changes() {
   }).catch(() => {});
 }
 
-// Next qualifying: the latest forecast, plus how earlier forecasts scored
+// Display-only forecast ordering. The exporter already sorts by this same
+// dot product of the rounded position distribution; it exports no pos_mean.
+function forecastMeanPosition(driver) {
+  if (Array.isArray(driver.pos_dist) && driver.pos_dist.length && driver.pos_dist.every(p => Number.isFinite(p))) {
+    return driver.pos_dist.reduce((sum, probability, i) => sum + probability * (i + 1), 0);
+  }
+  return Number.isFinite(driver.pos_mean) ? driver.pos_mean : null;
+}
+
+function orderedForecastDrivers(drivers, mode = 'pole') {
+  const preserveExportedOrder = mode === 'expected' && drivers.some(driver => forecastMeanPosition(driver) == null);
+  return drivers.map((driver, index) => ({ driver, index, mean: forecastMeanPosition(driver) })).sort((a, b) => {
+    if (preserveExportedOrder) return a.index - b.index;
+    const poleDifference = b.driver.p_pole - a.driver.p_pole;
+    const meanDifference = a.mean != null && b.mean != null ? a.mean - b.mean : a.mean != null ? -1 : b.mean != null ? 1 : 0;
+    return mode === 'expected'
+      ? meanDifference || poleDifference || a.index - b.index
+      : poleDifference || meanDifference || a.index - b.index;
+  }).map(item => item.driver);
+}
+
+function renderForecastGrid(drivers, mode = 'pole') {
+  const ordered = orderedForecastDrivers(drivers, mode);
+  const maximumPole = Math.max(...drivers.map(driver => driver.p_pole));
+  const favourites = drivers.filter(driver => driver.p_pole === maximumPole);
+  return ordered.map((driver, i) => {
+    const favourite = driver.p_pole === maximumPole, mean = forecastMeanPosition(driver);
+    const meanText = mean == null ? 'Unavailable' : 'P' + mean.toFixed(2);
+    const rangeText = `P${driver.pos_lo}–P${driver.pos_hi}`;
+    const orderName = mode === 'pole' ? 'pole-probability order' : 'expected-position order';
+    return `<div class="forecast-seat${favourite ? ' forecast-favourite' : ''}" role="listitem" data-driver="${safe(driver.code)}" style="--team:${TEAM[driver.team] || 'var(--ink-3)'}"
+        aria-label="${safe(driver.name)}, ${safe(driver.team)}: ${i + 1} in ${orderName}; pole ${pct(driver.p_pole)}, Q3 ${pct(driver.p_q3)}, mean position ${meanText}, middle 80 percent ${rangeText}">
+      <div class="forecast-seat-head"><span class="forecast-order-number" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span><span class="forecast-team">${safe(driver.team)} / #${driver.number}</span>${favourite ? `<span class="forecast-favourite-label">${favourites.length > 1 ? 'Joint pole favourite' : 'Pole favourite'}</span>` : ''}</div>
+      <h3 class="forecast-driver"><a href="inter.html#${encodeURIComponent(driver.code)}">${safe(last(driver.name))}</a></h3>
+      <dl class="forecast-odds"><div><dt>Pole</dt><dd>${pct(driver.p_pole)}</dd></div><div><dt>Q3</dt><dd>${pct(driver.p_q3)}</dd></div></dl>
+      <dl class="forecast-range"><div><dt>Mean position</dt><dd>${meanText}</dd></div><div><dt>Middle 80%</dt><dd>${rangeText}</dd></div></dl>
+    </div>`;
+  }).join('');
+}
+
+const forecastView = { drivers: [], mode: 'pole' };
+function updateForecastView() {
+  if (!forecastView.drivers.length) return;
+  const expected = forecastView.mode === 'expected';
+  $('next-grid').innerHTML = renderForecastGrid(forecastView.drivers, forecastView.mode);
+  $('next-grid').setAttribute('aria-label', expected ? 'Forecast ordered by mean qualifying position' : 'Forecast ordered by chance of pole');
+  $('forecast-pole-order').setAttribute('aria-pressed', String(!expected));
+  $('forecast-expected-order').setAttribute('aria-pressed', String(expected));
+  $('forecast-order-title').textContent = expected ? 'Expected position order' : 'Pole probability order';
+  $('forecast-order-note').textContent = expected
+    ? 'Ordered by mean qualifying position across the simulated sessions. A driver with a higher chance of pole can still have a worse mean position.'
+    : 'Ordered by chance of pole, highest first. The large numbers show this probability ranking; mean qualifying positions and their 80% ranges appear below each driver.';
+}
+$('forecast-pole-order').addEventListener('click', () => { forecastView.mode = 'pole'; updateForecastView(); });
+$('forecast-expected-order').addEventListener('click', () => { forecastView.mode = 'expected'; updateForecastView(); });
+
 function nextUp() {
-  const $ = id => document.getElementById(id);
-  const pct = p => p >= 0.995 ? '99%+' : p < 0.005 ? '<1%' : Math.round(p * 100) + '%';
-  const last = n => { const w = n.split(' ').slice(-1)[0]; return w.charAt(0) + w.slice(1).toLowerCase(); };
-  return fetch('data/forecasts/scorecard.json', { cache: 'no-cache' }).then(r => r.json()).then(card => {
+  return fetch('data/forecasts/scorecard.json', { cache: 'no-cache' }).then(response => {
+    if (!response.ok) throw new Error(response.status);
+    return response.json();
+  }).then(card => {
     if (!card.latest) return;
-    return fetch('data/forecasts/' + card.latest, { cache: 'no-cache' }).then(r => r.json()).then(fc => {
-      const done = card.rounds.some(r => r.round === fc.for_round);
+    return fetch('data/forecasts/' + card.latest, { cache: 'no-cache' }).then(response => {
+      if (!response.ok) throw new Error(response.status);
+      return response.json();
+    }).then(fc => {
+      const rounds = card.rounds || [], drivers = (fc.drivers || []).filter(PS.shown);
+      if (!drivers.length) return;
+      const done = rounds.some(round => round.round === fc.for_round);
       $('h2-next').textContent = done ? `Last forecast: ${fc.name}` : `Next qualifying: ${fc.name}`;
       $('next-sub').textContent = `${fc.location ? fc.location + ', ' : ''}${fc.date.replace(/-/g, '.')}. Forecast made after round ${fc.made_after_round}, ${Math.round(fc.weeks_ahead) === 1 ? 'one week' : Math.round(fc.weeks_ahead) + ' weeks'} ahead.`;
-      fc.drivers = fc.drivers.filter(PS.shown);
-      const N = fc.drivers.length, fav = fc.drivers.reduce((a, b) => b.p_pole > a.p_pole ? b : a);
-      const q1out = N > 10 ? Math.floor((N - 10) / 2) : 0, q2cut = N - q1out;                 // 22 cars: 6 out in Q1, 6 in Q2
-      const slot = (d, i) => {
-        const p = i + 1, tier = p > q2cut ? ' q1out' : p > 10 ? ' q2out' : '';
-        return `<div class="slot${d === fav ? ' fav' : ''}${tier}" role="listitem" style="--team:${TEAM[d.team] || 'var(--ink-3)'}"
-            aria-label="${d.name}, ${d.team}: expected P${p}, likely P${d.pos_lo} to P${d.pos_hi}, pole ${pct(d.p_pole)}, Q3 ${pct(d.p_q3)}">
-          <div class="car"><span class="pos">P${p}</span><span class="drv">${last(d.name)}</span>
-            <span class="sub">${d.team} &middot; P${d.pos_lo}&ndash;P${d.pos_hi}${p <= 10 ? ` &middot; pole ${pct(d.p_pole)}` : ` &middot; Q3 ${pct(d.p_q3)}`}</span></div></div>`;
-      };
-      $('next-grid').innerHTML = `<div class="col">${fc.drivers.filter((_, i) => i % 2 === 0).map((d, k) => slot(d, 2 * k)).join('')}</div>`
-        + `<div class="col r">${fc.drivers.filter((_, i) => i % 2 === 1).map((d, k) => slot(d, 2 * k + 1)).join('')}</div>`;
-      const S = card.summary, lastScored = card.rounds[card.rounds.length - 1];
-      const cell = (k, v, sub) => `<div><div class="k slash">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
-      $('next-card').innerHTML = S ? (
-        cell('Pole favourite', `${last(fav.name)} ${pct(fav.p_pole)}`, `then ${fc.drivers.filter(d => d !== fav).sort((a, b) => b.p_pole - a.p_pole).slice(0, 2).map(d => last(d.name) + ' ' + pct(d.p_pole)).join(', ')}`) +
-        cell('Forecasts scored', S.forecasts, `favourite took pole ${S.favourite_right} of ${S.forecasts} times`) +
-        cell('Q3 calls vs guessing', `${S.q3_skill >= 0 ? '+' : ''}${Math.round(S.q3_skill * 100)}% better`, `Brier skill against picking 10 at random`) +
-        cell('Last scored round', `${lastScored.name.replace(' Grand Prix', ' GP')}`, `${(fc.drivers.find(d => d.code === lastScored.actual_pole) || { name: lastScored.actual_pole }).name.split(' ').slice(-1)[0].replace(/^(.)(.*)$/, (m, a, b) => a + b.toLowerCase())} took pole, with a ${pct(lastScored.p_actual_pole)} chance in our forecast`)
-      ) : cell('Pole favourite', `${last(fav.name)} ${pct(fav.p_pole)}`, 'No forecasts scored yet');
+      forecastView.drivers = drivers;
+      updateForecastView();
+      const favourite = orderedForecastDrivers(drivers, 'pole')[0];
+      const summary = card.summary, lastScored = rounds[rounds.length - 1];
+      const cell = (key, value, sub) => `<div><div class="k slash">${key}</div><div class="v">${value}</div><div class="s">${sub}</div></div>`;
+      $('next-card').innerHTML = summary ? (
+        cell('Pole favourite', `${safe(last(favourite.name))} ${pct(favourite.p_pole)}`, `then ${orderedForecastDrivers(drivers.filter(driver => driver !== favourite), 'pole').slice(0, 2).map(driver => safe(last(driver.name)) + ' ' + pct(driver.p_pole)).join(', ')}`) +
+        cell('Forecasts scored', summary.forecasts, `favourite took pole ${summary.favourite_right} of ${summary.forecasts} times`) +
+        cell('Q3 calls vs guessing', `${summary.q3_skill >= 0 ? '+' : ''}${Math.round(summary.q3_skill * 100)}% better`, 'Brier skill against picking 10 at random') +
+        (lastScored ? cell('Last scored round', safe(lastScored.name.replace(' Grand Prix', ' GP')), `${safe((drivers.find(driver => driver.code === lastScored.actual_pole) || { name: lastScored.actual_pole }).name.split(' ').slice(-1)[0].replace(/^(.)(.*)$/, (match, a, b) => a + b.toLowerCase()))} took pole, with a ${pct(lastScored.p_actual_pole)} chance in our forecast`) : '')
+      ) : cell('Pole favourite', `${safe(last(favourite.name))} ${pct(favourite.p_pole)}`, 'No forecasts scored yet');
       $('next').hidden = false;
     });
   }).catch(() => {});
