@@ -1,143 +1,103 @@
-<p align="center"><img src="docs/banner.svg" alt="purple-sectors: who is quick because of the car, and who is quick anyway" width="100%"></p>
+# purple-sectors
 
-<p align="center">
-<a href="https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml"><img src="https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml/badge.svg" alt="Update model"></a>
-<a href="https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml"><img src="https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg" alt="Deploy site"></a>
-<a href="https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml"><img src="https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-</p>
+**Who is quick because of the car, and who is quick anyway.**
+One Bayesian model of every Formula 1 qualifying lap since 2023, refit after every session.
 
-<h3 align="center"><a href="https://tahahaha7.github.io/purple-sectors/">tahahaha7.github.io/purple-sectors</a></h3>
+**Live → [tahahaha7.github.io/purple-sectors](https://tahahaha7.github.io/purple-sectors/)**
 
----
+[![Update model](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/update.yml)
+[![Deploy site](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml)
+[![CI](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml)
 
-In Formula 1 timing, a **purple sector** is the fastest anyone has gone. It is also the hardest
-thing to read on a timing screen, because every lap time is two things at once: the car and the
-person driving it. Lewis Hamilton in a Ferrari is not Lewis Hamilton in a Mercedes, and a
-rookie in the quickest car will out-qualify a champion in the slowest.
+![Driver vs car: each column is a car, each helmet sits as high as its driver is quick](docs/img/soft-map.png)
 
-This project fits **one Bayesian model to every qualifying push lap since 2023** and pulls the two
-apart. After every session it answers three questions, with honest uncertainty on each:
+Every lap time is a car and a driver together. This model pulls them apart: columns are cars,
+slowest on the left; each helmet sits as high as its driver would be in an average car. Stars in
+slow cars are top left. Verstappen, top right, is 0.35 s a lap quicker than an average driver in
+only the third-quickest car.
 
-| | Question | Where |
-|---|---|---|
-| **1** | Which **driver** is quickest, with the car taken away? | Soft |
-| **2** | Which **car** is quickest, with the driver taken away? | Soft |
-| **3** | Where would **driver X qualify in car Y**, including cars he has never driven? | Soft, Inter |
+## What it does that nothing else does
 
-…and then it forecasts the next grid, scores itself when the real one arrives, and refits.
+- **Ranks the drivers with the car removed, and the cars with the drivers removed**, from one
+  posterior, with a 90% range on every number. Not points, not quali head-to-heads: pace.
+- **Puts every driver in every car.** A shrunk driver × car term means the site can say where
+  Hamilton would qualify in a Williams, and how unsure it is, even though he has never driven one.
+- **Connects the whole grid across seasons.** Driver skill carries from year to year, so every team
+  move links two garages; 2022 best laps are the bridge that ties McLaren and Aston Martin to
+  everyone else. That connectivity is what makes the decomposition identifiable at all.
+- **Forecasts the next grid and scores itself.** Thousands of simulated sessions, played out through
+  Q1, Q2 and Q3, give a position distribution for every driver. When the real grid arrives, the
+  forecast is graded and the scorecard is public.
+- **Refuses to publish a bad fit.** Zero divergences, R-hat ≤ 1.01, ESS ≥ 400, or the run retries
+  once and otherwise keeps the previous posterior live.
+- **Replays the season.** Every round is refit from scratch (`backfill.yml`), so you can scrub
+  from Melbourne to now and watch the order move.
 
-> After round 17 (Singapore), the model has seen 1,729 push laps this season. It puts Verstappen
-> at **0.35 s a lap quicker than an average driver**, in a car that is only the third quickest,
-> and Ferrari as the quickest car. That is the kind of sentence the site rewrites every Sunday.
+## The site
 
-## Four pages, like four compounds
+| | |
+|---|---|
+| ![The next grid: one strip per driver, shaded by the probability of each position](docs/img/soft-grid.png) | ![A car's season: median pace with 50% and 90% bands, round by round](docs/img/medium-season.png) |
+| **Soft · the quick read.** The two rankings, every driver in every car, and the next grid as the most likely arrangement of all 22, each row a strip of where that driver could land. | **Medium · the season.** Play the season: the rankings after every round, places gained and lost, and each car's or driver's pace with its uncertainty, round by round. |
 
-The site is organised the way a race weekend is: by how deep you want to go.
+![Pick a helmet](docs/img/inter-helmets.png)
 
-| Page | For | What it shows |
-|---|---|---|
-| **Soft** | the quick read | the two rankings, every driver in every car, the next grid as the model expects it |
-| **Medium** | the season | the same rankings after every round, as a replay; how the order moved and why |
-| **Inter** | one driver | pick a helmet: ranking, where they would qualify in every car, the teammate battle round by round |
-| **Hard** | the model | every term, every prior, every check, and the live diagnostics of the latest fit |
+**Inter · one driver.** Pick a helmet: their ranking with the car removed, where they would qualify
+in every car on the grid, and their teammate battle as a ridgeline across the season.
+**Hard · the model.** Every term, every prior, every check, and the live diagnostics of the latest
+fit, written as technical regulations.
 
-## The model, in one line
+## The model
 
 ```
 lap = baseline(session, segment) + evolution × t + car + driver + fit(driver, car) + tyres + execution
 ```
 
-Units are percent of lap time; 1% is about 0.9 s on a 90-second lap.
-
-- **car** is a team in one season: a persistent level plus a random walk over the rounds, so a car
-  can be developed into the season or fall away.
-- **driver** is skill relative to the grid, carried **across seasons**. That is what makes the
-  decomposition possible: a driver who changes team links two garages, and every driver has moved,
-  or had a teammate who moved, so the whole grid is connected. 2022 best laps are the bridge that
-  ties McLaren and Aston Martin to everyone else.
-- **fit** is a shrunk driver-by-car term. Pairs that happened are learned; pairs that never happened
-  get the prior, which is exactly what lets the site put a driver in a car he has not driven and
-  say how unsure it is.
-- **execution** admits that laps go wrong: each lap is either clean or compromised, both ex-Gaussian,
-  so one bad Q1 does not drag a driver's whole estimate down.
-
-Full specification, identification argument, priors, limits and the checks the fit must pass:
+in percent of lap time (1% ≈ 0.9 s on a 90-second lap). **car** is a team in one season, a level
+plus a random walk over the rounds. **driver** is skill relative to the grid, carried across
+seasons from a rookie offset. **fit** is the driver × car term, shrunk towards zero. **execution**
+says each lap is either clean or compromised, both ex-Gaussian, so one ruined Q1 does not drag a
+driver's estimate down. Specification, identification, priors, checks and limits:
 [`docs/pace_model.md`](docs/pace_model.md).
 
 ## The pipeline
 
-Every Sunday at 06:00 UTC, with a Monday retry in case timing data is late:
+Sunday 06:00 UTC, Monday retry if timing data was late:
 
-```mermaid
-flowchart LR
-  A["OpenF1<br/>push laps, 2023 →"] --> F["fetch.py"]
-  B["Jolpica<br/>2022 best laps · debuts · teammates"] --> H["history.py"]
-  F --> D["pace/data.py<br/>laps → design"]
-  H --> D
-  D --> S["stan/pace.stan<br/>CmdStan, NUTS"]
-  S --> G{"0 divergences<br/>R-hat ≤ 1.01<br/>ESS ≥ 400"}
-  G -- "fail → one careful refit" --> S
-  G -- pass --> E["pace/export.py<br/>site/data/*.json"]
-  E --> P["pace/forecast.py<br/>next grid · scorecard"]
-  P --> W["commit → GitHub Pages"]
 ```
-
-A fit that fails its checks is not published; the previous posterior stays live and the run is
-marked. `backfill.yml` replays the season round by round (fit rounds 1..k for every k), which is
-what Medium and Inter scrub through.
+OpenF1 + Jolpica → fetch → stan/pace.stan (CmdStan) → checks → export site/data → forecast → commit → Pages
+```
 
 ```
 src/purple_sectors/
-  fetch.py           OpenF1 → data/raw/quali_laps_<year>.csv   rate-limited, cached per session
-  history.py         Jolpica → 2022–25 best laps, debuts, the teammate network
-  rollover.py        end-of-season archive                      docs/rollover.md
-  pace/data.py       laps → design matrices
-  pace/fit.py        CmdStan fit, checks, posterior file
-  pace/export.py     posterior → site/data  (soft, pace grid, snapshots)
-  pace/forecast.py   the next qualifying session, and how the last forecast did
-  pace/simulate.py   NumPy mirror of the Stan model: prior checks, parameter recovery
+  fetch.py           OpenF1 → data/raw/quali_laps_<year>.csv
+  history.py         Jolpica → 2022–25 best laps, debuts, teammate network
+  rollover.py        end-of-season archive (docs/rollover.md)
+  pace/data.py       laps → design
+  pace/fit.py        fit, checks, posterior
+  pace/export.py     posterior → site/data (soft, pace grid, snapshots)
+  pace/forecast.py   next session and the scorecard
+  pace/simulate.py   NumPy mirror of the Stan model for prior checks and recovery
 stan/pace.stan       the model
-site/                the static site, no build step
-notebooks/           the whole pipeline in one Colab, with the recovery check
-tests/               pytest · 23 tests · no network or CmdStan needed
+site/                static site, no build step
+notebooks/           the whole pipeline in one Colab
+tests/               pytest, no network or CmdStan needed
 ```
 
-## What it does not do
-
-Race pace, strategy, tyre degradation over a stint, how long a driver would need to adapt to a
-different car, or anything about the weather. It is a model of a single flying lap in qualifying,
-and it says so when you ask it something else.
-
 <details>
-<summary><b>Reproduce the fit</b></summary>
+<summary>Reproduce</summary>
 
 ```bash
 pip install -r requirements.txt
 export PYTHONPATH=src
 for y in 2023 2024 2025 2026; do python -m purple_sectors.fetch --year $y; done
-python -m purple_sectors.pace.fit --years 2023 2024 2025 2026 \
-    --out posterior_pace.npz --report fit.json --retry
-python -m purple_sectors.pace.export --posterior posterior_pace.npz \
-    --laps data/raw/quali_laps_2026.csv --out site/data --snapshot-dir site/data/snapshots
-```
-
-CmdStan is needed for the fit; the fetch, export and site run anywhere. The fit takes a few
-minutes on a laptop.
-
-</details>
-
-<details>
-<summary><b>Run the tests</b></summary>
-
-```bash
-pip install -r requirements-dev.txt
-pytest          # a few seconds, no network
+python -m purple_sectors.pace.fit --years 2023 2024 2025 2026 --out posterior_pace.npz --report fit.json --retry
+python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps data/raw/quali_laps_2026.csv \
+    --out site/data --snapshot-dir site/data/snapshots
+pip install -r requirements-dev.txt && pytest
 ```
 
 </details>
 
----
-
-Lap timing from [OpenF1](https://openf1.org); history, debuts and teammate pairings from
-[Jolpica](https://jolpi.ca). MIT licence. An independent fan project, not associated with
-Formula 1.
+Lap timing from [OpenF1](https://openf1.org); history from [Jolpica](https://jolpi.ca). MIT licence.
+An independent fan project, not associated with Formula 1.
