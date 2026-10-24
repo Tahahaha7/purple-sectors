@@ -35,10 +35,7 @@ only the third-quickest car.
 
 ## The site
 
-| | |
-|---|---|
-| ![The next grid: one strip per driver, shaded by the probability of each position](docs/img/soft-grid.png) | ![A car's season: median pace with 50% and 90% bands, round by round](docs/img/medium-season.png) |
-| **Soft · the quick read.** The two rankings, every driver in every car, and the next grid as the most likely arrangement of all 22, each row a strip of where that driver could land. | **Medium · the season.** Play the season: the rankings after every round, places gained and lost, and each car's or driver's pace with its uncertainty, round by round. |
+
 
 ![Pick a helmet](docs/img/inter-helmets.png)
 
