@@ -63,18 +63,19 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 h1{font-weight:500;font-size:clamp(28px,3.8vw,46px);line-height:1.08;letter-spacing:-.03em}
 .lede{margin-top:20px;max-width:52ch}
 .transport{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--rule);
-  display:grid;grid-template-columns:minmax(150px,auto) auto minmax(0,1fr);gap:8px 22px;align-items:center;padding:10px 24px}
-.transport .note{grid-column:1 / -1;margin:0}
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 24px;align-items:center;padding:14px 24px 12px}
+.transport .note{margin:0;color:var(--ink-2);font-size:12px}
+.transport .row .note{white-space:nowrap}
 .now{font-size:16px;font-weight:500;letter-spacing:-.02em;line-height:1.2}
-.now small{display:block;font-size:11px;color:var(--ink-2);font-weight:400;letter-spacing:0}
-@media (max-width:860px){.transport{grid-template-columns:1fr auto;padding:8px 14px}.transport .timeline{grid-column:1 / -1}}
-.row{display:flex;gap:10px;align-items:center}
+.now small{display:block;font-size:11px;color:var(--ink-2);font-weight:400;letter-spacing:0;margin-top:2px}
+@media (max-width:860px){.transport{grid-template-columns:1fr;gap:10px;padding:10px 14px}.transport .row{justify-content:space-between}.timeline{gap:2px}.timeline button{font-size:9px;letter-spacing:0}}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 button{font:inherit;color:inherit;background:transparent;border:1px solid var(--rule);padding:6px 12px;cursor:pointer}
 button:hover{background:var(--fill)}
 button b{color:var(--accent);font-weight:500}
-.timeline{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:2px}
+.timeline{grid-column:1 / -1;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:4px}
 .timeline button{overflow:hidden;white-space:nowrap}
-.timeline button{padding:6px 0 4px;border:0;border-top:3px solid var(--rule);font-size:10px;color:var(--ink-3)}
+.timeline button{padding:7px 0 2px;border:0;border-top:3px solid var(--rule);font-size:11px;letter-spacing:.02em;color:var(--ink-3)}
 .timeline button.seen{border-top-color:var(--ink);color:var(--ink-2)}
 .timeline button.cur{border-top-color:var(--accent);color:var(--ink)}
 .timeline button.warn::after{content:"*";color:var(--ink-2)}
@@ -179,7 +180,6 @@ button b{color:var(--accent);font-weight:500}
   <div class="now" id="now"></div>
   <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
   <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
-  <p class="note" id="warn-note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
 </div>
 
 <section aria-labelledby="h-bd">
@@ -373,7 +373,7 @@ let ANIM = false, HIST = {};
 function setRound(k, animate = true) {
   const prev = K; K = k; const s = SNAPS[k]; ANIM = animate;
   $('now').innerHTML = `Round ${s.round} / ${s.name.replace(' Grand Prix', ' GP')}<small>${s.location}, ${s.date}. Model has seen ${s.laps.toLocaleString('en')} flying laps.</small>`;
-  $('status').textContent = s.diagnostics && s.diagnostics.status === 'warn' ? 'Lower confidence this round' : '';
+  $('status').textContent = s.diagnostics && s.diagnostics.status === 'warn' ? 'Lower confidence this round: borderline checks.' : '';
   [...$('timeline').children].forEach((b, i) => b.className = (i < k ? 'seen' : i === k ? 'cur' : '') + (SNAPS[i].diagnostics?.status === 'warn' ? ' warn' : ''));
   SNAPS.forEach((r, i) => { const f = $('fac' + r.round); f.setAttribute('class', 'fac' + (i > k ? ' future' : i === k ? ' cur' : '')); });
   edges.car.concat(edges.track, edges.bus).forEach(([r, p]) => p.classList.toggle('hot', r === s.round));
@@ -422,6 +422,19 @@ function series(id) {
     if (id[0] === 'm') { const t = s.teammates.find(t => 'm' + t.team === id); return t && { r: s.round, q: [t.lo, t.gap, t.hi], t }; }
   });
 }
+// Monotone cubic (Fritsch–Carlson) through points sorted by x: smooth, no overshoot, so band edges never cross.
+function spline(P, lead = 'M') {
+  const n = P.length; if (n < 2) return n ? `${lead}${P[0][0]} ${P[0][1]}` : '';
+  const dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = P[i + 1][0] - P[i][0]; m[i] = (P[i + 1][1] - P[i][1]) / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; } const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; } }
+  let d = `${lead}${P[0][0]} ${P[0][1]}`;
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${P[i][0] + h} ${P[i][1] + t[i] * h} ${P[i + 1][0] - h} ${P[i + 1][1] - t[i + 1] * h} ${P[i + 1][0]} ${P[i + 1][1]}`; }
+  return d;
+}
+
 function fan(svg, data, opts) {
   svg.innerHTML = ''; const W = opts.W, H = opts.H, pl = opts.pl ?? 56, pr = 14, pt = 12, pb = opts.pb ?? 26;
   const pts = data.map((d, i) => d && { ...d, i }).filter(Boolean); if (!pts.length) return;
@@ -442,11 +455,12 @@ function fan(svg, data, opts) {
   for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) { const vv = Math.round(v * 1000) / 1000;
     el('line', { class: 'g', x1: pl, x2: W - pr, y1: Y(vv), y2: Y(vv) }, g); if (opts.axis) el('text', { x: pl - 8, y: Y(vv) + 3, 'text-anchor': 'end' }, g).textContent = opts.fmt(vv); }
   if (opts.zero && lo < 0 && hi > 0) el('line', { class: 'z', x1: pl, x2: W - pr, y1: Y(0), y2: Y(0) }, g);
-  const area = (a, b) => 'M' + pts.map(d => `${X(d.i)} ${Y(d.q[a])}`).join('L') + 'L' + [...pts].reverse().map(d => `${X(d.i)} ${Y(d.q[b])}`).join('L') + 'Z';
+  const line = k => pts.map(d => [X(d.i), Y(d.q[k])]);
+  const area = (a, b) => spline(line(a)) + spline(line(b).reverse(), 'L') + 'Z';
   const n = pts[0].q.length;
   el('path', { class: 'o', d: area(0, n - 1) }, gc);
   if (n === 5) el('path', { class: 'i', d: area(1, 3) }, gc);
-  el('path', { class: 'm', d: 'M' + pts.map(d => `${X(d.i)} ${Y(d.q[(n - 1) / 2])}`).join('L') }, gc);
+  el('path', { class: 'm', d: spline(line((n - 1) / 2)) }, gc);
   el('line', { class: 'now-line', x1: X(K), x2: X(K), y1: pt, y2: H - pb }, g);
   pts.forEach(d => el('circle', { class: 'pt' + (d.i === K ? ' now' : ''), cx: X(d.i), cy: Y(d.q[(n - 1) / 2]), r: d.i === K ? 3.6 : 2 }, g));
   if (opts.labels) SNAPS.forEach((s, i) => el('text', { x: X(i), y: H - 8, 'text-anchor': 'middle' }, g).textContent = code(s.location));
@@ -578,7 +592,6 @@ function init() {
   SNAPS.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = code(s.location);
     b.title = s.name; b.addEventListener('click', () => { stop(); setRound(i); }); tl.appendChild(b); });
   $('stamp').textContent = SNAPS[SNAPS.length - 1].date;
-  $('warn-note').hidden = !SNAPS.some(s => s.diagnostics && s.diagnostics.status === 'warn');   // only when a round needs it
   $('play').addEventListener('click', () => timer ? stop() : play());
   const latest = SNAPS[SNAPS.length - 1];
   SEL = 'c' + latest.cars.reduce((a, b) => b.p_fast > a.p_fast ? b : a).team;
