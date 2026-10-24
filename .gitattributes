@@ -1,0 +1,3 @@
+# GitHub language stats: count only the model. The site is its output and the Python is its plumbing.
+* -linguist-detectable
+*.stan linguist-detectable

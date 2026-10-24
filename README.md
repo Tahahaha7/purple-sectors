@@ -9,7 +9,7 @@ One Bayesian model of every Formula 1 qualifying lap since 2023, refit after eve
 [![Deploy site](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/pages.yml)
 [![CI](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml/badge.svg)](https://github.com/Tahahaha7/purple-sectors/actions/workflows/ci.yml)
 
-![Driver vs car: each column is a car, each helmet sits as high as its driver is quick](docs/img/purple-sectors-icon-wide-wordmark.png)
+![Driver vs car: each column is a car, each helmet sits as high as its driver is quick](docs/img/soft-map.png)
 
 Every lap time is a car and a driver together. This model pulls them apart: columns are cars,
 slowest on the left; each helmet sits as high as its driver would be in an average car. Stars in
@@ -35,7 +35,10 @@ only the third-quickest car.
 
 ## The site
 
-
+| | |
+|---|---|
+| ![The next grid: one strip per driver, shaded by the probability of each position](docs/img/soft-grid.png) | ![A car's season: median pace with 50% and 90% bands, round by round](docs/img/medium-season.png) |
+| **Soft · the quick read.** The two rankings, every driver in every car, and the next grid as the most likely arrangement of all 22, each row a strip of where that driver could land. | **Medium · the season.** Play the season: the rankings after every round, places gained and lost, and each car's or driver's pace with its uncertainty, round by round. |
 
 ![Pick a helmet](docs/img/inter-helmets.png)
 
