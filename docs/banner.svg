@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="purple-sectors: who is quick because of the car, and who is quick anyway">
+  <defs>
+    <style>
+      text { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .wm { font-size: 44px; font-weight: 700; fill: #FFFFFF; letter-spacing: -0.02em; }
+      .slash { fill: #A57CFF; }
+      .tag { font-size: 18px; fill: #9A9A9A; }
+      .k { font-size: 12px; fill: #767676; letter-spacing: 0.02em; }
+      .t { font-size: 30px; font-weight: 500; fill: #FFFFFF; letter-spacing: -0.02em; }
+      .p { fill: #A57CFF; }
+      .g { fill: #39D27F; }
+      .y { fill: #F4C542; }
+      .rule { stroke: #232323; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect width="1200" height="300" fill="#000000"/>
+  <line class="rule" x1="60" y1="0.5" x2="1140" y2="0.5"/>
+  <line class="rule" x1="60" y1="299.5" x2="1140" y2="299.5"/>
+  <line class="rule" x1="60.5" y1="0" x2="60.5" y2="300"/>
+  <line class="rule" x1="1139.5" y1="0" x2="1139.5" y2="300"/>
+
+  <!-- wordmark -->
+  <text class="wm" x="96" y="112">purple-sectors<tspan class="slash">/</tspan></text>
+  <text class="tag" x="96" y="150">Who is quick because of the car, and who is quick anyway.</text>
+  <text class="tag" x="96" y="178">A Bayesian model of Formula 1 qualifying, refit after every session.</text>
+
+  <!-- a timing-screen readout: three sectors, the quickest in purple -->
+  <g transform="translate(96 222)">
+    <text class="k" x="0" y="0">LAP</text>
+    <text class="t" x="0" y="38">1:29.347</text>
+    <text class="k" x="236" y="0">S1</text>
+    <rect class="p" x="236" y="14" width="120" height="6"/>
+    <text class="k" x="236" y="40" style="fill:#A57CFF">fastest overall</text>
+    <text class="k" x="396" y="0">S2</text>
+    <rect class="g" x="396" y="14" width="120" height="6"/>
+    <text class="k" x="396" y="40" style="fill:#39D27F">personal best</text>
+    <text class="k" x="556" y="0">S3</text>
+    <rect class="y" x="556" y="14" width="120" height="6"/>
+    <text class="k" x="556" y="40" style="fill:#F4C542">slower than before</text>
+  </g>
+
+  <!-- the decomposition, right -->
+  <g transform="translate(900 92)">
+    <text class="k" x="0" y="0">EVERY LAP IS</text>
+    <text class="t" x="0" y="40">car</text>
+    <text class="t" x="0" y="80">+ driver</text>
+    <text class="t" x="0" y="120">+ the fit</text>
+    <text class="t" x="0" y="160">+ the day</text>
+  </g>
+</svg>
