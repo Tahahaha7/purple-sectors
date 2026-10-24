@@ -4,16 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#17161a">
+<meta name="theme-color" content="#000000">
 
-<title>Inter — The driver dossier / purple-sectors</title>
-<meta name="description" content="A driver dossier: qualifying pace with the car removed, every driver in every car, and the teammate comparison through the season.">
+<title>purple-sectors / Inter</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
 <style>
 
 
@@ -174,145 +173,40 @@ button:hover{background:var(--fill)}
 .mhead.one h1{font-size:clamp(24px,2.6vw,34px)}
 .mhead.one .lede{margin-top:6px;font-size:13px;color:var(--ink-2);max-width:90ch}
 </style>
-<link rel="stylesheet" href="paddock.css">
-<style>
-/* The dossier keeps the same posterior draws, with an editorial reading order. */
-.page-inter .mhead.one .lede{max-width:65ch;margin-top:20px;font:15px/1.7 var(--sans);color:var(--ink-2)}
-.page-inter .profile-selection-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin:0 0 16px;padding-top:26px;border-top:1px solid var(--rule)}
-.page-inter .profile-selection-head h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:30px;letter-spacing:-.025em}
-.page-inter .profile-selection-head p{color:var(--ink-2);font-size:12px}
-.page-inter .picker{grid-template-columns:repeat(6,minmax(0,1fr));gap:16px;padding:0 0 30px;border-bottom:0}
-.page-inter .pk-team{border:0;border-radius:0;border-top:1px solid var(--rule);padding:12px 2px 8px;align-items:flex-start}
-.page-inter .pk-pair{width:100%;justify-content:flex-start;gap:10px}
-.page-inter .pk{border-radius:0;padding:6px;color:var(--ink-2);min-width:48px;min-height:64px}
-.page-inter .pk .helm{width:50px}
-.page-inter .pk .lb{font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.5;margin-top:0}
-.page-inter .pk[aria-pressed="true"]{background:var(--fill);box-shadow:inset 0 -2px var(--accent)}
-.page-inter .pk-team:has(.pk[aria-pressed="true"]){border-color:var(--accent)}
-.page-inter .pk-name{font-size:11px;color:var(--ink-2);margin-top:8px}
-.page-inter .prof{grid-template-columns:minmax(0,1fr) minmax(0,1.18fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);gap:36px}
-.page-inter .prof>div{padding:30px 0;min-width:0}
-.page-inter .prof>div:first-child{border-right:0;padding-right:30px;border-right:1px solid var(--rule)}
-.page-inter .who{align-items:center;gap:22px}
-.page-inter .who .helm{width:104px}
-.page-inter .who .nm{font-family:"Instrument Serif",Georgia,serif;font-size:clamp(36px,4vw,50px);font-weight:400;line-height:1.05;letter-spacing:-.025em}
-.page-inter .who .sub{font-size:12px;line-height:1.6;margin-top:9px;color:var(--ink-2)}
-.page-inter .facts{margin-top:28px;gap:0}
-.page-inter .facts>div{padding:17px 0;border-top:1px solid var(--rule)}
-.page-inter .facts .k{font-family:"JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;font-size:11px;margin-bottom:8px}
-.page-inter .facts .v{font-size:15px;font-weight:400;line-height:1.7}
-.page-inter .facts .v>b{font-family:"JetBrains Mono",monospace;font-size:24px;line-height:1.2;font-weight:500;margin-right:4px}
-.page-inter .facts .profile-pace-range{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-2);margin-top:7px}
-.page-inter .mates{gap:6px 14px}
-.page-inter .mates span{border:0;padding:0;font-size:12px;line-height:1.7;color:var(--ink-2)}
-.page-inter .profile-table-title{font-family:"Instrument Serif",Georgia,serif;font-size:30px;font-weight:400;letter-spacing:-.025em;line-height:1.1;margin-bottom:12px}
-.page-inter .profile-note{font-size:12px;color:var(--ink-2);line-height:1.65;max-width:64ch}
-.page-inter .profile-counterfactual>.profile-note{margin-bottom:22px}
-.page-inter .profile-counterfactual>.profile-note:last-child{margin:18px 0 0}
-.page-inter .cars-t .h,.page-inter .cars-t .rw{grid-template-columns:26px minmax(0,1fr) 56px 78px 54px;gap:0 10px}
-.page-inter .cars-t .h{font-size:11px;font-family:"JetBrains Mono",monospace;line-height:1.4;padding:0 0 13px}
-.page-inter .cars-t .rw{min-height:46px;padding:9px 0;font-size:13px}
-.page-inter .cars-t .rw>span:nth-child(n+3){font-family:"JetBrains Mono",monospace;font-size:12px}
-.page-inter .cars-t .rw.own{background:var(--fill);box-shadow:inset 2px 0 var(--accent)}
-.page-inter .profile-battle-section{padding-top:38px}
-.page-inter .profile-battle-section>.eyebrow{margin-bottom:12px}
-.page-inter .profile-battle-section>h2{font-family:"Instrument Serif",Georgia,serif;font-size:40px;font-weight:400;line-height:1.05;letter-spacing:-.025em;margin-bottom:14px}
-.page-inter .profile-battle-section>.profile-note{margin-bottom:24px}
-.page-inter .mybattle{border-top:1px solid var(--rule)}
-.page-inter .duel{padding:22px 0;gap:24px;grid-template-columns:minmax(0,1fr) minmax(260px,390px) minmax(0,1fr)}
-.page-inter .duel .helm{width:76px}
-.page-inter .duel .nm{font-size:15px;font-weight:500}
-.page-inter .duel .mid .tm{font-family:"JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.07em;font-size:11px;margin-bottom:12px}
-.page-inter .duel .vd{font-size:15px;margin-top:12px}
-.page-inter .duel .vd .sub{font-size:12px;margin-top:4px}
-.page-inter .dots text{font-family:"JetBrains Mono",monospace;font-size:13px}
-.page-inter .ridge{padding:20px 0 24px;overflow-x:auto;scrollbar-color:var(--ink-3) var(--bg)}
-.page-inter .ridge svg{min-width:760px}
-.page-inter .dens text{font-size:17px}
-.page-inter .ridgeline-note{display:none}
-@media(max-width:1000px){
- .page-inter .picker{grid-template-columns:repeat(4,minmax(0,1fr))}
- .page-inter .prof{gap:24px;grid-template-columns:1fr 1.15fr}
- .page-inter .prof>div:first-child{padding-right:24px}
- .page-inter .who{gap:10px}
- .page-inter .who .helm{width:78px}
- .page-inter .cars-t .h,.page-inter .cars-t .rw{grid-template-columns:22px minmax(0,1fr) 46px 67px 42px;gap:0 6px}
- .page-inter .duel{grid-template-columns:1fr minmax(240px,340px) 1fr;gap:14px}
- .page-inter .duel .dr{gap:8px}
- .page-inter .duel .helm{width:58px}
-}
-@media(max-width:760px){
- .page-inter .mhead.one .lede{font-size:14px}
- .page-inter .prof{grid-template-columns:1fr;gap:0}
- .page-inter .prof>div:first-child{border-right:0;border-bottom:1px solid var(--rule);padding-right:0}
- .page-inter .profile-selection-head{align-items:flex-start;gap:10px;flex-direction:column;margin-bottom:18px}
- .page-inter .picker{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
- .page-inter .pk-pair{gap:3px}
- .page-inter .pk .helm{width:42px}
- .page-inter .pk{min-width:44px;padding:4px}
- .page-inter .pk-name{white-space:normal;line-height:1.5}
- .page-inter .who{gap:18px}
- .page-inter .who .helm{width:96px}
- .page-inter .cars-t .h,.page-inter .cars-t .rw{grid-template-columns:26px minmax(0,1fr) 56px 78px 54px;gap:0 8px}
- .page-inter .duel{grid-template-columns:1fr;gap:18px}
- .page-inter .duel .dr,.page-inter .duel .dr.b{flex-direction:row;text-align:left;gap:14px}
- .page-inter .duel .dr.b{justify-content:flex-end;text-align:right}
- .page-inter .duel .mid{width:100%;max-width:440px;justify-self:center}
- .page-inter .duel .helm{width:60px}
- .page-inter .duel .vd{margin-top:10px}
- .page-inter .ridgeline-note{display:block;margin-top:10px}
- .page-inter .profile-battle-section>h2{font-size:36px}
-}
-@media(max-width:440px){
- .page-inter .picker{grid-template-columns:repeat(2,minmax(0,1fr))}
- .page-inter .pk-pair{gap:12px}
- .page-inter .profile-table-title{font-size:28px}
- .page-inter .who .nm{font-size:36px}
- .page-inter .who .helm{width:76px}
- .page-inter .cars-t .h,.page-inter .cars-t .rw{grid-template-columns:minmax(0,1fr) 44px 65px 42px;gap:0 7px}
- .page-inter .cars-t .h>span:first-child,.page-inter .cars-t .rw>span:first-child{display:none}
- .page-inter .cars-t .rw{font-size:12px;line-height:1.5}
- .page-inter .cars-t .rw>span:nth-child(n+3){font-size:11px}
- .page-inter .cars-t .tc{margin-right:5px;width:3px}
- .page-inter .dots text{font-size:14px}
-}
-@media(prefers-reduced-motion:reduce){.page-inter .pk .helm{transition:none}}
-</style>
 </head>
-<body class="paddock page-inter">
+<body>
 <div class="page">
 <nav aria-label="Pages">
   <a class="home" href="index.html">purple-sectors</a>
   <ul class="keys">
-    <li><a href="index.html"><b>Soft</b><span>The grid</span></a></li>
-    <li><a href="medium.html"><b>Medium</b><span>Season</span></a></li>
-    <li><a href="inter.html" aria-current="page"><b>Inter</b><span>Drivers</span></a></li>
-    <li><a href="hard.html"><b>Hard</b><span>The model</span></a></li>
+    <li><a href="index.html"><b>[S]</b> Soft</a></li>
+    <li><a href="medium.html"><b>[M]</b> Medium</a></li>
+    <li><a href="inter.html" aria-current="page"><b>[I]</b> Inter</a></li>
+    <li><a href="hard.html"><b>[H]</b> Hard</a></li>
   </ul>
   <span class="stamp" id="stamp"></span>
 </nav>
 
 <header class="mhead one">
   <div class="copy">
-    <p class="edition">Inter / The driver dossier</p>
-    <h1>One driver.<br><em>Every angle.</em></h1>
-    <p class="lede">The pace they bring, the machinery around them, and the teammate on the other side of the garage. Choose a driver to inspect the evidence.</p>
+    <p class="hello">Inter: drivers</p>
+    <h1>One driver at a time.</h1>
+    <p class="lede">Pick a helmet: where that driver ranks with the car removed, where they would qualify in every car on the grid, and how their battle with their teammate played out round by round.</p>
   </div>
 </header>
 
-<div class="profile-selection-head"><h2>Choose your driver.</h2><p>Grouped by team. Use the arrow keys to move between drivers.</p></div>
-<div class="picker" id="picker" role="group" aria-label="Pick a driver">Loading the driver field…</div>
+<div class="picker" id="picker" role="group" aria-label="Pick a driver"></div>
 
 <section class="prof" id="prof" aria-live="polite">
-  <div class="profile-identity"><div class="who" id="p-who"></div><div class="facts" id="p-facts"></div></div>
-  <div class="profile-counterfactual"><h2 class="profile-table-title" id="p-cars-h">In every car</h2><p class="profile-note">One driver, another car, against the rest of the grid in their current seats. The range contains the middle 80% of modelled ranks.</p><div class="cars-t" id="p-cars"></div><p class="profile-note">Unfamiliar pairings use the model’s prior for driver–car fit. Immediate adaptation to the car is assumed.</p></div>
+  <div><div class="who" id="p-who"></div><div class="facts" id="p-facts"></div></div>
+  <div><div class="slash" style="color:var(--ink-2);font-size:12px;margin-bottom:10px" id="p-cars-h">In every car</div><div class="cars-t" id="p-cars"></div></div>
 </section>
-<section class="profile-battle-section" aria-labelledby="h-teammate"><p class="eyebrow">The teammate test</p><h2 id="h-teammate">Across the garage.</h2><p class="profile-note">The same machinery makes the teammate comparison especially useful. Twenty dots show the balance of evidence; the season distributions show how that picture developed. Select the comparison to open or close its season history.</p><div class="mybattle" id="p-battle"></div><p class="profile-note ridgeline-note">The detailed season distributions can be scrolled horizontally.</p></section>
+<div class="mybattle" id="p-battle"></div>
 
 <section class="router" aria-label="More">
-  <a href="index.html"><span class="slash">Soft</span><div class="t">The qualifying review</div><p>Who is fast right now, car and driver apart.</p></a>
-  <a href="medium.html"><span class="slash">Medium</span><div class="t">Play the season</div><p>The rankings round by round, and how the model learned.</p></a>
-  <a href="hard.html"><span class="slash">Hard</span><div class="t">Read the model</div><p>The model, its priors, and every check it passes.</p></a>
+  <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
+  <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The season</div><p>The rankings round by round, and how the model learned.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, its priors, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. "In every car" assumes a driver's skill carries over unchanged, ignoring time to adapt.</p>
 </div>
@@ -404,19 +298,19 @@ function renderProfile() {
   const mates = PAIRS.filter(p => p.a === code || p.b === code).map(p => ({ id: p.a === code ? p.b : p.a, list: p.list })).filter(m => PS.shown(m.id)).sort((x, y) => Math.max(...y.list.map(e => e.season)) - Math.max(...x.list.map(e => e.season)));
   const vh = d.vs_history, hist = d.history ? (Math.abs(vh) < 0.02 ? 'right in line with last season' : `${Math.abs(vh).toFixed(2)} s a lap ${vh < 0 ? 'faster' : 'slower'} than last season`) : 'his first season in the model, so 2026 alone decides';
   $('p-facts').innerHTML = `
-    <div><div class="k slash">Driver ranking, car removed</div><div class="v"><b>P${rank}</b> of ${SOFT.drivers.length}, ${sec(d.skill[1])} against the average driver<span class="profile-pace-range">90% pace interval: ${sec(d.skill[0])} to ${sec(d.skill[2])}</span></div></div>
+    <div><div class="k slash">Driver ranking, car removed</div><div class="v"><b>P${rank}</b> of ${SOFT.drivers.length}, ${sec(d.skill[1])} against the average driver</div></div>
     <div><div class="k slash">Against last season</div><div class="v">${hist}</div></div>
     <div><div class="k slash">Teammates since 2022 (${mates.length})</div><div class="mates">${mates.map(m => `<span>${nameOf(m.id)} ${[...new Set(m.list.map(e => e.season))].sort().join(', ')}</span>`).join('')}</div></div>`;
   // where he would qualify in each car (counterfactual against everyone else in their seats)
   const rows = cars.map(c => ({ c: c.team, r: counterfactual(code, c.team) })).sort((x, y) => x.r.med - y.r.med || y.r.pole - x.r.pole);
   $('p-cars-h').textContent = `${last(d.name)} in every car`;
-  $('p-cars').innerHTML = `<div class="h"><span>Pos</span><span>Car</span><span class="r">Likely</span><span class="r">80% range</span><span class="r">Pole</span></div>` +
+  $('p-cars').innerHTML = `<div class="h"><span>Pos</span><span>Car</span><span class="r">Likely</span><span class="r">Range</span><span class="r">Pole</span></div>` +
     rows.map((x, i) => `<div class="rw${x.c === d.team ? ' own' : ''}" style="--team:${TEAM[x.c] || '#888'}"><span class="${i === 0 ? 'best' : ''}">${String(i + 1).padStart(2, '0')}</span>
       <span><i class="tc"></i>${x.c}${x.c === d.team ? ' <span style="color:var(--ink-2);font-size:12px">(his car)</span>' : ''}</span>
       <span class="r">P${x.r.med}</span><span class="r">P${x.r.lo}\u2013${x.r.hi}</span><span class="r">${pct(x.r.pole)}</span></div>`).join('');
   // his teammate battle, opened with its season ridgeline
   const pair = SOFT.pairs.find(p => p.a.code === code || p.b.code === code);
-  $('p-battle').innerHTML = pair ? duelHTML(pair, true) : '<p class="profile-note" style="padding:20px 0">A teammate comparison is not available for this driver yet.</p>';
+  $('p-battle').innerHTML = pair ? duelHTML(pair, true) : '';
   if (pair && ORIENT[pair.team]) ridgeline(pair.team, $('p-battle').querySelector('.ridge svg'));
 }
 
@@ -486,22 +380,8 @@ function duelHTML(p, open) {
   const head = clear ? `<b>${A} is quicker</b>` : close ? `<b>Too close to call</b>` : `<b>Probably ${A}</b>`;
   const n = p.dots.filter(v => v < 0).length;
   const side = (d, flip) => `<div class="dr ${flip ? 'b' : 'a'}">${helmet(d, p.team, flip)}<div style="min-width:0"><div class="nm">${last(d.name)}</div><div class="sub">#${d.number} ${first(d.name)}</div></div></div>`;
-  return `<article class="duel${clear ? ' clear' : ''}" data-team="${p.team}" role="button" tabindex="0" aria-expanded="${open}" aria-label="${p.team}: ${p.a.name} versus ${p.b.name}">${side(p.a, false)}<div class="mid"><div class="tm">${p.team}</div>${dotplot(p.dots, A, B)}<div class="vd">${head}<span class="sub">${n} of 20 dots favour ${A}, by ${Math.abs(p.gap).toFixed(2)} s</span></div></div>${side(p.b, true)}</article><div class="ridge"${open ? '' : ' hidden'}><svg class="dens"></svg></div>`;
+  return `<article class="duel${clear ? ' clear' : ''}" data-team="${p.team}" tabindex="0" aria-expanded="${open}" aria-label="${p.team}: ${p.a.name} versus ${p.b.name}">${side(p.a, false)}<div class="mid"><div class="tm">${p.team}</div>${dotplot(p.dots, A, B)}<div class="vd">${head}<span class="sub">${n} of 20 dots favour ${A}, by ${Math.abs(p.gap).toFixed(2)} s</span></div></div>${side(p.b, true)}</article><div class="ridge"${open ? '' : ' hidden'}><svg class="dens"></svg></div>`;
 }
-// Keep the season-history disclosure operable by pointer and keyboard.
-function toggleBattle(target) {
-  const duel = target.closest('.duel');
-  if (!duel) return;
-  const ridge = duel.nextElementSibling;
-  if (!ridge || !ridge.classList.contains('ridge')) return;
-  const open = duel.getAttribute('aria-expanded') === 'true';
-  duel.setAttribute('aria-expanded', String(!open));
-  ridge.hidden = open;
-}
-$('p-battle').addEventListener('click', e => toggleBattle(e.target));
-$('p-battle').addEventListener('keydown', e => {
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.duel')) { e.preventDefault(); toggleBattle(e.target); }
-});
 /* ---------- boot ---------- */
 Promise.all([getJSON('data/soft.json'), getJSON('data/snapshots/index.json'), getJSON('data/network.json')]).then(([soft, idx, net]) => {
   SOFT = soft; NET = net;
@@ -521,7 +401,7 @@ Promise.all([getJSON('data/soft.json'), getJSON('data/snapshots/index.json'), ge
   });
   const fromHash = location.hash.slice(1).toUpperCase();
   choose(DRV[fromHash] ? fromHash : SOFT.drivers[0].code, false);
-}).catch(e => { console.error(e); $('stamp').textContent = ''; $('picker').textContent = 'Driver data could not be loaded. Reload this page to try again.'; });
+}).catch(e => { console.error(e); $('stamp').textContent = ''; $('picker').textContent = 'Data is refreshing. Check back in a few minutes.'; });
 </script>
 </body>
 </html>

@@ -4,16 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#17161a">
+<meta name="theme-color" content="#000000">
 
-<title>The season / Medium — purple-sectors</title>
-<meta name="description" content="Replay the qualifying season: driver and car pace estimates after every round, with credible intervals and a moving timing tower.">
+<title>purple-sectors / Medium</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: dark;                              /* always dark, whatever the computer's setting */
@@ -154,89 +153,40 @@ button b{color:var(--accent);font-weight:500}
 @media (max-width:860px){.tw-head,.tw{grid-template-columns:28px 36px minmax(0,1fr) 64px;padding:0 14px}.tw-head .hide,.tw .hide{display:none}}
 @media (prefers-reduced-motion:reduce){.tw,.tw .rng .bar,.tw .rng .dot{transition:none}}
 
-/* Paddock Review: season-specific working surfaces. */
-.page-medium .transport{grid-template-columns:minmax(200px,1fr) auto;gap:18px 28px;padding:22px 0;background:var(--bg);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.page-medium .transport .timeline{grid-column:1/-1;gap:5px}
-.page-medium .transport .timeline button{min-height:44px;font-size:11px;padding:10px 2px 4px;border-top-width:2px}
-.page-medium .transport .timeline button.cur{background:var(--fill)}
-.page-medium .season-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.page-medium .season-actions button{min-height:44px;padding:10px 14px;border-radius:0;font-size:12px}
-.page-medium #play{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;min-width:153px}
-.page-medium #play:disabled{background:var(--fill);color:var(--ink-2);border-color:var(--rule)}
-.page-medium button:disabled{opacity:.5;cursor:default}
-.page-medium .round-picker{display:none;font-size:12px;color:var(--ink-2)}
-.page-medium .round-picker select{display:block;margin-top:7px;width:100%;min-height:44px;background:var(--fill);color:var(--ink);border:1px solid var(--rule);font:inherit;padding:9px 10px;color-scheme:dark}
-.page-medium .now{font-family:'DM Sans',sans-serif;font-size:18px;font-weight:500}
-.page-medium .now small{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;margin-top:5px;max-width:65ch}
-.page-medium .transport .note{font-size:11px}
-.page-medium .transport #status:empty{display:none}
-.page-medium .tw{height:56px;font-family:'DM Sans',sans-serif;font-size:14px}
-.page-medium .tw .pos,.page-medium .tw .chg,.page-medium .tw .val{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-.page-medium .tw .nm{gap:10px}.page-medium .tw .nm .sub{display:block;font-size:11px;font-weight:400;margin-top:2px}
-.page-medium .tw-identity{min-width:0;overflow:hidden;text-overflow:ellipsis}.page-medium .tw-identity b{font-weight:500}
-.page-medium .interval-mobile{display:none}
-.page-medium .tw:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
-.page-medium .advanced-model{margin:42px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.page-medium .advanced-model>summary{padding:22px 0;color:var(--ink);font-size:18px;cursor:pointer;list-style-position:inside}
-.page-medium .advanced-model>summary small{display:block;color:var(--ink-2);font-size:12px;margin:6px 0 0 22px}
-.page-medium .advanced-model .head{padding-top:10px}
-.page-medium .season-detail{margin-top:42px}
-.page-medium .season-detail>svg{min-height:190px}
-@media(max-width:860px){
- .page-medium .transport{grid-template-columns:1fr;padding:18px 0;gap:14px}
- .page-medium .season-actions{justify-content:flex-start}
- .page-medium .round-picker{display:block;grid-column:1/-1}
- .page-medium .transport .timeline{display:none}
- .page-medium .tw-head,.page-medium .tw{grid-template-columns:24px 28px minmax(0,1fr) 72px;gap:0 8px;padding:0 10px}
- .page-medium .tw{grid-template-rows:24px 18px;align-content:center}
- .page-medium .tw .pos{grid-column:1;grid-row:1}.page-medium .tw .chg{grid-column:2;grid-row:1}
- .page-medium .tw .nm{grid-column:3;grid-row:1;font-size:13px}.page-medium .tw .val{grid-column:4;grid-row:1;font-size:12px}
- .page-medium .tw .nm .sub{display:none}.page-medium .tw .tc{height:14px;width:3px}
- .page-medium .tw .interval-mobile{display:block;grid-column:3/-1;grid-row:2;font:11px/1.4 'JetBrains Mono',monospace;color:var(--ink-2);white-space:nowrap}
- .page-medium .season-detail>svg{min-height:0}
-}
-@media(max-width:600px){
- .page-medium .season-actions #prev-round,.page-medium .season-actions #next-round{width:44px;padding:10px 0;text-align:center}
- .page-medium .round-step-label{display:none}
-}
-@media(prefers-reduced-motion:reduce){.page-medium .tw,.page-medium .tw .rng .bar,.page-medium .tw .rng .dot{transition:none}}
 </style>
-<link rel="stylesheet" href="paddock.css">
 </head>
-<body class="paddock page-medium">
+<body>
 <div class="page">
 <nav aria-label="Pages">
   <a class="home" href="index.html">purple-sectors</a>
   <ul class="keys">
-    <li><a href="index.html"><b>Soft</b><span>The grid</span></a></li>
-    <li><a href="medium.html" aria-current="page"><b>Medium</b><span>Season</span></a></li>
-    <li><a href="inter.html"><b>Inter</b><span>Drivers</span></a></li>
-    <li><a href="hard.html"><b>Hard</b><span>The model</span></a></li>
+    <li><a href="index.html"><b>[S]</b> Soft</a></li>
+    <li><a href="medium.html" aria-current="page"><b>[M]</b> Medium</a></li>
+    <li><a href="inter.html"><b>[I]</b> Inter</a></li>
+    <li><a href="hard.html"><b>[H]</b> Hard</a></li>
   </ul>
   <span class="stamp" id="stamp"></span>
 </nav>
 
 <header class="mhead">
   <div class="copy">
-    <p class="edition">Medium / The season</p>
-    <h1>A season.<br><em>A changing picture.</em></h1>
-    <p class="lede">The same grid, seen after every qualifying session. Play the season to follow the estimates as new evidence arrives, or stop at a round and look closer.</p>
+    <p class="hello">Medium: the season</p>
+    <h1>How we got here.</h1>
+    <p class="lede">The rankings after every round, from the first session to now. Drivers start from their earlier seasons and the 2026 laps take over from there. Play the season, or pick a round; the controls stay with you as you scroll.</p>
   </div>
 </header>
 <div class="transport" id="transport">
-  <div class="now" id="now" aria-live="polite">Loading the season…</div>
-  <div class="season-actions"><button id="prev-round" type="button" aria-label="Previous round" disabled>←<span class="round-step-label"> Previous</span></button><button id="play" type="button" aria-pressed="false" disabled>Play the season</button><button id="next-round" type="button" aria-label="Next round" disabled><span class="round-step-label">Next </span>→</button></div>
-  <label class="round-picker" for="round-select">Selected round<select id="round-select" disabled><option>Loading rounds…</option></select></label>
+  <div class="now" id="now"></div>
+  <div class="row"><button id="play" type="button"><b>[&#9654;]</b> Play the season</button><span class="note" id="status"></span></div>
   <div class="timeline" id="timeline" role="group" aria-label="Rounds"></div>
-  <span class="note" id="status" role="status"></span>
-  <p class="note" id="warn-note" hidden>* the model's checks were borderline for this round: shown, but with lower confidence.</p>
+  <p class="note" id="warn-note">* the model's checks were borderline for this round: shown, but with lower confidence.</p>
 </div>
 
 <section aria-labelledby="h-bd">
   <div class="head"><div><h2 id="h-bd">Drivers, round by round</h2>
     <p>The ranking with the car removed, after the round selected above. Play the season and watch the order change: &#9650; and &#9660; show places gained or lost since the previous round, and the small line on the right is each driver's whole season.</p></div></div>
   <div class="tw-head"><span class="slash">Pos</span><span class="slash">&plusmn;</span><span class="slash">Driver</span><span class="slash hide">Pace (90%)</span><span class="slash r">vs avg</span><span class="slash hide">Season</span></div>
-  <div class="tower" id="tower-d" role="group" aria-label="Driver ranking after the selected round"></div>
+  <div class="tower" id="tower-d" role="list" aria-label="Driver ranking after the selected round"></div>
   <p class="btext" id="bump-d-text" aria-live="polite"></p>
 </section>
 
@@ -244,12 +194,10 @@ button b{color:var(--accent);font-weight:500}
   <div class="head"><div><h2 id="h-bc">Cars, round by round</h2>
     <p>The ranking with the drivers removed. The pace bar uses one scale for the whole season, so a bar moving left is a car finding time.</p></div></div>
   <div class="tw-head"><span class="slash">Pos</span><span class="slash">&plusmn;</span><span class="slash">Car</span><span class="slash hide">Pace (90%)</span><span class="slash r">vs avg</span><span class="slash hide">Season</span></div>
-  <div class="tower" id="tower-c" role="group" aria-label="Car ranking after the selected round"></div>
+  <div class="tower" id="tower-c" role="list" aria-label="Car ranking after the selected round"></div>
   <p class="btext" id="bump-c-text" aria-live="polite"></p>
 </section>
 
-<details class="advanced-model" id="advanced-model">
-<summary>Inside the model<small>Explore how rounds, cars and drivers connect. Open the evidence map.</small></summary>
 <section aria-labelledby="h-graph">
   <div class="head"><div><h2 id="h-graph">Inside the model</h2>
     <p>Every round's laps inform its track, every car and the shared parameters; cars inform their drivers, and so do each driver's earlier seasons: every push lap since 2023 is in one model. Each band is what the model believes: wide means unsure. Click anything for its season story.</p></div></div>
@@ -260,17 +208,16 @@ button b{color:var(--accent);font-weight:500}
   </div>
   <div class="gwrap"><svg id="graph" viewBox="0 0 1160 668" role="img" aria-label="Factor graph of the model"></svg></div>
 </section>
-</details>
 
-<section class="detail season-detail" aria-live="polite">
+<section class="detail" aria-live="polite">
   <div class="head"><div><h2 id="d-title"></h2><p id="d-text"></p></div></div>
-  <svg id="fan" class="fan" viewBox="0 0 1160 340" role="img" aria-label="Selected driver, car or parameter estimate through the season"></svg>
+  <svg id="fan" class="fan" viewBox="0 0 1160 340"></svg>
 </section>
 
 <section class="router" aria-label="More">
-  <a href="index.html"><span class="slash">Soft</span><div class="t">The grid</div><p>Who is fast right now, car and driver apart.</p></a>
-  <a href="inter.html"><span class="slash">Inter</span><div class="t">One driver, in focus</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
-  <a href="hard.html"><span class="slash">Hard</span><div class="t">The evidence behind it</div><p>The model, its priors, and every check it passes.</p></a>
+  <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
+  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
+  <a href="hard.html"><span class="slash">Hard</span><div class="t">[H] Under the hood</div><p>The model, its priors, and every check it passes.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1. Driver rankings are with the car removed, using 2022&ndash;25 results as background evidence.</p>
 </div>
@@ -311,8 +258,8 @@ Promise.all([getJSON('data/snapshots/index.json'), getJSON('data/soft.json')])
     (soft && soft.drivers || []).forEach(d => HIST[d.code] = d.skill[1] - d.vs_history);
     return Promise.all(idx.rounds.map(r => getJSON('data/snapshots/' + r.file)));
   })
-  .then(snaps => { SNAPS = snaps.filter(Boolean).sort((a, b) => a.round - b.round); SNAPS.forEach(s => s.drivers = s.drivers.filter(PS.shown)); if (!SNAPS.length) throw new Error('No snapshots'); init(); })
-  .catch(() => { $('now').textContent = 'Season history is unavailable.'; $('status').textContent = 'Reload to try again. The rankings will appear when snapshot data is available.'; $('round-select').innerHTML = '<option>No rounds available</option>'; });
+  .then(snaps => { SNAPS = snaps.filter(Boolean).sort((a, b) => a.round - b.round); SNAPS.forEach(s => s.drivers = s.drivers.filter(PS.shown)); init(); })
+  .catch(() => { $('now').textContent = 'History is refreshing. Check back in a few minutes.'; });
 
 /* ---------- layout ---------- */
 const L = { top: 64, bottom: 586, fx: 74, tx: 172, cx: 540, dx: 860, gy: 632 };
@@ -424,14 +371,10 @@ function targets(s) {
 }
 let ANIM = false, HIST = {};
 function setRound(k, animate = true) {
-  animate = animate && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const prev = K; K = k; const s = SNAPS[k]; ANIM = animate;
-  $('prev-round').disabled = k === 0;
-  $('next-round').disabled = k === SNAPS.length - 1;
-  $('round-select').value = String(k);
   $('now').innerHTML = `Round ${s.round} / ${s.name.replace(' Grand Prix', ' GP')}<small>${s.location}, ${s.date}. Model has seen ${s.laps.toLocaleString('en')} flying laps.</small>`;
   $('status').textContent = s.diagnostics && s.diagnostics.status === 'warn' ? 'Lower confidence this round' : '';
-  [...$('timeline').children].forEach((b, i) => { b.className = (i < k ? 'seen' : i === k ? 'cur' : '') + (SNAPS[i].diagnostics?.status === 'warn' ? ' warn' : ''); b.setAttribute('aria-pressed', String(i === k)); });
+  [...$('timeline').children].forEach((b, i) => b.className = (i < k ? 'seen' : i === k ? 'cur' : '') + (SNAPS[i].diagnostics?.status === 'warn' ? ' warn' : ''));
   SNAPS.forEach((r, i) => { const f = $('fac' + r.round); f.setAttribute('class', 'fac' + (i > k ? ' future' : i === k ? ' cur' : '')); });
   edges.car.concat(edges.track, edges.bus).forEach(([r, p]) => p.classList.toggle('hot', r === s.round));
   const T = targets(s), fastest = s.cars.reduce((a, b) => b.p_fast > a.p_fast ? b : a).team;
@@ -457,7 +400,7 @@ function tween(T, ms, delay) {
   requestAnimationFrame(step);
 }
 function pulses(round) {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !$('advanced-model').open) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const svg = $('graph'), paths = edges.car.concat(edges.track, edges.bus).filter(([r]) => r === round).map(([, p]) => p);
   const dots = paths.map(p => ({ p, len: p.getTotalLength(), c: el('circle', { class: 'pulse', r: 2.6 }, svg) }));
   const t0 = performance.now(), ms = 620;
@@ -553,7 +496,7 @@ function rankAt(k, kind) {                       // rank of every driver ('d') o
   const s = SNAPS[k], items = kind === 'd' ? s.drivers.map(d => [d.code, d.skill[10]]) : s.cars.map(c => [c.team, c.pace[10]]);
   return Object.fromEntries(items.sort((a, b) => a[1] - b[1]).map(([id], i) => [id, i + 1]));
 }
-const TW = { d: { sel: null, rows: {}, spark: {} }, c: { sel: null, rows: {}, spark: {} } }, RH = 56;
+const TW = { d: { sel: null, rows: {}, spark: {} }, c: { sel: null, rows: {}, spark: {} } }, RH = 36;
 const itemsOf = (s, isD) => isD ? s.drivers.map(d => ({ id: d.code, q: d.skill, o: d })) : s.cars.map(c => ({ id: c.team, q: c.pace, o: c }));
 function buildBumps() { buildTower('d'); buildTower('c'); }
 function buildTower(kind) {
@@ -580,11 +523,11 @@ function buildTower(kind) {
     st.ranks.forEach((rk, i) => { if (rk[id] == null) { on = false; return; } d += (on ? 'L' : 'M') + sx(i) + ' ' + sy(rk[id]); on = true; });
     st.spark[id] = { sx, sy };
     row.innerHTML = `<span class="pos"></span><span class="chg"></span>
-      <span class="nm"><i class="tc"></i><span class="tw-identity"><b>${isD ? last2(o.name) : id}</b><span class="sub">${isD ? '#' + o.number + ' ' + o.team : ''}</span></span></span>
+      <span class="nm"><i class="tc"></i>${isD ? last2(o.name) : id}<span class="sub">${isD ? '#' + o.number + ' ' + o.team : ''}</span></span>
       <span class="rng hide"><i class="ax0" style="left:${X(0)}"></i><i class="bar"></i><i class="dot"></i></span>
       <span class="val r"></span>
-      <span class="spk hide"><svg viewBox="0 0 ${W} ${Hs}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"/><circle r="2.6"/></svg></span><span class="interval-mobile"></span>`;
-    const pick = () => { st.sel = id; renderTower(kind); select((isD ? 'd' : 'c') + id); };
+      <span class="spk hide"><svg viewBox="0 0 ${W} ${Hs}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"/><circle r="2.6"/></svg></span>`;
+    const pick = () => { st.sel = id; renderTower(kind); };
     row.addEventListener('click', pick); row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
     st.rows[id] = row; box.appendChild(row);
   });
@@ -607,9 +550,6 @@ function renderTower(kind) {
     c.textContent = !x || !prev || prev[id] == null ? '' : ch > 0 ? '\u25B2' + ch : ch < 0 ? '\u25BC' + (-ch) : '\u2013';
     c.className = 'chg' + (ch > 0 ? ' up' : ch < 0 ? ' dn' : '');
     row.querySelector('.val').textContent = x ? sec(q[10]) : 'not yet';
-    row.querySelector('.interval-mobile').textContent = x ? `90%: ${sec(q[1])} to ${sec(q[19])}` : 'Not in this round';
-    row.setAttribute('aria-label', x ? `${isD ? pretty(st.info[id].name) : id}, position ${rk[id]}, ${sec(q[10])}, 90 percent interval ${sec(q[1])} to ${sec(q[19])}` : `${isD ? pretty(st.info[id].name) : id}, not in this round`);
-    row.setAttribute('role', 'button'); row.setAttribute('aria-pressed', String(id === st.sel));
     const bar = row.querySelector('.bar'), dot = row.querySelector('.dot');
     if (x) { bar.style.left = X(q[1]); bar.style.width = `calc(${X(q[19])} - ${X(q[1])})`; dot.style.left = X(q[10]); }
     bar.style.opacity = dot.style.opacity = x ? '' : 0;
@@ -634,21 +574,9 @@ function renderBumps() { if (SNAPS.length) { renderTower('d'); renderTower('c');
 /* ---------- boot ---------- */
 function init() {
   const nodes = layout(); buildGraph(nodes); buildBumps();
-  document.querySelectorAll('#graph .node').forEach(n => {
-    n.setAttribute('tabindex', '0'); n.setAttribute('role', 'button');
-    n.setAttribute('aria-label', `Explore ${(n.querySelector('.lbl') || n).textContent}`);
-    n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const id = n.dataset.id; select(id[0] === 'r' ? 't' + id.slice(1) : id); } });
-  });
   const tl = $('timeline'); tl.style.setProperty('--n', SNAPS.length);
-  const picker = $('round-select'); picker.innerHTML = '';
   SNAPS.forEach((s, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = code(s.location);
-    b.setAttribute('aria-label', `Round ${s.round}: ${s.name}`); b.setAttribute('aria-pressed', 'false'); b.addEventListener('click', () => { stop(); setRound(i); }); tl.appendChild(b);
-    const option = document.createElement('option'); option.value = String(i); option.textContent = `Round ${s.round} — ${s.name.replace(' Grand Prix', ' GP')}`; picker.appendChild(option);
-  });
-  picker.disabled = false; picker.addEventListener('change', () => { stop(); setRound(Number(picker.value)); });
-  $('prev-round').addEventListener('click', () => { stop(); if (K > 0) setRound(K - 1); });
-  $('next-round').addEventListener('click', () => { stop(); if (K < SNAPS.length - 1) setRound(K + 1); });
-  $('play').disabled = SNAPS.length < 2;
+    b.title = s.name; b.addEventListener('click', () => { stop(); setRound(i); }); tl.appendChild(b); });
   $('stamp').textContent = SNAPS[SNAPS.length - 1].date;
   $('warn-note').hidden = !SNAPS.some(s => s.diagnostics && s.diagnostics.status === 'warn');   // only when a round needs it
   $('play').addEventListener('click', () => timer ? stop() : play());
@@ -657,13 +585,11 @@ function init() {
   setRound(SNAPS.length - 1, false); select(SEL);
 }
 function play() {
-  if (SNAPS.length < 2 || timer) return;
-  $('play').textContent = 'Pause the season'; $('play').setAttribute('aria-pressed', 'true');
+  $('play').innerHTML = '<b>[&#10074;&#10074;]</b> Pause';
   if (K >= SNAPS.length - 1) { shown.clear(); setRound(0, false); }
-  timer = setInterval(() => { if (K >= SNAPS.length - 1) return stop(); setRound(K + 1); if (K === SNAPS.length - 1) stop(); }, 1500);
+  timer = setInterval(() => { if (K >= SNAPS.length - 1) return stop(); setRound(K + 1); }, 1500);
 }
-function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play the season'; $('play').setAttribute('aria-pressed', 'false'); }
-document.addEventListener('visibilitychange', () => { if (document.hidden && timer) stop(); });
+function stop() { clearInterval(timer); timer = null; $('play').innerHTML = '<b>[&#9654;]</b> Play the season'; }
 </script>
 </body>
 </html>
