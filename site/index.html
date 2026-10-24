@@ -63,23 +63,23 @@ nav{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;padding:14px 24p
 
 
 .next .stats .v{font-size:19px;line-height:1.25}.next .stats .s{color:var(--ink-2);font-size:12px;margin-top:4px}
-/* the starting grid: two staggered files, pole at the top left, a painted line ahead of each car */
-.gridbox{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;padding:26px 24px 8px;max-width:680px}
-.gridbox .col{display:flex;flex-direction:column;gap:16px}
-.gridbox .col.r{padding-top:38px}
-.slot{position:relative;padding-top:10px}
-.slot::before{content:"";position:absolute;left:0;top:0;width:62%;height:2px;background:var(--ink-2)}
-.slot::after{content:"";position:absolute;left:0;top:0;width:2px;height:16px;background:var(--ink-2)}
-.car{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:baseline;padding:8px 12px 9px;
-  border:1px solid var(--rule);border-left:7px solid var(--team);border-radius:3px 14px 14px 3px;background:var(--fill)}
-.car .pos{font-weight:600;font-size:18px;letter-spacing:-.02em}
-.car .drv{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.car .sub{grid-column:1 / -1;color:var(--ink-2);font-size:12px;margin-top:2px}
-.slot.fav .car{border-color:var(--accent);border-left-color:var(--team)}
-.slot.fav .car .pos{color:var(--accent)}
-.slot.q2out .car{opacity:.78}
-.slot.q1out .car{opacity:.55}
-@media (max-width:560px){.gridbox{column-gap:14px;padding:18px 14px 6px}.gridbox .col.r{padding-top:30px}.car{padding:6px 8px;column-gap:8px}.car .pos{font-size:15px}.car .sub{font-size:11px}}
+/* the next grid: one row per driver in the most likely grid, a 22-cell strip of where they could land */
+.gridlist .thead,.gridlist .trow{display:grid;grid-template-columns:44px minmax(0,1.1fr) minmax(0,2.6fr) 70px;align-items:center;gap:0 14px;padding:0 24px}
+.gridlist .thead{min-height:40px;border-bottom:1px solid var(--rule);color:var(--ink-2);font-size:12px}
+.gridlist .trow{min-height:40px;border-bottom:1px solid var(--rule)}
+.gridlist .trow:hover{background:var(--fill)}
+.gridlist .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gridlist .nm .sub{color:var(--ink-2);font-weight:400;font-size:12px;margin-left:6px}
+.gridlist .trow.fav .nm{color:var(--accent)}
+.gridlist .trow.fav .pole{color:var(--accent)}
+.gridlist .trow.q2out{opacity:.8}
+.gridlist .trow.q1out{opacity:.55}
+.gridlist .cols{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2px;font-size:11px;color:var(--ink-3)}
+.gridlist .cols span{text-align:center}
+.gridlist .cells{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2px;height:18px}
+.gridlist .cells i{display:block;background:var(--accent);opacity:var(--a);border-radius:1px}
+.gridlist .cells i.here{outline:1px solid var(--ink);outline-offset:-1px}
+@media (max-width:860px){.gridlist .thead,.gridlist .trow{grid-template-columns:30px minmax(0,1fr) minmax(0,2fr);padding:0 14px}.gridlist .pole,.gridlist .thead .r{display:none}.gridlist .cells{height:14px}}
 
 /* section heads */
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:30px 24px 16px;border-bottom:1px solid var(--rule)}
@@ -152,6 +152,13 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 .legendrow{display:flex;flex-wrap:wrap;gap:18px;padding:12px 24px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-2)}
 /* rankings */
 .rk .thead,.rk .trow{display:grid;grid-template-columns:44px minmax(0,1.5fr) minmax(0,1.8fr) 84px 64px 112px;align-items:center;gap:0 14px;padding:0 24px}
+.rk .head{align-items:flex-start}
+.tabs{display:flex;gap:18px;flex:none;padding-top:4px}
+.tabs button{font:inherit;background:none;border:0;padding:0;cursor:pointer;color:var(--ink-2)}
+.tabs button:hover{color:var(--ink)}
+.tabs button b{font-weight:500}
+.tabs button[aria-selected="true"]{color:var(--ink)}
+.tabs button[aria-selected="true"] b{color:var(--accent)}
 .rk .thead{min-height:40px;border-bottom:1px solid var(--rule);color:var(--ink-2);font-size:12px}
 .rk .trow{min-height:46px;border-bottom:1px solid var(--rule)}
 .rk .trow:last-child{border-bottom:0}
@@ -160,9 +167,8 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 .rk .trow.top .nm{color:var(--accent)}
 .rng{position:relative;height:18px}
 .rng .ax0{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--ink-3)}
-.rng .bar{position:absolute;top:6px;height:6px;background:repeating-linear-gradient(90deg,var(--ink-3) 0 6px,var(--fill) 6px 12px)}
-.rng .dot{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
-.rk .trow.top .rng .dot{background:var(--accent)}
+.rng .bar{position:absolute;top:7px;height:4px;border-radius:2px;background:var(--team,var(--ink-3));opacity:.38}
+.rng .dot{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:var(--team,var(--ink));transform:translateX(-50%)}
 .tag{display:inline-block;font-size:11px;padding:1px 6px;border:1px solid var(--rule);color:var(--ink-2);white-space:nowrap}
 .tag.gem{border-color:var(--accent);color:var(--accent)}
 .rk .cars .thead,.rk .cars .trow{grid-template-columns:44px minmax(0,1.3fr) minmax(0,2fr) 84px 96px}
@@ -229,17 +235,19 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <div class="mapscroll"><div class="mapbox" id="map"><svg id="map-svg" viewBox="0 0 1160 600" preserveAspectRatio="none" aria-hidden="true"></svg><div class="tip" id="tip" role="status"></div></div></div>
 </section>
 
-<section class="rk" aria-labelledby="h2-drv">
-  <div class="head"><div><h2 id="h2-drv">Fastest drivers, car removed <span class="count" id="n-drv"></span></h2>
-    <p>Each driver's pace against the average driver on the grid, as if everyone had the same car. Possible because every push lap since 2023 is in one model, so drivers who changed team link every garage. "Beats car" marks drivers ranked at least four places above their car.</p></div></div>
+<section class="rk" id="rank" aria-label="Rankings">
+  <div class="head">
+    <div class="hd" id="hd-drv"><h2 id="h2-drv">Fastest drivers, car removed <span class="count" id="n-drv"></span></h2>
+    <p>Pace against the average driver, as if all had the same car. "Beats car": four or more places above their car.</p></div>
+    <div class="hd" id="hd-car" hidden><h2 id="h2-car">Fastest cars, drivers removed <span class="count" id="n-car"></span></h2>
+    <p>Each car's pace against the average car, as if every car had the same driver.</p></div>
+    <div class="tabs" role="tablist" aria-label="Rank by"><button role="tab" id="tab-drv" aria-selected="true" aria-controls="pane-drv" data-pane="drv"><b>[D]</b> Drivers</button><button role="tab" id="tab-car" aria-selected="false" aria-controls="pane-car" data-pane="car"><b>[C]</b> Cars</button></div>
+  </div>
+  <div id="pane-drv" role="tabpanel" aria-labelledby="tab-drv">
   <div class="thead"><span class="slash">Pos</span><span class="slash">Driver</span><span class="slash hide">Pace range (90%)</span><span class="slash r">vs avg</span><span class="slash r">Top 3</span><span class="slash hide">Their car</span></div>
   <div id="drv-rows"></div>
-</section>
-
-<section class="rk" aria-labelledby="h2-car">
-  <div class="cars">
-  <div class="head"><div><h2 id="h2-car">Fastest cars, drivers removed <span class="count" id="n-car"></span></h2>
-    <p>Each car's pace against the average car, as if every car had the same driver.</p></div></div>
+  </div>
+  <div id="pane-car" class="cars" role="tabpanel" aria-labelledby="tab-car" hidden>
   <div class="thead"><span class="slash">Pos</span><span class="slash">Car</span><span class="slash hide">Pace range (90%)</span><span class="slash r">vs avg</span><span class="slash r">Fastest</span></div>
   <div id="car-rows"></div>
   </div>
@@ -254,8 +262,8 @@ h1{font-weight:500;font-size:clamp(30px,4.2vw,52px);line-height:1.05;letter-spac
 <section class="next" id="next" aria-labelledby="h2-next" hidden>
   <div class="head"><div><h2 id="h2-next"></h2><p id="next-sub"></p></div></div>
   <div class="stats" id="next-card"></div>
-  <div class="gridbox" id="next-grid" role="list" aria-label="Likely starting grid, pole at the top left"></div>
-  <p class="fine" style="padding:14px 24px 22px">The grid as the model expects it, pole at the top left. Each slot shows the driver's likely range of positions and chance of pole; cars drawn fainter are expected to drop out in Q1. Every probability comes from the posterior's simulated qualifying sessions, played out through Q1, Q2 and Q3.</p>
+  <div class="gridlist" id="next-grid" aria-label="The most likely starting grid, pole at the top"></div>
+  <p class="fine" style="padding:14px 24px 22px">The most likely grid: the one arrangement of the field that the simulated sessions make most probable, pole at the top. Each strip shows how likely the driver is to qualify in each position, P1 on the left; the outlined cell is the slot they are given here. Rows drawn fainter are expected to drop out in Q1. Every probability comes from the posterior's simulated qualifying sessions, played out through Q1, Q2 and Q3.</p>
 </section>
 
 <section class="changes" id="changes" aria-labelledby="h2-changes" hidden>
@@ -287,7 +295,7 @@ const helmet = (d, team, mirror) => `<div class="helm${mirror ? ' mirror' : ''}"
 function render(D) {
   const drivers = (D.drivers || []).filter(PS.shown), cars = [...D.cars].sort((a, b) => a.med - b.med);
   if (!drivers.length) {                       // data from before the pace model: no cross-team driver ranking yet
-    document.querySelectorAll('.mapwrap, .rk:not(:has(.cars))').forEach(el => el.hidden = true);
+    document.querySelectorAll('.mapwrap, .tabs').forEach(el => el.hidden = true); showPane('car');
     $('h-drv').textContent = 'Arriving with the next update';
     $('h-drv-s').textContent = 'The driver ranking arrives with the next model update.';
   }
@@ -309,7 +317,7 @@ function render(D) {
   $('n-drv').textContent = `(${drivers.length})`;
   $('drv-rows').innerHTML = drivers.map((d, i) => {
     const cr = carRank[d.team], gem = cr - (i + 1) >= 4;
-    return `<div class="trow${i === 0 ? ' top' : ''}" role="group" aria-label="${d.name}: ${sec(d.skill[1])} against the average driver">
+    return `<div class="trow${i === 0 ? ' top' : ''}" role="group" style="--team:${TEAM[d.team] || 'var(--ink-3)'}" aria-label="${d.name}: ${sec(d.skill[1])} against the average driver">
       <span>${String(i + 1).padStart(2, '0')}</span>
       <span class="nm">${last(d.name)}<span class="sub">#${d.number} ${d.team}${d.history ? '' : ', rookie'}</span></span>
       <span class="rng hide"><i class="ax0" style="left:${X(0)}"></i><i class="bar" style="left:${X(d.skill[0])};width:calc(${X(d.skill[2])} - ${X(d.skill[0])})"></i><i class="dot" style="left:${X(d.skill[1])}"></i></span>
@@ -320,11 +328,17 @@ function render(D) {
   const cl = Math.min(...cars.map(c => c.lo)) - 0.05, ch = Math.max(...cars.map(c => c.hi)) + 0.05;
   const XC = v => ((v - cl) / (ch - cl) * 100).toFixed(2) + '%';
   $('n-car').textContent = `(${cars.length})`;
-  $('car-rows').innerHTML = cars.map((c, i) => `<div class="trow${i === 0 ? ' top' : ''}">
+  $('car-rows').innerHTML = cars.map((c, i) => `<div class="trow${i === 0 ? ' top' : ''}" style="--team:${TEAM[c.team] || 'var(--ink-3)'}">
       <span>${String(i + 1).padStart(2, '0')}</span><span class="nm">${c.team}</span>
       <span class="rng hide"><i class="ax0" style="left:${XC(0)}"></i><i class="bar" style="left:${XC(c.lo)};width:calc(${XC(c.hi)} - ${XC(c.lo)})"></i><i class="dot" style="left:${XC(c.med)}"></i></span>
       <span class="r">${sec(c.med)}</span><span class="r">${pct(c.p_fast)}</span></div>`).join('');
 }
+
+function showPane(k) {
+  ['drv', 'car'].forEach(p => { const on = p === k; $('pane-' + p).hidden = !on; $('hd-' + p).hidden = !on; $('tab-' + p).setAttribute('aria-selected', on); });
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showPane(b.dataset.pane)));
+document.addEventListener('keydown', e => { if (e.target.closest('input,textarea') || e.metaKey || e.ctrlKey || e.altKey) return; if (e.key === 'd' || e.key === 'D') showPane('drv'); if (e.key === 'c' || e.key === 'C') showPane('car'); });
 
 function drawMap(drivers, cars, carRank) {
   // across: one column per car, slowest left to fastest right; up: driver skill (faster up)
@@ -374,6 +388,28 @@ function drawMap(drivers, cars, carRank) {
   });
 }
 
+// The single most probable grid: Hungarian assignment of drivers to slots on cost -log p(driver in slot).
+// Returns driver indices in slot order (pole first).
+function mostLikelyGrid(P) {
+  const n = P.length, INF = 1e18, a = P.map(r => r.map(p => -Math.log(Math.max(p, 1e-9))));
+  const u = new Array(n + 1).fill(0), v = new Array(n + 1).fill(0), p = new Array(n + 1).fill(0), way = new Array(n + 1).fill(0);
+  for (let i = 1; i <= n; i++) {
+    p[0] = i; let j0 = 0; const minv = new Array(n + 1).fill(INF), used = new Array(n + 1).fill(false);
+    do {
+      used[j0] = true; const i0 = p[j0]; let delta = INF, j1 = 0;
+      for (let j = 1; j <= n; j++) if (!used[j]) {
+        const cur = a[i0 - 1][j - 1] - u[i0] - v[j];
+        if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+        if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+      }
+      for (let j = 0; j <= n; j++) if (used[j]) { u[p[j]] += delta; v[j] -= delta; } else minv[j] -= delta;
+      j0 = j1;
+    } while (p[j0] !== 0);
+    do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
+  }
+  return Array.from({ length: n }, (_, j) => p[j + 1] - 1);   // slot j -> driver index
+}
+
 // "What changed this weekend": the latest round against the one before, for drivers and cars
 function changes() {
   return fetch('data/snapshots/index.json', { cache: 'no-cache' }).then(r => r.json()).then(idx => {
@@ -411,15 +447,18 @@ function nextUp() {
       fc.drivers = fc.drivers.filter(PS.shown);
       const N = fc.drivers.length, fav = fc.drivers.reduce((a, b) => b.p_pole > a.p_pole ? b : a);
       const q1out = N > 10 ? Math.floor((N - 10) / 2) : 0, q2cut = N - q1out;                 // 22 cars: 6 out in Q1, 6 in Q2
-      const slot = (d, i) => {
-        const p = i + 1, tier = p > q2cut ? ' q1out' : p > 10 ? ' q2out' : '';
-        return `<div class="slot${d === fav ? ' fav' : ''}${tier}" role="listitem" style="--team:${TEAM[d.team] || 'var(--ink-3)'}"
-            aria-label="${d.name}, ${d.team}: expected P${p}, likely P${d.pos_lo} to P${d.pos_hi}, pole ${pct(d.p_pole)}, Q3 ${pct(d.p_q3)}">
-          <div class="car"><span class="pos">P${p}</span><span class="drv">${last(d.name)}</span>
-            <span class="sub">${d.team} &middot; P${d.pos_lo}&ndash;P${d.pos_hi}${p <= 10 ? ` &middot; pole ${pct(d.p_pole)}` : ` &middot; Q3 ${pct(d.p_q3)}`}</span></div></div>`;
+      // the most likely grid: assign drivers to slots so the joint probability is highest (Hungarian method on -log p)
+      const order = mostLikelyGrid(fc.drivers.map(d => d.pos_dist));
+      const row = (d, i) => {
+        const p = i + 1, tier = p > q2cut ? ' q1out' : p > 10 ? ' q2out' : '', mx = Math.max(...d.pos_dist);
+        return `<div class="trow${d === fav ? ' fav' : ''}${tier}" role="row" aria-label="${d.name}, ${d.team}: slot P${p}, likely P${d.pos_lo} to P${d.pos_hi}, pole ${pct(d.p_pole)}, Q3 ${pct(d.p_q3)}">
+          <span>P${p}</span><span class="nm">${last(d.name)}<span class="sub">${d.team}</span></span>
+          <span class="cells" style="--n:${N}">${d.pos_dist.map((q, j) => `<i class="${j === i ? 'here' : ''}" style="--a:${(0.05 + 0.95 * q / mx).toFixed(2)}" title="P${j + 1}: ${pct(q)}"></i>`).join('')}</span>
+          <span class="r pole">${pct(d.p_pole)}</span></div>`;
       };
-      $('next-grid').innerHTML = `<div class="col">${fc.drivers.filter((_, i) => i % 2 === 0).map((d, k) => slot(d, 2 * k)).join('')}</div>`
-        + `<div class="col r">${fc.drivers.filter((_, i) => i % 2 === 1).map((d, k) => slot(d, 2 * k + 1)).join('')}</div>`;
+      const ticks = Array.from({ length: N }, (_, j) => `<span>${j === 0 || (j + 1) % 5 === 0 || j === N - 1 ? j + 1 : ''}</span>`).join('');
+      $('next-grid').innerHTML = `<div class="thead"><span class="slash">Slot</span><span class="slash">Driver</span><span class="cols" style="--n:${N}">${ticks}</span><span class="slash r">Pole</span></div>`
+        + order.map((k, i) => row(fc.drivers[k], i)).join('');
       const S = card.summary, lastScored = card.rounds[card.rounds.length - 1];
       const cell = (k, v, sub) => `<div><div class="k slash">${k}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
       $('next-card').innerHTML = S ? (
