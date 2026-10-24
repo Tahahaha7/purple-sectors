@@ -25,7 +25,35 @@ env:
   PYTHONPATH: src
 
 jobs:
+  season:
+    # The schedule has no end date, so this job does the stopping: a week after the last round of
+    # YEAR the update is skipped until the rollover (docs/rollover.md) moves YEAR on. A manual run
+    # with "force" still goes through.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      active: ${{ steps.check.outputs.active }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: data/raw/schedule_${{ env.YEAR }}.json
+          sparse-checkout-cone-mode: false
+      - id: check
+        run: |
+          last=$(python3 -c "import json; print(max(r['date'] for r in json.load(open('data/raw/schedule_${YEAR}.json')))[:10])")
+          stop=$(date -u -d "$last + 8 days" +%F)
+          today=$(date -u +%F)
+          if [[ "$today" > "$stop" && "${{ inputs.force }}" != "true" ]]; then
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "Season $YEAR ended with the round of $last; nothing to update. Run the rollover to start $((YEAR + 1))." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "active=true" >> "$GITHUB_OUTPUT"
+            echo "Season $YEAR is live until $stop." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   update:
+    needs: season
+    if: needs.season.outputs.active == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -40,7 +68,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Tests
-        run: pytest -q
+        run: pytest -q tests
 
       - name: Restore OpenF1 cache
         uses: actions/cache@v5

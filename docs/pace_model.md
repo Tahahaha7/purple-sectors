@@ -52,7 +52,7 @@ around one driver, a mid-season upgrade for one side of the garage, or a driver 
 suits a car are all things `fit` can only partly absorb.
 
 Drivers outside the main teammate network (see `connectivity` in the JSON) are only comparable
-with their own teammates. The notebook prints the components.
+with their own teammates; `connectivity` in the fit report lists the components.
 
 ## Validation
 
@@ -77,8 +77,6 @@ python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps data/
     --out site/data --snapshot-dir site/data/snapshots
 pytest                                            # a few seconds, no CmdStan or network
 ```
-
-`notebooks/01_pace_model.ipynb` does all of this in Colab, the same way as the earlier notebooks.
 
 ## What changed from the previous model (October 2026)
 

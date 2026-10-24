@@ -22,6 +22,6 @@ jobs:
         run: |
           { echo '### Installed versions'; echo '```'; pip freeze; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Tests
-        run: pytest -q
+        run: pytest -q tests
       - name: Workflow files parse
         run: python -c "import glob, yaml; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]; print('ok')"
