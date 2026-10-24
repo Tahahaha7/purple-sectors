@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#17161a">
 
-<title>purple-sectors / Hard</title>
+<title>The model / Hard — purple-sectors</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: dark;                              /* always dark, whatever the computer's setting */
@@ -98,26 +98,84 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
   .router{grid-template-columns:1fr}.router > a,.router > div{border-right:0;border-bottom:1px solid var(--rule)}
 }
 </style>
+<link rel="stylesheet" href="paddock.css">
+<style>
+/* The methodology reads as an editorial reference, with the original model intact. */
+.page-hard .title{grid-template-columns:minmax(0,1.25fr) minmax(280px,.85fr);gap:46px;padding:48px 0 40px;border-bottom:1px solid var(--rule)}
+.page-hard .title .copy{padding:0;border:0}
+.page-hard .title h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(46px,5.8vw,74px);line-height:1.01;letter-spacing:-.025em}
+.page-hard .title h1 em{font-weight:400;color:var(--accent)}
+.page-hard .title .lede{max-width:57ch;margin-top:23px;color:var(--ink-2);font-size:16px;line-height:1.7}
+.page-hard .contents{align-self:end;min-width:0}
+.page-hard .contents-label{font:500 11px/1.5 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:0 0 13px}
+.page-hard .toc{padding:0;grid-template-columns:1fr;gap:0;align-content:start}
+.page-hard .toc li{min-width:0;border-top:1px solid var(--rule)}
+.page-hard .toc a{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;font-size:13px;line-height:1.4;color:var(--ink)}
+.page-hard .toc a:hover{color:var(--accent)}
+.page-hard .toc b{width:auto;font:400 11px/1.5 "JetBrains Mono",monospace;color:var(--ink-2)}
+.page-hard article{margin-top:42px;border-bottom:0;scroll-margin-top:24px}
+.page-hard article>h2{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 18px;padding:16px 0 18px;border-top:1px solid var(--ink-3);border-bottom:1px solid var(--rule);font:400 34px/1.2 "Instrument Serif",Georgia,serif;letter-spacing:-.015em}
+.page-hard article>h2 span{font:400 11px/1.5 "JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:.08em;margin:0;min-width:84px;color:var(--accent)}
+.page-hard .cl{grid-template-columns:84px minmax(0,1fr);gap:0 18px;padding:20px 0;border:0}
+.page-hard .cl+.cl{padding-top:6px}
+.page-hard .cl>.n{font:400 11px/1.75 "JetBrains Mono",monospace;color:var(--ink-3);padding-top:4px}
+.page-hard .cl p{max-width:78ch;font-size:15px;line-height:1.8}
+.page-hard .cl p b{font-weight:600}
+.page-hard .cl p a{color:var(--accent);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:3px;overflow-wrap:anywhere}
+.page-hard .cl .tw{margin:16px 0;max-width:100%}
+.page-hard table{max-width:none;font-size:13px;line-height:1.6}
+.page-hard th{font:400 11px/1.5 "JetBrains Mono",monospace;padding-bottom:12px;color:var(--ink-2)}
+.page-hard td{padding-top:12px;padding-bottom:12px}
+.page-hard td.r,.page-hard th.r{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.page-hard code,.page-hard pre{font-family:"JetBrains Mono",monospace;font-size:12px}
+.page-hard pre{margin-top:12px;padding:20px;line-height:1.8;border-left:2px solid var(--accent)}
+.page-hard .eq{margin:16px 0;padding:18px 0;max-width:100%}
+.page-hard .badge{padding:3px 8px;font:400 11px/1.5 "JetBrains Mono",monospace}
+.page-hard .router{margin-top:50px}
+@media(max-width:900px){
+ .page-hard .title{grid-template-columns:1fr;gap:32px;padding-top:32px}
+ .page-hard .toc{grid-template-columns:1fr 1fr;gap:0 24px}
+ .page-hard .title .lede{max-width:70ch}
+}
+@media(max-width:560px){
+ .page-hard .title{padding-top:28px;padding-bottom:30px}
+ .page-hard .title h1{font-size:48px}
+ .page-hard .title .lede{font-size:14px}
+ .page-hard .toc{grid-template-columns:1fr}
+ .page-hard .toc a{min-height:44px}
+ .page-hard article{margin-top:30px}
+ .page-hard article>h2{font-size:30px}
+ .page-hard article>h2 span{min-width:auto;width:100%}
+ .page-hard .cl{grid-template-columns:1fr;gap:6px;padding-top:18px}
+ .page-hard .cl+.cl{padding-top:16px}
+ .page-hard .cl>.n{padding:0;margin:0}
+ .page-hard .cl p{font-size:14px;line-height:1.8}
+ .page-hard .cl table{min-width:560px}
+ .page-hard .eq math{font-size:1.15em}
+}
+</style>
 </head>
-<body>
+<body class="paddock page-hard">
 <div class="page">
 <nav aria-label="Pages">
   <a class="home" href="index.html">purple-sectors</a>
   <ul class="keys">
-    <li><a href="index.html"><b>[S]</b> Soft</a></li>
-    <li><a href="medium.html"><b>[M]</b> Medium</a></li>
-    <li><a href="inter.html"><b>[I]</b> Inter</a></li>
-    <li><a href="hard.html" aria-current="page"><b>[H]</b> Hard</a></li>
+    <li><a href="index.html"><b>Soft</b><span>The grid</span></a></li>
+    <li><a href="medium.html"><b>Medium</b><span>Season</span></a></li>
+    <li><a href="inter.html"><b>Inter</b><span>Drivers</span></a></li>
+    <li><a href="hard.html" aria-current="page"><b>Hard</b><span>The model</span></a></li>
   </ul>
   <span class="stamp" id="stamp"></span>
 </nav>
 
 <header class="title">
   <div class="copy">
-    <p class="hello">Hard: under the hood</p>
-    <h1>Technical regulations of the model.</h1>
+    <p class="edition">Hard / The model</p>
+    <h1>Behind every<br><em>estimate.</em></h1>
     <p class="lede">Everything behind the numbers on this site: the data, the one model that produces every page, each prior and why, how every fit is checked, and what the model cannot tell you. Articles 7 and 9 are live and update after every qualifying session.</p>
   </div>
+  <aside class="contents" aria-label="Model article contents">
+  <p class="contents-label">Technical regulations / contents</p>
   <ol class="toc">
     <li><a href="#a1"><b>Art. 1</b>Scope</a></li><li><a href="#a2"><b>Art. 2</b>Data</a></li>
     <li><a href="#a3"><b>Art. 3</b>The model</a></li><li><a href="#a4"><b>Art. 4</b>Across teams and seasons</a></li>
@@ -125,6 +183,7 @@ pre{background:var(--fill);padding:12px 14px;overflow-x:auto;font-size:12.5px;ma
     <li><a href="#a7"><b>Art. 7</b>Validation</a></li><li><a href="#a8"><b>Art. 8</b>Limitations</a></li>
     <li><a href="#a9"><b>Art. 9</b>Current fit (live)</a></li><li><a href="#a10"><b>Art. 10</b>Reproducibility</a></li>
   </ol>
+  </aside>
 </header>
 
 <article id="a1"><h2><span>Article 1</span>Scope</h2>
@@ -217,9 +276,9 @@ python -m purple_sectors.pace.export --posterior posterior_pace.npz --laps data/
 </article>
 
 <section class="router" aria-label="More">
-  <a href="index.html"><span class="slash">Soft</span><div class="t">[S] The grid, decoded</div><p>Who is fast right now, car and driver apart.</p></a>
-  <a href="medium.html"><span class="slash">Medium</span><div class="t">[M] The season</div><p>The rankings round by round, and how the model learned.</p></a>
-  <a href="inter.html"><span class="slash">Inter</span><div class="t">[I] One driver at a time</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
+  <a href="index.html"><span class="slash">Soft</span><div class="t">The qualifying picture</div><p>Who is fast right now, car and driver apart.</p></a>
+  <a href="medium.html"><span class="slash">Medium</span><div class="t">The season in motion</div><p>The rankings round by round, and how the model learned.</p></a>
+  <a href="inter.html"><span class="slash">Inter</span><div class="t">A closer look at each driver</div><p>Any driver's ranking, where they would qualify in every car, and their teammate battle.</p></a>
 </section>
 <p class="fine">An independent fan project, not associated with Formula 1.</p>
 </div>
