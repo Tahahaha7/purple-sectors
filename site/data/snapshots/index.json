@@ -1,5 +1,5 @@
 {
- "latest": 17,
+ "latest": 18,
  "rounds": [
   {
    "round": 1,
@@ -153,6 +153,15 @@
    "file": "r17.json",
    "passed": true,
    "status": "warn"
+  },
+  {
+   "round": 18,
+   "name": "United States Grand Prix",
+   "location": "Austin",
+   "date": "2026.10.24",
+   "file": "r18.json",
+   "passed": true,
+   "status": "pass"
   }
  ]
 }

@@ -223,14 +223,28 @@
    "brier_q3_baseline": 0.2479,
    "log_score_pole": -1.461,
    "rank_corr": 0.813
+  },
+  {
+   "round": 18,
+   "name": "United States Grand Prix",
+   "actual_pole": "ANT",
+   "p_actual_pole": 0.203,
+   "favourite": "VER",
+   "p_favourite": 0.206,
+   "favourite_right": false,
+   "q3_hits": 8,
+   "brier_q3": 0.055,
+   "brier_q3_baseline": 0.2479,
+   "log_score_pole": -1.595,
+   "rank_corr": 0.93
   }
  ],
- "latest": "r18.json",
+ "latest": "r19.json",
  "summary": {
-  "forecasts": 16,
+  "forecasts": 17,
   "favourite_right": 4,
-  "q3_skill": 0.66,
-  "mean_rank_corr": 0.859,
-  "mean_p_actual_pole": 0.159
+  "q3_skill": 0.667,
+  "mean_rank_corr": 0.863,
+  "mean_p_actual_pole": 0.162
  }
 }
