@@ -96,4 +96,4 @@ pip install -r requirements-dev.txt && pytest
 </details>
 
 Lap timing from [OpenF1](https://openf1.org); history from [Jolpica](https://jolpi.ca). MIT licence.
-An independent fan project, not associated with Formula 1.
+An independent fan project.
