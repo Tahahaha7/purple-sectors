@@ -1,5 +1,5 @@
 {
- "latest": 18,
+ "latest": 19,
  "rounds": [
   {
    "round": 1,
@@ -162,6 +162,15 @@
    "file": "r18.json",
    "passed": true,
    "status": "pass"
+  },
+  {
+   "round": 19,
+   "name": "Mexico City Grand Prix",
+   "location": "Mexico City",
+   "date": "2026.10.31",
+   "file": "r19.json",
+   "passed": true,
+   "status": "warn"
   }
  ]
 }
